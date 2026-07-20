@@ -16,6 +16,7 @@ import Archives from '@/pages/Archives';
 import Insights from '@/pages/Insights';
 import Community from '@/pages/Community';
 import Settings from '@/pages/Settings';
+import DeveloperControlPlane from '@/pages/DeveloperControlPlane';
 // Add page imports here
 
 const AuthenticatedApp = () => {
@@ -54,6 +55,7 @@ const AuthenticatedApp = () => {
         <Route path="/insights" element={<Insights />} />
         <Route path="/community" element={<Community />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/developer" element={<DeveloperControlPlane />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

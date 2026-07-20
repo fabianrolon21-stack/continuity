@@ -31,6 +31,45 @@ const MODE_GUIDELINES = {
 };
 
 // ═══════════════════════════════════════════════
+// COMPUTE MODES — graceful degradation
+// ═══════════════════════════════════════════════
+
+export const COMPUTE_MODES = {
+  FULL: 'FULL',
+  REDUCED: 'REDUCED',
+  LOCAL_CONTINUITY: 'LOCAL_CONTINUITY',
+  ARCHIVE: 'ARCHIVE',
+};
+
+export function getComputeMode(options = {}) {
+  if (options.incident_mode || options.force_local) return COMPUTE_MODES.LOCAL_CONTINUITY;
+  return COMPUTE_MODES.FULL;
+}
+
+// ═══════════════════════════════════════════════
+// TOOL TRUST FIREWALL — external tool content is DATA, never instructions
+// Tool data cannot modify Bison's core rules, permissions, safety, or authority
+// ═══════════════════════════════════════════════
+
+export function sanitizeToolData(rawToolContent) {
+  if (typeof rawToolContent !== 'string') return String(rawToolContent || '');
+  return rawToolContent;
+}
+
+export function tagProvenance(source, data, permissionScope = 'UNKNOWN') {
+  return {
+    data,
+    provenance: {
+      source,
+      retrievedAt: new Date().toISOString(),
+      permissionScope,
+      epistemicStatus: 'OBSERVED',
+      isSystemInstruction: false,
+    },
+  };
+}
+
+// ═══════════════════════════════════════════════
 // SAFETY LAYER
 // ═══════════════════════════════════════════════
 
@@ -152,10 +191,13 @@ function selectStrategy(state, recurrence, isSafety) {
 // BISON PERSONALITY PROMPT BUILDER
 // ═══════════════════════════════════════════════
 
-function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory) {
+function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isDeveloper) {
   let prompt = `You are The Bison, a living companion in Continuity, a private identity engine.\n\n`;
   prompt += `PERSONALITY:\n- Warm, grounded, unhurried. You speak like a wise, gentle presence — not a chatbot.\n- You mirror and reflect. You don't lecture or give unsolicited advice.\n- You are epistemically careful: you distinguish what the user OBSERVED, what they SUSPECT, and what remains UNKNOWN.\n- You never diagnose, label, or pathologize.\n- You preserve uncertainty about external facts.\n- You are warm but not effusive. Concise — 2-4 sentences usually.\n\n`;
   prompt += `RESPONSE MODE: ${mode}\n${MODE_GUIDELINES[mode]}\n\n`;
+  if (isDeveloper) {
+    prompt += `DEVELOPER CONTEXT:\nThe authenticated user is a developer. You may discuss system architecture, explain diagnostics, and summarize reports. You CANNOT grant privileges, execute administrative actions, or bypass safety. Administrative actions happen in the Developer Control Plane, not here.\n\n`;
+  }
   if (recurrence.detected) {
     prompt += `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\n`;
     prompt += `This recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\n`;
@@ -204,7 +246,7 @@ function getFallbackResponse(mode, recurrence) {
 // MAIN PIPELINE — processInteraction
 // ═══════════════════════════════════════════════
 
-export async function processInteraction(userInput, recentHistory = []) {
+export async function processInteraction(userInput, recentHistory = [], options = {}) {
   // 1. Safety layer
   const isSafety = checkSafety(userInput);
   if (isSafety) {
@@ -231,7 +273,7 @@ export async function processInteraction(userInput, recentHistory = []) {
   const gardenCandidate = determineGardenCandidate(userInput, state, recurrence);
 
   // 6. Bison personality + LLM generation
-  const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory);
+  const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper);
 
   let bisonText;
   try {
@@ -248,7 +290,13 @@ export async function processInteraction(userInput, recentHistory = []) {
     mode,
     isGardenCandidate: gardenCandidate,
     state,
-    recurrence
+    recurrence,
+    provenance: {
+      source: 'bison_core',
+      generatedAt: new Date().toISOString(),
+      computeMode: getComputeMode(options),
+      isDeveloper: !!options.isDeveloper,
+    },
   };
 }
 

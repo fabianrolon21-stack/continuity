@@ -20,9 +20,11 @@ export default function BisonChat() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [savedIds, setSavedIds] = useState(new Set());
+  const [user, setUser] = useState(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
+    base44.auth.me().then(u => setUser(u)).catch(() => {});
     base44.entities.BisonMessage.list('-created_date', 50).then(msgs => {
       setMessages((msgs || []).reverse());
       setLoading(false);
@@ -49,7 +51,7 @@ export default function BisonChat() {
     } catch (e) {}
 
     try {
-      const result = await processInteraction(text, recentHistory);
+      const result = await processInteraction(text, recentHistory, { isDeveloper: user?.role === 'admin' });
 
       const bisonMsg = {
         role: 'bison',

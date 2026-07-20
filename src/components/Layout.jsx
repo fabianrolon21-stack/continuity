@@ -2,7 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins } from 'lucide-react';
+import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield } from 'lucide-react';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Sanctuary', icon: Home, color: 'hsl(120 40% 58%)' },
@@ -18,9 +18,10 @@ const NAV_ITEMS = [
 export default function Layout() {
   const location = useLocation();
   const [tokenBalance, setTokenBalance] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    base44.auth.me().then(u => setTokenBalance(u?.token_balance || 0)).catch(() => {});
+    base44.auth.me().then(u => { setTokenBalance(u?.token_balance || 0); setUserRole(u?.role); }).catch(() => {});
   }, [location.pathname]);
 
   return (
@@ -49,6 +50,16 @@ export default function Layout() {
             );
           })}
         </nav>
+        {userRole === 'admin' && (
+          <Link
+            to="/developer"
+            className="mx-3 mb-2 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all"
+            style={location.pathname === '/developer' ? { backgroundColor: 'hsl(0 70% 50% / 0.1)', color: 'hsl(0 70% 50%)' } : { color: 'hsl(268 8% 60%)' }}
+          >
+            <Shield className="w-4 h-4 shrink-0" />
+            Developer
+          </Link>
+        )}
         {tokenBalance !== null && (
           <div className="p-4 m-3 rounded-lg bg-secondary/50 flex items-center gap-2">
             <Coins className="w-4 h-4 text-gold" />

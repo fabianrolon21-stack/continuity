@@ -1,0 +1,46 @@
+{
+  "name": "AuditLog",
+  "type": "object",
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "action": {
+      "type": "string"
+    },
+    "actor_role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "admin"
+      ]
+    },
+    "capability_used": {
+      "type": "string"
+    },
+    "result": {
+      "type": "string",
+      "enum": [
+        "SUCCESS",
+        "FAILED",
+        "DENIED"
+      ]
+    },
+    "message": {
+      "type": "string"
+    },
+    "previous_hash": {
+      "type": "string"
+    },
+    "current_hash": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "timestamp",
+    "action",
+    "actor_role",
+    "result"
+  ]
+}
