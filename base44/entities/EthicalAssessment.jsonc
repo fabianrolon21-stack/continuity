@@ -1,0 +1,39 @@
+{
+  "name": "EthicalAssessment",
+  "type": "object",
+  "properties": {
+    "dimension": {
+      "type": "string",
+      "enum": [
+        "honesty",
+        "compassion",
+        "courage",
+        "justice",
+        "loyalty",
+        "growth"
+      ]
+    },
+    "blue_points": {
+      "type": "number",
+      "default": 0
+    },
+    "red_points": {
+      "type": "number",
+      "default": 0
+    },
+    "mixed_points": {
+      "type": "number",
+      "default": 0
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "dimension"
+  ]
+}

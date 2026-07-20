@@ -1,0 +1,42 @@
+{
+  "name": "JournalEntry",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "title": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    },
+    "mood": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "energy": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "distortions_detected": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "date",
+    "content"
+  ]
+}

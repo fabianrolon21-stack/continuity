@@ -1,0 +1,42 @@
+{
+  "name": "Relationship",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "trust_level": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "closeness_level": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "interaction_notes": {
+      "type": "string"
+    },
+    "perception_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "family",
+        "friend",
+        "partner",
+        "colleague",
+        "acquaintance",
+        "other"
+      ]
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "SavedMemory",
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string"
+    },
+    "epistemic_status": {
+      "type": "string",
+      "enum": [
+        "OBSERVED",
+        "INFERRED",
+        "PREDICTED",
+        "USER_CONFIRMED",
+        "UNKNOWN"
+      ],
+      "default": "USER_CONFIRMED"
+    },
+    "source": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "text"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "PhilosophyStatement",
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "belief",
+        "value",
+        "principle",
+        "question",
+        "intention"
+      ]
+    },
+    "perspective": {
+      "type": "string",
+      "enum": [
+        "stoicism",
+        "buddhism",
+        "existentialism",
+        "taoism",
+        "christianity",
+        "islam",
+        "secular_humanism",
+        "jungian",
+        "personal"
+      ]
+    }
+  },
+  "required": [
+    "text"
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "name": "CheckIn",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "mood": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "energy": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "sleep_hours": {
+      "type": "number"
+    },
+    "sleep_quality": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "stress_level": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "exercise_type": {
+      "type": "string"
+    },
+    "exercise_duration_min": {
+      "type": "number"
+    },
+    "social_interactions_count": {
+      "type": "number"
+    },
+    "social_detail": {
+      "type": "string"
+    },
+    "nutrition_quality": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "hydration_glasses": {
+      "type": "number"
+    },
+    "focus_level": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "steps": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "date"
+  ]
+}

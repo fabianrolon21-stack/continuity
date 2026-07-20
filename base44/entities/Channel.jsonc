@@ -1,0 +1,29 @@
+{
+  "name": "Channel",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "theme": {
+      "type": "string",
+      "enum": [
+        "philosophy",
+        "creative",
+        "support",
+        "daily",
+        "growth",
+        "abstract"
+      ]
+    },
+    "created_by_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

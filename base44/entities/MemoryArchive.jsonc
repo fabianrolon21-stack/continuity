@@ -1,0 +1,31 @@
+{
+  "name": "MemoryArchive",
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "animals",
+        "technology",
+        "location",
+        "intake"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "photo_url": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "category",
+    "title"
+  ]
+}

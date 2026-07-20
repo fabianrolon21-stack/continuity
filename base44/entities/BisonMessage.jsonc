@@ -1,0 +1,48 @@
+{
+  "name": "BisonMessage",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "bison"
+      ]
+    },
+    "text": {
+      "type": "string"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "REFLECT",
+        "STABILIZE",
+        "EXPLORE",
+        "AFFIRM",
+        "CLARIFY",
+        "GROUND"
+      ]
+    },
+    "is_garden_candidate": {
+      "type": "boolean",
+      "default": false
+    },
+    "intent": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "emotional_tone": {
+      "type": "string"
+    },
+    "recurrence_detected": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "role",
+    "text"
+  ]
+}

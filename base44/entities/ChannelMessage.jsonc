@@ -1,0 +1,19 @@
+{
+  "name": "ChannelMessage",
+  "type": "object",
+  "properties": {
+    "channel_id": {
+      "type": "string"
+    },
+    "text": {
+      "type": "string"
+    },
+    "author_display_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "channel_id",
+    "text"
+  ]
+}

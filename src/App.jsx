@@ -6,6 +6,16 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
+import Layout from '@/components/Layout';
+import Sanctuary from '@/pages/Sanctuary';
+import BisonChat from '@/pages/BisonChat';
+import CheckIn from '@/pages/CheckIn';
+import Journal from '@/pages/Journal';
+import Reflect from '@/pages/Reflect';
+import Archives from '@/pages/Archives';
+import Insights from '@/pages/Insights';
+import Community from '@/pages/Community';
+import Settings from '@/pages/Settings';
 // Add page imports here
 
 const AuthenticatedApp = () => {
@@ -34,7 +44,17 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
+      <Route element={<Layout />}>
+        <Route path="/" element={<Sanctuary />} />
+        <Route path="/bison" element={<BisonChat />} />
+        <Route path="/checkin" element={<CheckIn />} />
+        <Route path="/journal" element={<Journal />} />
+        <Route path="/reflect" element={<Reflect />} />
+        <Route path="/archives" element={<Archives />} />
+        <Route path="/insights" element={<Insights />} />
+        <Route path="/community" element={<Community />} />
+        <Route path="/settings" element={<Settings />} />
+      </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

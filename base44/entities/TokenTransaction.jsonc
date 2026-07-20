@@ -1,0 +1,23 @@
+{
+  "name": "TokenTransaction",
+  "type": "object",
+  "properties": {
+    "amount": {
+      "type": "number"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "earn",
+        "spend"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "amount",
+    "type"
+  ]
+}

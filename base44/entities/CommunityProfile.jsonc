@@ -1,0 +1,41 @@
+{
+  "name": "CommunityProfile",
+  "type": "object",
+  "properties": {
+    "display_name": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "values": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "interests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "preferred_vibe": {
+      "type": "string",
+      "enum": [
+        "calm",
+        "energetic",
+        "reflective",
+        "playful",
+        "deep"
+      ]
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "display_name"
+  ]
+}
