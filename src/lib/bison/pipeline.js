@@ -10,6 +10,10 @@ import { detectSynthesisRequest, runSynthesis, buildInsightContextString } from 
 import { getIdentityContext, trackConsequence, buildIdentityContextString } from './identityKernel';
 import { validateAction, buildConstitutionalContextString } from './constitutionalKernel';
 import { retrieveEcologicalKnowledge, interpretAnimalSignals, detectStagnation, buildEcologicalContextString } from './ecologicalContext';
+import { getTemporalContext, buildWorldAwarenessString } from './worldAwareness';
+import { getUserAdaptation, buildAdaptationContextString } from './userAdaptation';
+import { analyzeFairness, buildFairnessContextString } from './fairnessEngine';
+import { buildAutonomyContextString } from './betaAutonomyController';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -248,6 +252,18 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   if (phaseContext.constitutionalContext) {
     prompt += phaseContext.constitutionalContext;
   }
+  if (phaseContext.worldAwarenessContext) {
+    prompt += phaseContext.worldAwarenessContext;
+  }
+  if (phaseContext.adaptationContext) {
+    prompt += phaseContext.adaptationContext;
+  }
+  if (phaseContext.fairnessContext) {
+    prompt += phaseContext.fairnessContext;
+  }
+  if (phaseContext.autonomyContext) {
+    prompt += phaseContext.autonomyContext;
+  }
   if (recurrence.detected) {
     prompt += `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\n`;
     prompt += `This recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\n`;
@@ -373,6 +389,15 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 5e. Identity context (Package 26)
   const identityContext = await getIdentityContext();
 
+  // 5f. World awareness + temporal context (Package 28)
+  const temporalContext = getTemporalContext();
+
+  // 5g. User adaptation (Package 28)
+  const userAdaptation = await getUserAdaptation();
+
+  // 5h. Fairness analysis (Package 26/28)
+  const fairnessResult = analyzeFairness({ state, affectiveContext, userAdaptation });
+
   // 6. Bison personality + LLM generation
   const phaseContext = {
     selfModelContext,
@@ -387,6 +412,10 @@ export async function processInteraction(userInput, recentHistory = [], options 
       ? buildEcologicalContextString({ ecologicalKnowledge, animalSignals, stagnationSignal })
       : null,
     constitutionalContext: buildConstitutionalContextString(),
+    worldAwarenessContext: buildWorldAwarenessString(temporalContext),
+    adaptationContext: buildAdaptationContextString(userAdaptation),
+    fairnessContext: buildFairnessContextString(fairnessResult),
+    autonomyContext: buildAutonomyContextString(),
   };
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
 
@@ -446,6 +475,9 @@ export async function processInteraction(userInput, recentHistory = [], options 
     stagnationSignal,
     ecologicalKnowledge,
     animalSignals,
+    temporalContext,
+    userAdaptation,
+    fairnessResult,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),
