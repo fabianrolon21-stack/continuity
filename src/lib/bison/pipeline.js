@@ -7,6 +7,9 @@ import { trackWellbeing, generateSimulatedAffectiveState, buildProtectionContext
 import { detectThreats, getImmuneResponse, buildImmuneContextString } from './immuneSystem';
 import { retrieveKnowledge, buildKnowledgeContextString as buildCuratedKnowledgeString } from './knowledgeCore';
 import { detectSynthesisRequest, runSynthesis, buildInsightContextString } from './insightEngine';
+import { getIdentityContext, trackConsequence, buildIdentityContextString } from './identityKernel';
+import { validateAction, buildConstitutionalContextString } from './constitutionalKernel';
+import { retrieveEcologicalKnowledge, interpretAnimalSignals, detectStagnation, buildEcologicalContextString } from './ecologicalContext';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -236,6 +239,15 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   if (phaseContext.insightContext) {
     prompt += phaseContext.insightContext;
   }
+  if (phaseContext.identityContext) {
+    prompt += phaseContext.identityContext;
+  }
+  if (phaseContext.ecologicalContext) {
+    prompt += phaseContext.ecologicalContext;
+  }
+  if (phaseContext.constitutionalContext) {
+    prompt += phaseContext.constitutionalContext;
+  }
   if (recurrence.detected) {
     prompt += `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\n`;
     prompt += `This recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\n`;
@@ -333,6 +345,11 @@ export async function processInteraction(userInput, recentHistory = [], options 
     insightContext = await runSynthesis(embodiedContext, affectiveContext);
   }
 
+  // 2h. Stagnation detection + ecological context (Phase 22)
+  const stagnationSignal = detectStagnation(userInput, recentHistory);
+  const ecologicalKnowledge = retrieveEcologicalKnowledge(userInput);
+  const animalSignals = interpretAnimalSignals(userInput);
+
   // 3. Recurrence detection (from bounded recent history only)
   const recentUserMessages = recentHistory.filter(m => m.role === 'user');
   const recurrence = detectRecurrence(state, recentUserMessages);
@@ -353,6 +370,9 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 5d. Simulated affective state (Phase 24)
   const simulatedAffectiveState = generateSimulatedAffectiveState(wellbeingState);
 
+  // 5e. Identity context (Package 26)
+  const identityContext = await getIdentityContext();
+
   // 6. Bison personality + LLM generation
   const phaseContext = {
     selfModelContext,
@@ -362,6 +382,11 @@ export async function processInteraction(userInput, recentHistory = [], options 
     immuneContext: threats.length > 0 ? buildImmuneContextString({ threats, immuneResponse }) : null,
     curatedKnowledge,
     insightContext: insightContext ? buildInsightContextString(insightContext) : null,
+    identityContext: identityContext ? buildIdentityContextString(identityContext) : null,
+    ecologicalContext: (ecologicalKnowledge.length > 0 || animalSignals || stagnationSignal?.detected)
+      ? buildEcologicalContextString({ ecologicalKnowledge, animalSignals, stagnationSignal })
+      : null,
+    constitutionalContext: buildConstitutionalContextString(),
   };
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
 
@@ -373,24 +398,32 @@ export async function processInteraction(userInput, recentHistory = [], options 
     bisonText = bisonText.trim();
     if (!bisonText) bisonText = getFallbackResponse(mode, recurrence);
 
-    // 6b. Action engine — check if Bison proposed a tool call (Phase 15)
+    // 6b. Action engine — constitutional validation + tool execution (Phase 15 + Package 26)
     if (MAX_TOOL_ROUNDS > 0) {
       const actionRequest = extractActionRequest(bisonText);
       if (actionRequest) {
-        actionResult = await processActionRequest(actionRequest, { ...options, computeMode: getComputeMode(options) });
-        if (actionResult && actionResult.status === 'SUCCESS') {
-          const followUpPrompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, { ...phaseContext, actionResult });
-          try {
-            const followUp = await base44.integrations.Core.InvokeLLM({ prompt: followUpPrompt });
-            const followUpText = typeof followUp === 'string' ? followUp : (followUp?.text || String(followUp));
-            if (followUpText?.trim()) bisonText = followUpText.trim();
-          } catch (e) {}
+        const constitutionalResult = validateAction(actionRequest);
+        if (constitutionalResult === 'DENY') {
+          actionResult = { status: 'DENIED', error: 'Constitutional constraint violated.' };
+        } else {
+          actionResult = await processActionRequest(actionRequest, { ...options, computeMode: getComputeMode(options) });
+          if (actionResult && actionResult.status === 'SUCCESS') {
+            const followUpPrompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, { ...phaseContext, actionResult });
+            try {
+              const followUp = await base44.integrations.Core.InvokeLLM({ prompt: followUpPrompt });
+              const followUpText = typeof followUp === 'string' ? followUp : (followUp?.text || String(followUp));
+              if (followUpText?.trim()) bisonText = followUpText.trim();
+            } catch (e) {}
+          }
         }
       }
     }
   } catch (e) {
     bisonText = getFallbackResponse(mode, recurrence);
   }
+
+  // 7. Consequence reflection (Package 26)
+  try { await trackConsequence(userInput, bisonText, state, mode); } catch (e) {}
 
   return {
     text: bisonText,
@@ -409,6 +442,10 @@ export async function processInteraction(userInput, recentHistory = [], options 
     immuneResponse,
     insightContext,
     simulatedAffectiveState,
+    identityContext,
+    stagnationSignal,
+    ecologicalKnowledge,
+    animalSignals,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),
