@@ -9,6 +9,7 @@ export default function Sanctuary() {
   const [latestCheckin, setLatestCheckin] = useState(null);
   const [latestJournal, setLatestJournal] = useState(null);
   const [tokenBalance, setTokenBalance] = useState(0);
+  const [companionState, setCompanionState] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,6 +21,7 @@ export default function Sanctuary() {
       setLatestCheckin(checkins?.[0] || null);
       setLatestJournal(journals?.[0] || null);
       setTokenBalance(user?.token_balance || 0);
+      setCompanionState(user?.companion_state || null);
       setLoading(false);
     });
   }, []);
@@ -64,6 +66,13 @@ export default function Sanctuary() {
                 ? `Energy ${latestCheckin.energy}/10 · Stress ${latestCheckin.stress_level}/10`
                 : 'Start with a daily check-in to help Bison understand you better.'}
             </p>
+            {companionState && (
+              <div className="flex items-center gap-3 mt-3 text-[10px] text-muted-foreground">
+                <span>Energy {Math.round(companionState.energy ?? 80)}</span>
+                <span>Hydration {Math.round(companionState.hydration ?? 80)}</span>
+                <span>Hunger {Math.round(companionState.hunger ?? 80)}</span>
+              </div>
+            )}
             <Link
               to="/bison"
               className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 rounded-lg bg-gold/10 text-gold text-sm font-medium hover:bg-gold/20 transition-all"

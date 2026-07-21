@@ -1,5 +1,8 @@
 import { base44 } from '@/api/base44Client';
 import { interpretEmbodiedContext, buildEmbodiedContextString } from './embodiedContext';
+import { wakeAndTick, detectCareAction, performCareAction, generateSelfModel, formatSelfModelForPrompt, evaluateUITrigger } from './companionEngine';
+import { interpretAffectiveContext, buildAffectiveContextString, retrieveNeuroscienceKnowledge, buildKnowledgeContextString } from './affectiveContext';
+import { extractActionRequest, processActionRequest, buildActionResultString, MAX_TOOL_ROUNDS } from './actionEngine';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -170,9 +173,12 @@ function detectRecurrence(currentState, recentUserMessages) {
 // SPS6-LITE STRATEGY SELECTOR
 // ═══════════════════════════════════════════════
 
-function selectStrategy(state, recurrence, isSafety) {
+function selectStrategy(state, recurrence, isSafety, affectiveContext) {
   if (isSafety) return RESPONSE_MODES.GROUND;
   if (state.emotionIntensity > 0.6 && ['anxious', 'sad', 'angry'].includes(state.emotionalTone)) {
+    return RESPONSE_MODES.STABILIZE;
+  }
+  if (!isSafety && affectiveContext?.supportPriority === 'HIGH' && state.emotionIntensity > 0.6) {
     return RESPONSE_MODES.STABILIZE;
   }
   if (recurrence.detected && recurrence.suggestedMode === 'STABILIZE') {
@@ -192,7 +198,7 @@ function selectStrategy(state, recurrence, isSafety) {
 // BISON PERSONALITY PROMPT BUILDER
 // ═══════════════════════════════════════════════
 
-function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isDeveloper, embodiedContext) {
+function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isDeveloper, embodiedContext, phaseContext = {}) {
   let prompt = `You are The Bison, a living companion in Continuity, a private identity engine.\n\n`;
   prompt += `PERSONALITY:\n- Warm, grounded, unhurried. You speak like a wise, gentle presence — not a chatbot.\n- You mirror and reflect. You don't lecture or give unsolicited advice.\n- You are epistemically careful: you distinguish what the user OBSERVED, what they SUSPECT, and what remains UNKNOWN.\n- You never diagnose, label, or pathologize.\n- You preserve uncertainty about external facts.\n- You are warm but not effusive. Concise — 2-4 sentences usually.\n\n`;
   prompt += `RESPONSE MODE: ${mode}\n${MODE_GUIDELINES[mode]}\n\n`;
@@ -201,6 +207,18 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   }
   if (embodiedContext && embodiedContext.detected) {
     prompt += buildEmbodiedContextString(embodiedContext);
+  }
+  if (phaseContext.selfModelContext) {
+    prompt += phaseContext.selfModelContext;
+  }
+  if (phaseContext.affectiveContext) {
+    prompt += buildAffectiveContextString(phaseContext.affectiveContext);
+  }
+  if (phaseContext.neuroKnowledge && phaseContext.neuroKnowledge.length > 0) {
+    prompt += buildKnowledgeContextString(phaseContext.neuroKnowledge);
+  }
+  if (phaseContext.actionResult) {
+    prompt += buildActionResultString(phaseContext.actionResult);
   }
   if (recurrence.detected) {
     prompt += `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\n`;
@@ -263,31 +281,70 @@ export async function processInteraction(userInput, recentHistory = [], options 
     };
   }
 
+  // 1b. Companion continuity — wake, tick needs, record interaction (Phase 12)
+  let needsState = null;
+  let continuityContext = null;
+  try {
+    const companion = await wakeAndTick();
+    needsState = companion.needsState;
+    continuityContext = companion.continuityContext;
+    const careAction = detectCareAction(userInput);
+    if (careAction) needsState = await performCareAction(careAction);
+  } catch (e) {}
+
   // 2. State interpretation
   const state = interpretState(userInput);
 
   // 2b. Embodied context interpretation
   const embodiedContext = interpretEmbodiedContext(userInput);
 
+  // 2c. Affective context (Phase 16)
+  const affectiveContext = interpretAffectiveContext(userInput, state, embodiedContext);
+
   // 3. Recurrence detection (from bounded recent history only)
   const recentUserMessages = recentHistory.filter(m => m.role === 'user');
   const recurrence = detectRecurrence(state, recentUserMessages);
 
   // 4. SPS6-Lite strategy selection
-  const mode = selectStrategy(state, recurrence, false);
+  const mode = selectStrategy(state, recurrence, false, affectiveContext);
 
   // 5. Garden candidate determination (metadata only — no planting, no saving, no UI)
   const gardenCandidate = determineGardenCandidate(userInput, state, recurrence);
 
+  // 5b. Self-model context (Phase 12)
+  const selfModel = generateSelfModel(needsState, continuityContext, embodiedContext, getComputeMode(options));
+  const selfModelContext = formatSelfModelForPrompt(selfModel);
+
+  // 5c. Neuroscience knowledge retrieval — only if relevant (Phase 16)
+  const neuroKnowledge = retrieveNeuroscienceKnowledge(userInput);
+
   // 6. Bison personality + LLM generation
-  const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext);
+  const phaseContext = { selfModelContext, affectiveContext, neuroKnowledge };
+  const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
 
   let bisonText;
+  let actionResult = null;
   try {
     const result = await base44.integrations.Core.InvokeLLM({ prompt });
     bisonText = typeof result === 'string' ? result : (result?.text || String(result));
     bisonText = bisonText.trim();
     if (!bisonText) bisonText = getFallbackResponse(mode, recurrence);
+
+    // 6b. Action engine — check if Bison proposed a tool call (Phase 15)
+    if (MAX_TOOL_ROUNDS > 0) {
+      const actionRequest = extractActionRequest(bisonText);
+      if (actionRequest) {
+        actionResult = await processActionRequest(actionRequest, { ...options, computeMode: getComputeMode(options) });
+        if (actionResult && actionResult.status === 'SUCCESS') {
+          const followUpPrompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, { ...phaseContext, actionResult });
+          try {
+            const followUp = await base44.integrations.Core.InvokeLLM({ prompt: followUpPrompt });
+            const followUpText = typeof followUp === 'string' ? followUp : (followUp?.text || String(followUp));
+            if (followUpText?.trim()) bisonText = followUpText.trim();
+          } catch (e) {}
+        }
+      }
+    }
   } catch (e) {
     bisonText = getFallbackResponse(mode, recurrence);
   }
@@ -299,6 +356,11 @@ export async function processInteraction(userInput, recentHistory = [], options 
     state,
     recurrence,
     embodiedContext,
+    affectiveContext,
+    needsState,
+    computeMode: getComputeMode(options),
+    triggerUI: evaluateUITrigger({ mode, continuityContext, needsState, gardenCandidate }),
+    actionResult,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),

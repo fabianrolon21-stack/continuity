@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { processInteraction, RESPONSE_MODES, createMemoryFromMessage } from '@/lib/bison/pipeline';
 import { awardTokens } from '@/lib/tokens';
 import { PageHeader, EmptyState } from '@/components/MicroAnimations';
-import { Send, Brain, Repeat, Bookmark, Sparkles, Loader2 } from 'lucide-react';
+import { Send, Brain, Repeat, Bookmark, Sparkles, Loader2, Zap, Droplet, Heart } from 'lucide-react';
 
 const MODE_COLORS = {
   REFLECT: 'hsl(265 41% 64%)',
@@ -21,10 +21,21 @@ export default function BisonChat() {
   const [processing, setProcessing] = useState(false);
   const [savedIds, setSavedIds] = useState(new Set());
   const [user, setUser] = useState(null);
+  const [needsState, setNeedsState] = useState(null);
+  const [backupReminder, setBackupReminder] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    base44.auth.me().then(u => setUser(u)).catch(() => {});
+    base44.auth.me().then(u => {
+      setUser(u);
+      if (u?.companion_state) {
+        setNeedsState({
+          hunger: u.companion_state.hunger ?? 80,
+          hydration: u.companion_state.hydration ?? 80,
+          energy: u.companion_state.energy ?? 80,
+        });
+      }
+    }).catch(() => {});
     base44.entities.BisonMessage.list('-created_date', 50).then(msgs => {
       setMessages((msgs || []).reverse());
       setLoading(false);
@@ -52,6 +63,17 @@ export default function BisonChat() {
 
     try {
       const result = await processInteraction(text, recentHistory, { isDeveloper: user?.role === 'admin' });
+
+      if (result.needsState) setNeedsState(result.needsState);
+      if (result.triggerUI === 'show_backup_reminder') {
+        setBackupReminder(true);
+        try {
+          const u = await base44.auth.me();
+          const cs = u?.companion_state || {};
+          cs.lastBackupReminder = new Date().toISOString();
+          await base44.auth.updateMe({ companion_state: cs });
+        } catch (e) {}
+      }
 
       const bisonMsg = {
         role: 'bison',
@@ -171,6 +193,19 @@ export default function BisonChat() {
       </div>
 
       <div className="px-4 lg:px-10 pb-24 lg:pb-6 pt-2">
+        {backupReminder && (
+          <div className="mb-2 glass rounded-xl px-4 py-2 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">It's been a while since your last backup. Consider exporting your Continuity Archive.</span>
+            <button onClick={() => setBackupReminder(false)} className="text-gold hover:underline ml-2 shrink-0">Dismiss</button>
+          </div>
+        )}
+        {needsState && (
+          <div className="mb-2 flex items-center gap-3 text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-gold" /> {Math.round(needsState.energy)}</span>
+            <span className="flex items-center gap-1"><Droplet className="w-3 h-3 text-sky-accent" /> {Math.round(needsState.hydration)}</span>
+            <span className="flex items-center gap-1"><Heart className="w-3 h-3 text-peach" /> {Math.round(needsState.hunger)}</span>
+          </div>
+        )}
         <div className="flex gap-2 items-end">
           <textarea
             value={input}
