@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import BisonCompanion from '@/components/BisonCompanion';
 import { PageHeader } from '@/components/MicroAnimations';
+import CognitiveInsights from '@/components/CognitiveInsights';
+import { buildCognitiveContext } from '@/lib/bison/cognitiveContext';
 import { ClipboardCheck, BookOpen, MessageCircle, Users, ArrowRight } from 'lucide-react';
 
 export default function Sanctuary() {
@@ -10,6 +12,7 @@ export default function Sanctuary() {
   const [latestJournal, setLatestJournal] = useState(null);
   const [tokenBalance, setTokenBalance] = useState(0);
   const [companionState, setCompanionState] = useState(null);
+  const [cognitiveContext, setCognitiveContext] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,11 +20,13 @@ export default function Sanctuary() {
       base44.entities.CheckIn.list('-date', 1).catch(() => []),
       base44.entities.JournalEntry.list('-created_date', 1).catch(() => []),
       base44.auth.me().catch(() => null),
-    ]).then(([checkins, journals, user]) => {
+      buildCognitiveContext().catch(() => null),
+    ]).then(([checkins, journals, user, cogContext]) => {
       setLatestCheckin(checkins?.[0] || null);
       setLatestJournal(journals?.[0] || null);
       setTokenBalance(user?.token_balance || 0);
       setCompanionState(user?.companion_state || null);
+      setCognitiveContext(cogContext);
       setLoading(false);
     });
   }, []);
@@ -152,6 +157,8 @@ export default function Sanctuary() {
             )}
           </div>
         </div>
+
+        {cognitiveContext && <CognitiveInsights context={cognitiveContext} />}
 
         <div className="glass rounded-xl p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center">

@@ -14,6 +14,7 @@ import { getTemporalContext, buildWorldAwarenessString } from './worldAwareness'
 import { getUserAdaptation, buildAdaptationContextString } from './userAdaptation';
 import { analyzeFairness, buildFairnessContextString } from './fairnessEngine';
 import { buildAutonomyContextString } from './betaAutonomyController';
+import { buildCognitiveContext, buildCognitiveContextString } from './cognitiveContext';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -264,6 +265,9 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   if (phaseContext.autonomyContext) {
     prompt += phaseContext.autonomyContext;
   }
+  if (phaseContext.cognitiveContext) {
+    prompt += phaseContext.cognitiveContext;
+  }
   if (recurrence.detected) {
     prompt += `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\n`;
     prompt += `This recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\n`;
@@ -366,6 +370,9 @@ export async function processInteraction(userInput, recentHistory = [], options 
   const ecologicalKnowledge = retrieveEcologicalKnowledge(userInput);
   const animalSignals = interpretAnimalSignals(userInput);
 
+  // 2i. Unified cognitive context — aggregates ALL user data (cross-page integration)
+  const cognitiveContext = await buildCognitiveContext();
+
   // 3. Recurrence detection (from bounded recent history only)
   const recentUserMessages = recentHistory.filter(m => m.role === 'user');
   const recurrence = detectRecurrence(state, recentUserMessages);
@@ -416,6 +423,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     adaptationContext: buildAdaptationContextString(userAdaptation),
     fairnessContext: buildFairnessContextString(fairnessResult),
     autonomyContext: buildAutonomyContextString(),
+    cognitiveContext: cognitiveContext ? buildCognitiveContextString(cognitiveContext) : null,
   };
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
 
@@ -478,6 +486,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     temporalContext,
     userAdaptation,
     fairnessResult,
+    cognitiveContext,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),
