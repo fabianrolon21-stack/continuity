@@ -1,0 +1,79 @@
+{
+  "name": "InsightGem",
+  "type": "object",
+  "properties": {
+    "source_references": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "observed_connection": {
+      "type": "string"
+    },
+    "hypothesis": {
+      "type": "string"
+    },
+    "evidence_strength": {
+      "type": "string",
+      "enum": [
+        "WEAK",
+        "MODERATE",
+        "STRONG"
+      ]
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM"
+      ]
+    },
+    "alternative_explanations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "domain_bridge": {
+      "type": "string"
+    },
+    "sensitivity_level": {
+      "type": "string",
+      "enum": [
+        "NORMAL",
+        "SENSITIVE",
+        "HIGHLY_SENSITIVE"
+      ]
+    },
+    "suggested_reflection": {
+      "type": "string"
+    },
+    "user_feedback_status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "ACCEPTED",
+        "CORRECTED",
+        "REJECTED",
+        "SNOOZED",
+        "INVALIDATED"
+      ],
+      "default": "PENDING"
+    }
+  },
+  "required": [
+    "source_references",
+    "observed_connection",
+    "evidence_strength",
+    "confidence",
+    "sensitivity_level",
+    "user_feedback_status"
+  ]
+}

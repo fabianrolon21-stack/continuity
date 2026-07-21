@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { processInteraction, RESPONSE_MODES, createMemoryFromMessage } from '@/lib/bison/pipeline';
 import { awardTokens } from '@/lib/tokens';
 import { PageHeader, EmptyState } from '@/components/MicroAnimations';
-import { Send, Brain, Repeat, Bookmark, Sparkles, Loader2, Zap, Droplet, Heart } from 'lucide-react';
+import { Send, Brain, Repeat, Bookmark, Sparkles, Loader2, Zap, Droplet, Heart, ShieldAlert, Lightbulb } from 'lucide-react';
 
 const MODE_COLORS = {
   REFLECT: 'hsl(265 41% 64%)',
@@ -23,6 +23,7 @@ export default function BisonChat() {
   const [user, setUser] = useState(null);
   const [needsState, setNeedsState] = useState(null);
   const [backupReminder, setBackupReminder] = useState(false);
+  const [threatNotification, setThreatNotification] = useState(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -65,6 +66,9 @@ export default function BisonChat() {
       const result = await processInteraction(text, recentHistory, { isDeveloper: user?.role === 'admin' });
 
       if (result.needsState) setNeedsState(result.needsState);
+      if (result.threats && result.threats.length > 0) {
+        setThreatNotification(result.threats[0]);
+      }
       if (result.triggerUI === 'show_backup_reminder') {
         setBackupReminder(true);
         try {
@@ -80,6 +84,7 @@ export default function BisonChat() {
         text: result.text,
         mode: result.mode,
         is_garden_candidate: result.isGardenCandidate,
+        has_insight: !!result.insightContext?.detected,
         intent: result.state?.intent,
         domain: result.state?.domain,
         emotional_tone: result.state?.emotionalTone,
@@ -163,6 +168,11 @@ export default function BisonChat() {
                         <Sparkles className="w-2.5 h-2.5" /> garden
                       </span>
                     )}
+                    {msg.has_insight && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-starlight/15 text-starlight flex items-center gap-1">
+                        <Lightbulb className="w-2.5 h-2.5" /> insight
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -193,6 +203,15 @@ export default function BisonChat() {
       </div>
 
       <div className="px-4 lg:px-10 pb-24 lg:pb-6 pt-2">
+        {threatNotification && (
+          <div className="mb-2 glass rounded-xl px-4 py-2 flex items-center justify-between text-xs border border-peach/30">
+            <span className="flex items-center gap-2 text-peach">
+              <ShieldAlert className="w-3.5 h-3.5" />
+              Possible {threatNotification.category.toLowerCase().replace(/_/g, ' ')} detected in your message. Be cautious.
+            </span>
+            <button onClick={() => setThreatNotification(null)} className="text-muted-foreground hover:text-foreground ml-2 shrink-0">Dismiss</button>
+          </div>
+        )}
         {backupReminder && (
           <div className="mb-2 glass rounded-xl px-4 py-2 flex items-center justify-between text-xs">
             <span className="text-muted-foreground">It's been a while since your last backup. Consider exporting your Continuity Archive.</span>

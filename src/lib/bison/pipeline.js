@@ -3,6 +3,10 @@ import { interpretEmbodiedContext, buildEmbodiedContextString } from './embodied
 import { wakeAndTick, detectCareAction, performCareAction, generateSelfModel, formatSelfModelForPrompt, evaluateUITrigger } from './companionEngine';
 import { interpretAffectiveContext, buildAffectiveContextString, retrieveNeuroscienceKnowledge, buildKnowledgeContextString } from './affectiveContext';
 import { extractActionRequest, processActionRequest, buildActionResultString, MAX_TOOL_ROUNDS } from './actionEngine';
+import { trackWellbeing, generateSimulatedAffectiveState, buildProtectionContextString } from './protectionEngine';
+import { detectThreats, getImmuneResponse, buildImmuneContextString } from './immuneSystem';
+import { retrieveKnowledge, buildKnowledgeContextString as buildCuratedKnowledgeString } from './knowledgeCore';
+import { detectSynthesisRequest, runSynthesis, buildInsightContextString } from './insightEngine';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -220,6 +224,18 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   if (phaseContext.actionResult) {
     prompt += buildActionResultString(phaseContext.actionResult);
   }
+  if (phaseContext.protectionContext) {
+    prompt += phaseContext.protectionContext;
+  }
+  if (phaseContext.immuneContext) {
+    prompt += phaseContext.immuneContext;
+  }
+  if (phaseContext.curatedKnowledge && phaseContext.curatedKnowledge.length > 0) {
+    prompt += buildCuratedKnowledgeString(phaseContext.curatedKnowledge);
+  }
+  if (phaseContext.insightContext) {
+    prompt += phaseContext.insightContext;
+  }
   if (recurrence.detected) {
     prompt += `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\n`;
     prompt += `This recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\n`;
@@ -301,6 +317,22 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 2c. Affective context (Phase 16)
   const affectiveContext = interpretAffectiveContext(userInput, state, embodiedContext);
 
+  // 2d. Wellbeing tracking (Phase 24)
+  const wellbeingState = trackWellbeing(affectiveContext, embodiedContext);
+
+  // 2e. Threat detection (Phase 24+25)
+  const threats = detectThreats(userInput);
+  const immuneResponse = threats.length > 0 ? getImmuneResponse(threats[0], wellbeingState) : null;
+
+  // 2f. Curated knowledge retrieval (Phase 25)
+  const curatedKnowledge = retrieveKnowledge(userInput);
+
+  // 2g. Insight synthesis — only if explicitly requested (Phase 18)
+  let insightContext = null;
+  if (detectSynthesisRequest(userInput)) {
+    insightContext = await runSynthesis(embodiedContext, affectiveContext);
+  }
+
   // 3. Recurrence detection (from bounded recent history only)
   const recentUserMessages = recentHistory.filter(m => m.role === 'user');
   const recurrence = detectRecurrence(state, recentUserMessages);
@@ -318,8 +350,19 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 5c. Neuroscience knowledge retrieval — only if relevant (Phase 16)
   const neuroKnowledge = retrieveNeuroscienceKnowledge(userInput);
 
+  // 5d. Simulated affective state (Phase 24)
+  const simulatedAffectiveState = generateSimulatedAffectiveState(wellbeingState);
+
   // 6. Bison personality + LLM generation
-  const phaseContext = { selfModelContext, affectiveContext, neuroKnowledge };
+  const phaseContext = {
+    selfModelContext,
+    affectiveContext,
+    neuroKnowledge,
+    protectionContext: buildProtectionContextString({ wellbeingState, simulatedAffectiveState, threats }),
+    immuneContext: threats.length > 0 ? buildImmuneContextString({ threats, immuneResponse }) : null,
+    curatedKnowledge,
+    insightContext: insightContext ? buildInsightContextString(insightContext) : null,
+  };
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
 
   let bisonText;
@@ -361,6 +404,11 @@ export async function processInteraction(userInput, recentHistory = [], options 
     computeMode: getComputeMode(options),
     triggerUI: evaluateUITrigger({ mode, continuityContext, needsState, gardenCandidate }),
     actionResult,
+    wellbeingState,
+    threats,
+    immuneResponse,
+    insightContext,
+    simulatedAffectiveState,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),

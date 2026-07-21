@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { getTokenBalance } from '@/lib/tokens';
 import { PageHeader } from '@/components/MicroAnimations';
 import { Switch } from '@/components/ui/switch';
-import { Coins, Globe, Zap, Music, Info } from 'lucide-react';
+import { Coins, Globe, Zap, Music, Info, Shield } from 'lucide-react';
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -30,6 +30,7 @@ export default function Settings() {
   const [audioPack, setAudioPack] = useState('piano');
   const [autoTone, setAutoTone] = useState(true);
   const [volume, setVolume] = useState(50);
+  const [immuneEnabled, setImmuneEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export default function Settings() {
       setAudioPack(u?.audio_pack || 'piano');
       setAutoTone(u?.auto_tone !== false);
       setVolume(u?.audio_volume || 50);
+      setImmuneEnabled(u?.immune_enabled !== false);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -102,6 +104,20 @@ export default function Settings() {
               <p className="text-xs text-muted-foreground">Minimize animations across the app</p>
             </div>
             <Switch checked={reduceMotion} onCheckedChange={v => { setReduceMotion(v); updateSetting('reduce_motion', v); }} />
+          </div>
+        </div>
+
+        <div className="glass rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Shield className="w-4 h-4" style={{ color: accent }} />
+            <h3 className="font-heading font-semibold text-sm">Protection</h3>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm">Threat Detection</p>
+              <p className="text-xs text-muted-foreground">Detect phishing, spam, and sensitive data in messages</p>
+            </div>
+            <Switch checked={immuneEnabled} onCheckedChange={v => { setImmuneEnabled(v); updateSetting('immune_enabled', v); }} />
           </div>
         </div>
 
