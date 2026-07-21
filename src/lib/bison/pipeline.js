@@ -1,4 +1,5 @@
 import { base44 } from '@/api/base44Client';
+import { interpretEmbodiedContext, buildEmbodiedContextString } from './embodiedContext';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -191,12 +192,15 @@ function selectStrategy(state, recurrence, isSafety) {
 // BISON PERSONALITY PROMPT BUILDER
 // ═══════════════════════════════════════════════
 
-function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isDeveloper) {
+function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isDeveloper, embodiedContext) {
   let prompt = `You are The Bison, a living companion in Continuity, a private identity engine.\n\n`;
   prompt += `PERSONALITY:\n- Warm, grounded, unhurried. You speak like a wise, gentle presence — not a chatbot.\n- You mirror and reflect. You don't lecture or give unsolicited advice.\n- You are epistemically careful: you distinguish what the user OBSERVED, what they SUSPECT, and what remains UNKNOWN.\n- You never diagnose, label, or pathologize.\n- You preserve uncertainty about external facts.\n- You are warm but not effusive. Concise — 2-4 sentences usually.\n\n`;
   prompt += `RESPONSE MODE: ${mode}\n${MODE_GUIDELINES[mode]}\n\n`;
   if (isDeveloper) {
     prompt += `DEVELOPER CONTEXT:\nThe authenticated user is a developer. You may discuss system architecture, explain diagnostics, and summarize reports. You CANNOT grant privileges, execute administrative actions, or bypass safety. Administrative actions happen in the Developer Control Plane, not here.\n\n`;
+  }
+  if (embodiedContext && embodiedContext.detected) {
+    prompt += buildEmbodiedContextString(embodiedContext);
   }
   if (recurrence.detected) {
     prompt += `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\n`;
@@ -262,6 +266,9 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 2. State interpretation
   const state = interpretState(userInput);
 
+  // 2b. Embodied context interpretation
+  const embodiedContext = interpretEmbodiedContext(userInput);
+
   // 3. Recurrence detection (from bounded recent history only)
   const recentUserMessages = recentHistory.filter(m => m.role === 'user');
   const recurrence = detectRecurrence(state, recentUserMessages);
@@ -273,7 +280,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
   const gardenCandidate = determineGardenCandidate(userInput, state, recurrence);
 
   // 6. Bison personality + LLM generation
-  const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper);
+  const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext);
 
   let bisonText;
   try {
@@ -291,6 +298,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     isGardenCandidate: gardenCandidate,
     state,
     recurrence,
+    embodiedContext,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),
