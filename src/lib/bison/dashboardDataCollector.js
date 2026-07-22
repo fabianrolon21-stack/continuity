@@ -1,0 +1,106 @@
+// ═══════════════════════════════════════════════
+// DASHBOARD DATA COLLECTOR (Package 29)
+// Aggregates existing internal state into a single DashboardState.
+// Pure aggregation — no new data collection, no new analysis.
+// All data comes from already-existing state variables.
+// ═══════════════════════════════════════════════
+
+import { base44 } from '@/api/base44Client';
+import { listCapabilities } from '@/lib/security/deviceAccess';
+import { getImmuneMemory } from '@/lib/bison/immuneSystem';
+import { getComputeMode } from '@/lib/bison/pipeline';
+import { calculateTrustScore } from '@/lib/bison/trustScoreCalculator';
+
+export async function collectDashboardState(lastInteractionResult = null) {
+  try {
+    const [user, capabilities, immuneMemory, recentMemories, recentMessages] = await Promise.all([
+      base44.auth.me().catch(() => null),
+      listCapabilities().catch(() => []),
+      getImmuneMemory().catch(() => ({ threats: [] })),
+      base44.entities.SavedMemory.list('-created_date', 5).catch(() => []),
+      base44.entities.BisonMessage.list('-created_date', 10).catch(() => []),
+    ]);
+
+    const companionState = user?.companion_state || {};
+    const trustScoreState = user?.trust_score_state || { score: 100, breakdown: [], sessionStart: new Date().toISOString() };
+
+    // Observation mode — derived from capability statuses
+    const observationMode = determineObservationMode(capabilities);
+
+    // Epistemic flags from last interaction
+    const epistemicFlags = extractEpistemicFlags(lastInteractionResult, recentMessages);
+
+    // Self-model summary
+    const selfModelSummary = lastInteractionResult?.needsState
+      ? buildSelfModelSummary(lastInteractionResult, companionState)
+      : buildSelfModelSummary(null, companionState);
+
+    // Simulated affect
+    const simulatedAffectiveState = lastInteractionResult?.simulatedAffectiveState || null;
+
+    // Protective actions from immune memory
+    const protectiveActions = (immuneMemory?.threats || []).slice(-5).reverse().map(t => ({
+      time: t.timestamp,
+      action: `${t.category} blocked (${t.actionTaken || 'observed'})`,
+    }));
+
+    // Constitutional status
+    const constitutionalStatus = lastInteractionResult?.actionResult
+      ? `${lastInteractionResult.actionResult.status}${lastInteractionResult.actionResult.error ? ' — ' + lastInteractionResult.actionResult.error : ''}`
+      : 'No action requested';
+
+    // Trust score
+    const trustScore = calculateTrustScore(trustScoreState, null);
+
+    return {
+      permissions: capabilities.map(c => ({ name: c.label, status: c.permissionStatus, available: c.available })),
+      observationMode,
+      recentMemories: recentMemories.map(m => ({ text: m.text?.substring(0, 80), source: m.source })),
+      epistemicFlags,
+      selfModelSummary,
+      painLevel: simulatedAffectiveState?.painLevel ?? 10,
+      empathyLevel: simulatedAffectiveState?.empathyLevel ?? 20,
+      protectiveActions,
+      trustScore: trustScore.score,
+      trustScoreBreakdown: trustScore.breakdown,
+      computeMode: lastInteractionResult?.computeMode || getComputeMode({ incident_mode: user?.incident_mode, force_local: user?.force_local }),
+      constitutionalStatus,
+      wellbeingState: lastInteractionResult?.wellbeingState || null,
+      threats: lastInteractionResult?.threats || [],
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+function determineObservationMode(capabilities) {
+  const camera = capabilities.find(c => c.id === 'camera');
+  const mic = capabilities.find(c => c.id === 'microphone');
+  if (camera?.permissionStatus === 'AUTHORIZED' && mic?.permissionStatus === 'AUTHORIZED') return 'audio + camera';
+  if (camera?.permissionStatus === 'AUTHORIZED') return 'camera';
+  if (mic?.permissionStatus === 'AUTHORIZED') return 'audio';
+  return 'text-only';
+}
+
+function extractEpistemicFlags(lastInteractionResult, recentMessages) {
+  const flags = [];
+  if (lastInteractionResult?.state) {
+    flags.push({ claim: `Intent: ${lastInteractionResult.state.intent}`, status: 'INFERRED' });
+    flags.push({ claim: `Domain: ${lastInteractionResult.state.domain}`, status: 'INFERRED' });
+    flags.push({ claim: `Emotional tone: ${lastInteractionResult.state.emotionalTone}`, status: 'INFERRED' });
+  }
+  if (lastInteractionResult?.recurrence?.detected) {
+    flags.push({ claim: `Recurring pattern: ${lastInteractionResult.recurrence.patternType}`, status: 'OBSERVED' });
+  }
+  if (lastInteractionResult?.cognitiveContext?.contradictions?.length > 0) {
+    flags.push({ claim: 'Cross-entity contradiction detected', status: 'INFERRED' });
+  }
+  return flags;
+}
+
+function buildSelfModelSummary(interactionResult, companionState) {
+  const energy = companionState?.energy ?? 80;
+  const hunger = companionState?.hunger ?? 80;
+  const hydration = companionState?.hydration ?? 80;
+  return `Energy: ${Math.round(energy)}/100. Hunger: ${Math.round(hunger)}/100. Hydration: ${Math.round(hydration)}/100. Companion state, not biological.`;
+}

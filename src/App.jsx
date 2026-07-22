@@ -17,6 +17,7 @@ import Insights from '@/pages/Insights';
 import Community from '@/pages/Community';
 import Settings from '@/pages/Settings';
 import DeveloperControlPlane from '@/pages/DeveloperControlPlane';
+import TrustDashboard from '@/pages/TrustDashboard';
 // Add page imports here
 
 const AuthenticatedApp = () => {
@@ -56,6 +57,7 @@ const AuthenticatedApp = () => {
         <Route path="/community" element={<Community />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/developer" element={<DeveloperControlPlane />} />
+        <Route path="/trust" element={<TrustDashboard />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

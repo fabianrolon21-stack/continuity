@@ -15,6 +15,7 @@ import { getUserAdaptation, buildAdaptationContextString } from './userAdaptatio
 import { analyzeFairness, buildFairnessContextString } from './fairnessEngine';
 import { buildAutonomyContextString } from './betaAutonomyController';
 import { buildCognitiveContext, buildCognitiveContextString } from './cognitiveContext';
+import { createTrustEvent, TRUST_EVENTS } from './trustScoreCalculator';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -462,6 +463,12 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 7. Consequence reflection (Package 26)
   try { await trackConsequence(userInput, bisonText, state, mode); } catch (e) {}
 
+  // 7b. Trust score event (Package 29)
+  let trustScoreEvent = null;
+  if (actionResult?.status === 'DENIED') {
+    trustScoreEvent = createTrustEvent(TRUST_EVENTS.SAFETY_REFUSAL, actionResult.error || 'Constitutional constraint');
+  }
+
   return {
     text: bisonText,
     mode,
@@ -487,6 +494,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     userAdaptation,
     fairnessResult,
     cognitiveContext,
+    trustScoreEvent,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),

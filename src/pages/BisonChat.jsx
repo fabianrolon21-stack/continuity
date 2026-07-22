@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { processInteraction, RESPONSE_MODES, createMemoryFromMessage } from '@/lib/bison/pipeline';
+import { calculateTrustScore, createTrustEvent, TRUST_EVENTS } from '@/lib/bison/trustScoreCalculator';
 import { awardTokens } from '@/lib/tokens';
 import { PageHeader, EmptyState } from '@/components/MicroAnimations';
 import { Send, Brain, Repeat, Bookmark, Sparkles, Loader2, Zap, Droplet, Heart, ShieldAlert, Lightbulb } from 'lucide-react';
@@ -66,6 +67,14 @@ export default function BisonChat() {
       const result = await processInteraction(text, recentHistory, { isDeveloper: user?.role === 'admin' });
 
       if (result.needsState) setNeedsState(result.needsState);
+      if (result.trustScoreEvent) {
+        try {
+          const cu = await base44.auth.me();
+          const tsState = cu?.trust_score_state || { score: 100, breakdown: [], sessionStart: new Date().toISOString() };
+          const updated = calculateTrustScore(tsState, result.trustScoreEvent);
+          await base44.auth.updateMe({ trust_score_state: updated });
+        } catch (e) {}
+      }
       if (result.threats && result.threats.length > 0) {
         setThreatNotification(result.threats[0]);
       }
@@ -115,6 +124,12 @@ export default function BisonChat() {
     try {
       const memory = createMemoryFromMessage(msg.text);
       await base44.entities.SavedMemory.create({ ...memory, source: 'bison_conversation' });
+      try {
+        const cu = await base44.auth.me();
+        const tsState = cu?.trust_score_state || { score: 100, breakdown: [], sessionStart: new Date().toISOString() };
+        const updated = calculateTrustScore(tsState, createTrustEvent(TRUST_EVENTS.MEMORY_CONFIRMED));
+        await base44.auth.updateMe({ trust_score_state: updated });
+      } catch (e) {}
       setSavedIds(prev => new Set([...prev, index]));
     } catch (e) {}
   };

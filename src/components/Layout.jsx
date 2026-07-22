@@ -2,7 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield } from 'lucide-react';
+import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield, Eye } from 'lucide-react';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Sanctuary', icon: Home, color: 'hsl(120 40% 58%)' },
@@ -19,9 +19,10 @@ export default function Layout() {
   const location = useLocation();
   const [tokenBalance, setTokenBalance] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [dashboardEnabled, setDashboardEnabled] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(u => { setTokenBalance(u?.token_balance || 0); setUserRole(u?.role); }).catch(() => {});
+    base44.auth.me().then(u => { setTokenBalance(u?.token_balance || 0); setUserRole(u?.role); setDashboardEnabled(u?.dashboard_enabled ?? false); }).catch(() => {});
   }, [location.pathname]);
 
   return (
@@ -50,6 +51,16 @@ export default function Layout() {
             );
           })}
         </nav>
+        {dashboardEnabled && (
+          <Link
+            to="/trust"
+            className="mx-3 mb-2 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all"
+            style={location.pathname === '/trust' ? { backgroundColor: 'hsl(199 56% 64% / 0.1)', color: 'hsl(199 56% 64%)' } : { color: 'hsl(268 8% 60%)' }}
+          >
+            <Eye className="w-4 h-4 shrink-0" />
+            Trust
+          </Link>
+        )}
         {userRole === 'admin' && (
           <Link
             to="/developer"
