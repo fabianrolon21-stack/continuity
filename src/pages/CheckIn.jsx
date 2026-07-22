@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Plus, Calendar } from 'lucide-react';
+import { emit, EVENT_TYPES } from '@/lib/events';
 
 const todayStr = () => new Date().toISOString().split('T')[0];
 
@@ -44,6 +45,7 @@ export default function CheckIn() {
   const handleSave = async () => {
     try {
       await base44.entities.CheckIn.create(form);
+      emit(EVENT_TYPES.CHECKIN_COMPLETED, { checkin: form }, 'checkin_page');
       await awardTokens(3, 'daily_checkin');
       setCheckins(prev => [form, ...prev]);
       setRipple(true);

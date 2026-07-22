@@ -1,0 +1,74 @@
+// ═══════════════════════════════════════════════
+// EVENT TYPES (Package 011)
+// Every meaningful action in Continuity becomes an event.
+// ═══════════════════════════════════════════════
+
+export const EVENT_TYPES = {
+  // Journal
+  JOURNAL_CREATED: 'JOURNAL_CREATED',
+  JOURNAL_UPDATED: 'JOURNAL_UPDATED',
+  JOURNAL_DELETED: 'JOURNAL_DELETED',
+
+  // Check-in
+  CHECKIN_COMPLETED: 'CHECKIN_COMPLETED',
+
+  // Reflection
+  REFLECTION_SAVED: 'REFLECTION_SAVED',
+  PHILOSOPHY_ADDED: 'PHILOSOPHY_ADDED',
+  ETHICS_ASSESSED: 'ETHICS_ASSESSED',
+
+  // Relationships
+  RELATIONSHIP_UPDATED: 'RELATIONSHIP_UPDATED',
+  RELATIONSHIP_ADDED: 'RELATIONSHIP_ADDED',
+
+  // Memory
+  MEMORY_SAVED: 'MEMORY_SAVED',
+  MEMORY_ARCHIVED: 'MEMORY_ARCHIVED',
+
+  // Insights
+  INSIGHT_GENERATED: 'INSIGHT_GENERATED',
+  INSIGHT_ACCEPTED: 'INSIGHT_ACCEPTED',
+  INSIGHT_REJECTED: 'INSIGHT_REJECTED',
+
+  // Bison
+  BISON_INTERACTION: 'BISON_INTERACTION',
+  BISON_RESPONSE: 'BISON_RESPONSE',
+  BISON_MODE_CHANGED: 'BISON_MODE_CHANGED',
+
+  // Health
+  HEALTH_EVENT_LOGGED: 'HEALTH_EVENT_LOGGED',
+
+  // Achievements
+  ACHIEVEMENT_UNLOCKED: 'ACHIEVEMENT_UNLOCKED',
+
+  // Mystery Events
+  MYSTERY_EVENT_TRIGGERED: 'MYSTERY_EVENT_TRIGGERED',
+
+  // Tokens
+  TOKEN_EARNED: 'TOKEN_EARNED',
+  TOKEN_SPENT: 'TOKEN_SPENT',
+
+  // Trust
+  TRUST_SCORE_CHANGED: 'TRUST_SCORE_CHANGED',
+  SAFETY_REFUSAL: 'SAFETY_REFUSAL',
+
+  // Community
+  COMMUNITY_MESSAGE_POSTED: 'COMMUNITY_MESSAGE_POSTED',
+  COMMUNITY_PROFILE_UPDATED: 'COMMUNITY_PROFILE_UPDATED',
+
+  // System
+  CONSTITUTIONAL_VIOLATION: 'CONSTITUTIONAL_VIOLATION',
+  AUTONOMOUS_ACTION_LOGGED: 'AUTONOMOUS_ACTION_LOGGED',
+  THREAT_DETECTED: 'THREAT_DETECTED',
+};
+
+// Event metadata — each event carries provenance
+export function createEvent(type, payload = {}, source = 'unknown') {
+  return {
+    type,
+    payload,
+    source,
+    timestamp: new Date().toISOString(),
+    id: `${type}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+  };
+}

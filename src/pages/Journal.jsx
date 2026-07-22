@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { awardTokens } from '@/lib/tokens';
 import { detectCognitiveDistortions } from '@/lib/bison/pipeline';
+import { emit } from '@/lib/events';
+import { EVENT_TYPES } from '@/lib/events';
 import { PageHeader, EmptyState, SaveRipple } from '@/components/MicroAnimations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +40,7 @@ export default function Journal() {
     const distortions = detectCognitiveDistortions(form.content);
     try {
       const entry = await base44.entities.JournalEntry.create({ ...form, distortions_detected: distortions });
+      emit(EVENT_TYPES.JOURNAL_CREATED, { entry, distortions }, 'journal_page');
       await awardTokens(3, 'journal_entry');
       setEntries(prev => [entry, ...prev]);
       setRipple(true);
@@ -50,6 +53,7 @@ export default function Journal() {
   const handleDelete = async (id) => {
     try {
       await base44.entities.JournalEntry.delete(id);
+      emit(EVENT_TYPES.JOURNAL_DELETED, { id }, 'journal_page');
       setEntries(prev => prev.filter(e => e.id !== id));
     } catch (e) {}
   };

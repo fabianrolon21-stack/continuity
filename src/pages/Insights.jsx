@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Sparkles, Trash2, Compass, Scale, User, Brain, Heart, Shield } from 'lucide-react';
+import { emit, EVENT_TYPES } from '@/lib/events';
 
 const ETHICAL_DIMENSIONS = [
   { id: 'honesty', label: 'Honesty', icon: Scale },
@@ -65,6 +66,7 @@ export default function Insights() {
     if (!form.text.trim()) return;
     try {
       const stmt = await base44.entities.PhilosophyStatement.create(form);
+      emit(EVENT_TYPES.PHILOSOPHY_ADDED, { statement: stmt }, 'insights_page');
       await awardTokens(3, 'philosophy_statement');
       setStatements(prev => [stmt, ...prev]);
       setRipple(true);
@@ -81,6 +83,7 @@ export default function Insights() {
   const handleSaveAssessment = async () => {
     try {
       const eth = await base44.entities.EthicalAssessment.create({ ...ethForm, date: new Date().toISOString().split('T')[0] });
+      emit(EVENT_TYPES.ETHICS_ASSESSED, { assessment: eth }, 'insights_page');
       setAssessments(prev => [eth, ...prev]);
       setEthForm({ dimension: 'honesty', blue_points: 0, red_points: 0, mixed_points: 0, notes: '' });
     } catch (e) {}
