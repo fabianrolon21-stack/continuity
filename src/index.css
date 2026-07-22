@@ -122,6 +122,54 @@
     100% { transform: scale(1); }
   }
 
+  .animate-glow-pulse {
+    animation: glow-pulse 4s ease-in-out infinite;
+  }
+  @keyframes glow-pulse {
+    0%, 100% { filter: drop-shadow(0 0 8px hsl(42 63% 55% / 0.2)); }
+    50% { filter: drop-shadow(0 0 24px hsl(42 63% 55% / 0.5)); }
+  }
+
+  .animate-shimmer {
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .animate-twinkle {
+    animation: twinkle 2.5s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.3; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.4s ease-out;
+  }
+  @keyframes slide-up {
+    0% { opacity: 0; transform: translateY(16px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .glass-glow {
+    box-shadow: 0 0 20px hsl(42 63% 55% / 0.08), 0 4px 24px hsl(268 16% 5% / 0.4);
+    border: 1px solid hsl(42 63% 55% / 0.1);
+  }
+
+  .text-glow-gold {
+    text-shadow: 0 0 12px hsl(42 63% 55% / 0.4);
+  }
+  .text-glow-leaf {
+    text-shadow: 0 0 12px hsl(120 40% 58% / 0.4);
+  }
+  .text-glow-starlight {
+    text-shadow: 0 0 12px hsl(48 67% 74% / 0.4);
+  }
+
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 

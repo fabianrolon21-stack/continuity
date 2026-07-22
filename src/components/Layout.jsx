@@ -47,7 +47,7 @@ export default function Layout() {
       <OnboardingTutorial />
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 flex-col border-r border-border bg-card/40 backdrop-blur-xl z-40">
         <div className="p-6 pb-4">
-          <h1 className="font-heading text-xl font-bold text-gold tracking-tight">Continuity</h1>
+          <h1 className="font-heading text-xl font-bold text-gold tracking-tight text-glow-gold animate-glow-pulse">Continuity</h1>
           <p className="text-xs text-muted-foreground mt-0.5">Private Identity Engine</p>
         </div>
         <nav className="flex-1 px-3 space-y-0.5">
@@ -58,12 +58,12 @@ export default function Layout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all"
-                style={active ? { backgroundColor: `${item.color}1a`, color: item.color } : { color: 'hsl(268 8% 60%)' }}
-                onMouseEnter={e => !active && (e.currentTarget.style.color = 'hsl(40 20% 92%)')}
-                onMouseLeave={e => !active && (e.currentTarget.style.color = 'hsl(268 8% 60%)')}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-300"
+                style={active ? { backgroundColor: `${item.color}1a`, color: item.color, boxShadow: `0 0 16px ${item.color}25` } : { color: 'hsl(268 8% 60%)' }}
+                onMouseEnter={e => { if (!active) { e.currentTarget.style.color = 'hsl(40 20% 92%)'; e.currentTarget.style.backgroundColor = 'hsl(268 10% 18% / 0.5)'; } }}
+                onMouseLeave={e => { if (!active) { e.currentTarget.style.color = 'hsl(268 8% 60%)'; e.currentTarget.style.backgroundColor = 'transparent'; } }}
               >
-                <Icon className="w-4 h-4 shrink-0" />
+                <Icon className="w-4 h-4 shrink-0" style={active ? { filter: `drop-shadow(0 0 6px ${item.color})` } : {}} />
                 {item.label}
               </Link>
             );
@@ -101,10 +101,10 @@ export default function Layout() {
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25 }}
+            initial={{ opacity: 0, y: 12, scale: 0.98, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -12, scale: 1.02, filter: 'blur(4px)' }}
+            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
           >
             <Outlet />
           </motion.div>

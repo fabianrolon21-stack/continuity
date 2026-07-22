@@ -10,6 +10,7 @@ import { useState, useEffect } from 'react';
 import { computeWorldState } from '@/lib/world/worldStateEngine';
 import { getPerformanceConfig } from '@/lib/world/performanceModes';
 import WorldParticles from './WorldParticles';
+import NintendoOverlay from './NintendoOverlay';
 
 const WORLD_CHECK_INTERVAL = 60000; // 1 minute
 
@@ -92,6 +93,9 @@ export default function LivingWorld({ performanceMode = 'balanced', userBirthday
           transition: `background ${perf.transitionDuration} ease-in-out`,
         }}
       />
+
+      {/* Layer 6b: Nintendo-style decorative overlay — logo + pattern + glow */}
+      <NintendoOverlay performanceMode={performanceMode} />
 
       {/* Layer 7: Vignette for depth */}
       {perf.enableBlur && (
