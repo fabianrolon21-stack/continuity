@@ -294,7 +294,7 @@ export function useWorldState(options = {}) {
       setWorldState(computeWorldState(options));
     }, 60000); // re-check every minute
     return () => clearInterval(interval);
-  }, []);
+  }, [options]);
 
   return worldState;
 }

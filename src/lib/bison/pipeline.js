@@ -18,8 +18,7 @@ import { buildCognitiveContext, buildCognitiveContextString } from './cognitiveC
 import { createTrustEvent, TRUST_EVENTS } from './trustScoreCalculator';
 import { loadConsciousnessState, processMemory, classifyInteractionResult, buildConsciousnessContextString } from './consciousnessEngine';
 import { buildHumorContextString } from './reflectiveHumor';
-import { classifyData, redactPII } from './privacyIsolation';
-import { classifyEvent } from './eventRegistry';
+import { classifyData } from './privacyIsolation';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS

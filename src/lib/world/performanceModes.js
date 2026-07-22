@@ -82,11 +82,25 @@ export function autoDetectPerformanceMode() {
 
   if (prefersReducedMotion) return PERFORMANCE_MODES.MINIMAL;
 
+  if (isMobile) return PERFORMANCE_MODES.BALANCED;
+  return PERFORMANCE_MODES.HIGH;
+}
+
+// Async version — checks battery API (where available) before deciding
+export async function autoDetectPerformanceModeAsync() {
+  if (typeof navigator === 'undefined') return PERFORMANCE_MODES.BALANCED;
+
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+
+  if (prefersReducedMotion) return PERFORMANCE_MODES.MINIMAL;
+
   // Battery API (where available)
   if (navigator.getBattery) {
-    navigator.getBattery().then(battery => {
+    try {
+      const battery = await navigator.getBattery();
       if (battery.level < 0.15 && !battery.charging) return PERFORMANCE_MODES.BATTERY_SAVER;
-    }).catch(() => {});
+    } catch (e) {}
   }
 
   if (isMobile) return PERFORMANCE_MODES.BALANCED;
