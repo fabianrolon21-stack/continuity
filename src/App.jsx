@@ -19,6 +19,8 @@ import Settings from '@/pages/Settings';
 import DeveloperControlPlane from '@/pages/DeveloperControlPlane';
 import TrustDashboard from '@/pages/TrustDashboard';
 import VoiceStudio from '@/pages/VoiceStudio';
+import Garden from '@/pages/Garden';
+import DecisionLab from '@/pages/DecisionLab';
 // Add page imports here
 
 const AuthenticatedApp = () => {
@@ -60,6 +62,8 @@ const AuthenticatedApp = () => {
         <Route path="/developer" element={<DeveloperControlPlane />} />
         <Route path="/trust" element={<TrustDashboard />} />
         <Route path="/voice" element={<VoiceStudio />} />
+        <Route path="/garden" element={<Garden />} />
+        <Route path="/decisions" element={<DecisionLab />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

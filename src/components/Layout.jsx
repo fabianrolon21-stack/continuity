@@ -2,12 +2,13 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield, Eye, Mic } from 'lucide-react';
+import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield, Eye, Mic, Sprout, Brain } from 'lucide-react';
 import BackgroundLayer from '@/components/BackgroundLayer';
 import AudioPlayer from '@/components/AudioPlayer';
 import OnboardingTutorial from '@/components/OnboardingTutorial';
 import { loadUserTheme } from '@/lib/ambiance/themeEngine';
 import { initLanguage } from '@/lib/localization';
+import { startPresenceLoop, recordInteraction, getPresenceState } from '@/lib/bison/presenceManager';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Sanctuary', icon: Home, color: 'hsl(120 40% 58%)' },
@@ -18,6 +19,8 @@ const NAV_ITEMS = [
   { path: '/insights', label: 'Insights', icon: Sparkles, color: 'hsl(265 41% 64%)' },
   { path: '/community', label: 'Community', icon: Users, color: 'hsl(21 73% 69%)' },
   { path: '/voice', label: 'Voice', icon: Mic, color: 'hsl(265 41% 64%)' },
+  { path: '/garden', label: 'Garden', icon: Sprout, color: 'hsl(120 40% 58%)' },
+  { path: '/decisions', label: 'Decisions', icon: Brain, color: 'hsl(199 56% 64%)' },
   { path: '/settings', label: 'Settings', icon: Settings, color: 'hsl(268 8% 60%)' },
 ];
 
@@ -31,6 +34,10 @@ export default function Layout() {
     base44.auth.me().then(u => { setTokenBalance(u?.token_balance || 0); setUserRole(u?.role); setDashboardEnabled(u?.dashboard_enabled ?? false); }).catch(() => {});
     loadUserTheme();
     initLanguage();
+    recordInteraction();
+    const stopLoop = startPresenceLoop(() => ({ userActive: true }));
+    const persistInterval = setInterval(() => { getPresenceState(); }, 60000);
+    return () => { stopLoop(); clearInterval(persistInterval); };
   }, [location.pathname]);
 
   return (

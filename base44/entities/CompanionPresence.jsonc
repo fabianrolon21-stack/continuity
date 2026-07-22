@@ -1,0 +1,39 @@
+{
+  "name": "CompanionPresence",
+  "type": "object",
+  "properties": {
+    "current_behavior": {
+      "type": "string",
+      "enum": [
+        "walking",
+        "looking_around",
+        "resting",
+        "reading",
+        "thinking",
+        "observing",
+        "celebrating",
+        "interacting"
+      ],
+      "default": "resting"
+    },
+    "mood": {
+      "type": "string"
+    },
+    "energy": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "default": 80
+    },
+    "context_note": {
+      "type": "string"
+    },
+    "last_interaction": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "current_behavior"
+  ]
+}

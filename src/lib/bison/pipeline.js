@@ -18,6 +18,8 @@ import { buildCognitiveContext, buildCognitiveContextString } from './cognitiveC
 import { createTrustEvent, TRUST_EVENTS } from './trustScoreCalculator';
 import { loadConsciousnessState, processMemory, classifyInteractionResult, buildConsciousnessContextString } from './consciousnessEngine';
 import { buildHumorContextString } from './reflectiveHumor';
+import { classifyData, redactPII } from './privacyIsolation';
+import { classifyEvent } from './eventRegistry';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -326,6 +328,9 @@ function getFallbackResponse(mode, recurrence) {
 // ═══════════════════════════════════════════════
 
 export async function processInteraction(userInput, recentHistory = [], options = {}) {
+  // 0. Privacy isolation — classify and detect PII
+  const privacyClass = classifyData(userInput, { isJournalEntry: true });
+
   // 1. Safety layer
   const isSafety = checkSafety(userInput);
   if (isSafety) {
@@ -525,6 +530,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
       computeMode: getComputeMode(options),
       isDeveloper: !!options.isDeveloper,
     },
+    privacy: privacyClass,
   };
 }
 

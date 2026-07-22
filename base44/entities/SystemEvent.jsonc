@@ -1,0 +1,85 @@
+{
+  "name": "SystemEvent",
+  "type": "object",
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "calendar",
+        "reminder",
+        "goal",
+        "habit",
+        "time",
+        "weather",
+        "device",
+        "battery",
+        "location",
+        "travel",
+        "learning",
+        "health",
+        "financial",
+        "project_milestone",
+        "communication",
+        "security",
+        "achievement",
+        "user_defined"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "informational",
+        "actionable",
+        "urgent",
+        "system"
+      ],
+      "default": "informational"
+    },
+    "context_data": {
+      "type": "string"
+    },
+    "impact_areas": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "relationships",
+          "goals",
+          "schedule",
+          "emotional",
+          "memory",
+          "planning",
+          "health",
+          "security"
+        ]
+      }
+    },
+    "companion_action": {
+      "type": "string"
+    },
+    "is_processed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "event_type",
+    "title"
+  ]
+}

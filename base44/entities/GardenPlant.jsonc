@@ -1,0 +1,78 @@
+{
+  "name": "GardenPlant",
+  "type": "object",
+  "properties": {
+    "plant_type": {
+      "type": "string",
+      "enum": [
+        "fern",
+        "flower",
+        "tree",
+        "mushroom",
+        "crystal",
+        "vine",
+        "succulent",
+        "herb",
+        "bonsai",
+        "orchid",
+        "wildflower",
+        "rare_bloom"
+      ]
+    },
+    "growth_stage": {
+      "type": "string",
+      "enum": [
+        "seed",
+        "sprout",
+        "young",
+        "mature",
+        "blooming"
+      ],
+      "default": "seed"
+    },
+    "rarity": {
+      "type": "string",
+      "enum": [
+        "common",
+        "uncommon",
+        "rare",
+        "legendary"
+      ],
+      "default": "common"
+    },
+    "health": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "default": 100
+    },
+    "care_actions": {
+      "type": "number",
+      "default": 0
+    },
+    "position_x": {
+      "type": "number",
+      "default": 50
+    },
+    "position_y": {
+      "type": "number",
+      "default": 50
+    },
+    "season": {
+      "type": "string",
+      "enum": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ],
+      "default": "spring"
+    },
+    "discovered_wildlife": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "plant_type"
+  ]
+}

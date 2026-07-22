@@ -1,0 +1,60 @@
+{
+  "name": "DecisionSimulation",
+  "type": "object",
+  "properties": {
+    "situation": {
+      "type": "string"
+    },
+    "recommended_action": {
+      "type": "string"
+    },
+    "benefit_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "risk_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "alternatives": {
+      "type": "string"
+    },
+    "long_term_outlook": {
+      "type": "string"
+    },
+    "priority_weights": {
+      "type": "string"
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "user_feedback": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected",
+        "modified"
+      ],
+      "default": "pending"
+    },
+    "observed_outcome": {
+      "type": "string"
+    },
+    "accuracy_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "model_adjustment": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "situation"
+  ]
+}
