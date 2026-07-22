@@ -143,7 +143,7 @@ export default function BisonChat() {
   }
 
   return (
-    <div className="flex flex-col h-screen lg:h-screen">
+    <div className="flex flex-col h-screen-safe lg:h-screen">
       <PageHeader title="Bison" subtitle="Your living companion" accent="hsl(42 63% 55%)" />
 
       <div className="flex-1 overflow-y-auto px-4 lg:px-10 pb-4 space-y-4">
@@ -217,7 +217,7 @@ export default function BisonChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="px-4 lg:px-10 pb-24 lg:pb-6 pt-2">
+      <div className="px-4 lg:px-10 pb-safe lg:pb-6 pt-2">
         {threatNotification && (
           <div className="mb-2 glass rounded-xl px-4 py-2 flex items-center justify-between text-xs border border-peach/30">
             <span className="flex items-center gap-2 text-peach">
@@ -252,7 +252,7 @@ export default function BisonChat() {
             }}
             placeholder="Share what's on your mind..."
             rows={1}
-            className="flex-1 glass rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-gold/40 min-h-[48px] max-h-32"
+            className="flex-1 glass rounded-xl px-4 py-3 text-base resize-none focus:outline-none focus:ring-1 focus:ring-gold/40 min-h-[48px] max-h-32"
             style={{ color: 'hsl(40 20% 92%)' }}
           />
           <button

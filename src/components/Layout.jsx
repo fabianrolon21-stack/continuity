@@ -26,7 +26,7 @@ export default function Layout() {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-background pattern-overlay">
+    <div className="min-h-screen bg-background pattern-overlay no-tap-highlight">
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 flex-col border-r border-border bg-card/40 backdrop-blur-xl z-40">
         <div className="p-6 pb-4">
           <h1 className="font-heading text-xl font-bold text-gold tracking-tight">Continuity</h1>
@@ -79,7 +79,7 @@ export default function Layout() {
         )}
       </aside>
 
-      <main className="lg:ml-64 min-h-screen pb-24 lg:pb-8">
+      <main className="lg:ml-64 min-h-screen pb-28 lg:pb-8 pt-safe">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -93,7 +93,7 @@ export default function Layout() {
         </AnimatePresence>
       </main>
 
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 flex items-center justify-around border-t border-border bg-card/80 backdrop-blur-xl z-40 px-1">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 flex items-center justify-around border-t border-border bg-card/80 backdrop-blur-xl z-40 px-1 pb-safe">
         {NAV_ITEMS.slice(0, 5).map(item => {
           const Icon = item.icon;
           const active = location.pathname === item.path;
@@ -101,7 +101,7 @@ export default function Layout() {
             <Link
               key={item.path}
               to={item.path}
-              className="flex flex-col items-center gap-1 py-2.5 px-1 flex-1"
+              className="flex flex-col items-center gap-1 py-2.5 px-1 flex-1 touch-target no-tap-highlight"
               style={active ? { color: item.color } : { color: 'hsl(268 8% 50%)' }}
             >
               <Icon className="w-5 h-5" />
