@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Plus, Calendar } from 'lucide-react';
 import { emit, EVENT_TYPES } from '@/lib/events';
+import { incrementCheckIn } from '@/lib/bison/ascensionEngine';
 
 const todayStr = () => new Date().toISOString().split('T')[0];
 
@@ -47,6 +48,7 @@ export default function CheckIn() {
       await base44.entities.CheckIn.create(form);
       emit(EVENT_TYPES.CHECKIN_COMPLETED, { checkin: form }, 'checkin_page');
       await awardTokens(3, 'daily_checkin');
+      await incrementCheckIn();
       setCheckins(prev => [form, ...prev]);
       setRipple(true);
       setTimeout(() => setRipple(false), 700);

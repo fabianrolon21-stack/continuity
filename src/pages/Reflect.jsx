@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Plus, Users, Trash2, Heart, Shield } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SensoryLogger from '@/components/SensoryLogger';
+import SecretChamber from '@/components/SecretChamber';
 
 const TAG_OPTIONS = ['supportive', 'distant', 'inspiring', 'draining', 'honest', 'complex', 'warm', 'challenging'];
 
@@ -123,6 +125,8 @@ export default function Reflect() {
           <TabsList className="bg-secondary/50">
             <TabsTrigger value="relationships">Relationships</TabsTrigger>
             <TabsTrigger value="journal">Journal</TabsTrigger>
+            <TabsTrigger value="sensory">Sensory</TabsTrigger>
+            <TabsTrigger value="secret">Secret</TabsTrigger>
           </TabsList>
 
           <TabsContent value="relationships" className="mt-4">
@@ -188,6 +192,14 @@ export default function Reflect() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="sensory" className="mt-4">
+            <SensoryLogger />
+          </TabsContent>
+
+          <TabsContent value="secret" className="mt-4">
+            <SecretChamber />
           </TabsContent>
         </Tabs>
       </div>

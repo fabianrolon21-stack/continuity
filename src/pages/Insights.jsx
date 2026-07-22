@@ -9,6 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Sparkles, Trash2, Compass, Scale, User, Brain, Heart, Shield } from 'lucide-react';
 import { emit, EVENT_TYPES } from '@/lib/events';
+import SkillsAssessment from '@/components/SkillsAssessment';
+import SelfMirror from '@/components/SelfMirror';
+import ArchetypeDisplay from '@/components/ArchetypeDisplay';
 
 const ETHICAL_DIMENSIONS = [
   { id: 'honesty', label: 'Honesty', icon: Scale },
@@ -43,6 +46,7 @@ const PERSPECTIVE_LABELS = ['stoicism', 'buddhism', 'existentialism', 'taoism', 
 
 export default function Insights() {
   const [tab, setTab] = useState('philosophy');
+
   const [statements, setStatements] = useState([]);
   const [assessments, setAssessments] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -1,0 +1,35 @@
+{
+  "name": "SensoryLog",
+  "type": "object",
+  "properties": {
+    "sense_type": {
+      "type": "string",
+      "enum": [
+        "hearing",
+        "smell",
+        "media"
+      ]
+    },
+    "data": {
+      "type": "string"
+    },
+    "intensity": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "emotion": {
+      "type": "string"
+    },
+    "context": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "sense_type",
+    "data"
+  ]
+}

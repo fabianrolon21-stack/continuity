@@ -1,0 +1,43 @@
+{
+  "name": "SkillAssessment",
+  "type": "object",
+  "properties": {
+    "work_type": {
+      "type": "string",
+      "enum": [
+        "Technical",
+        "Creative",
+        "Physical",
+        "Social",
+        "Analytical"
+      ]
+    },
+    "work_type_rank": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "thinking_style": {
+      "type": "string",
+      "enum": [
+        "First principles",
+        "Pattern recognition",
+        "Systems thinking",
+        "Empathy",
+        "Problem decomposition"
+      ]
+    },
+    "thinking_style_rank": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "work_type",
+    "thinking_style"
+  ]
+}

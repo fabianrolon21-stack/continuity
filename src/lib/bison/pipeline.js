@@ -16,6 +16,7 @@ import { analyzeFairness, buildFairnessContextString } from './fairnessEngine';
 import { buildAutonomyContextString } from './betaAutonomyController';
 import { buildCognitiveContext, buildCognitiveContextString } from './cognitiveContext';
 import { createTrustEvent, TRUST_EVENTS } from './trustScoreCalculator';
+import { loadConsciousnessState, processMemory, classifyInteractionResult, buildConsciousnessContextString } from './consciousnessEngine';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -269,6 +270,9 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   if (phaseContext.cognitiveContext) {
     prompt += phaseContext.cognitiveContext;
   }
+  if (phaseContext.consciousnessContext) {
+    prompt += phaseContext.consciousnessContext;
+  }
   if (recurrence.detected) {
     prompt += `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\n`;
     prompt += `This recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\n`;
@@ -406,6 +410,9 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 5h. Fairness analysis (Package 26/28)
   const fairnessResult = analyzeFairness({ state, affectiveContext, userAdaptation });
 
+  // 5i. Consciousness state (Package D — Bison Core)
+  const consciousnessState = await loadConsciousnessState();
+
   // 6. Bison personality + LLM generation
   const phaseContext = {
     selfModelContext,
@@ -425,6 +432,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     fairnessContext: buildFairnessContextString(fairnessResult),
     autonomyContext: buildAutonomyContextString(),
     cognitiveContext: cognitiveContext ? buildCognitiveContextString(cognitiveContext) : null,
+    consciousnessContext: buildConsciousnessContextString(consciousnessState),
   };
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
 
@@ -463,6 +471,15 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 7. Consequence reflection (Package 26)
   try { await trackConsequence(userInput, bisonText, state, mode); } catch (e) {}
 
+  // 7b. Consciousness processing (Package D — Bison Core)
+  let updatedConsciousness = null;
+  try {
+    const interactionEvent = classifyInteractionResult({ state, recurrence, mode });
+    if (interactionEvent) {
+      updatedConsciousness = await processMemory(interactionEvent);
+    }
+  } catch (e) {}
+
   // 7b. Trust score event (Package 29)
   let trustScoreEvent = null;
   if (actionResult?.status === 'DENIED') {
@@ -494,6 +511,8 @@ export async function processInteraction(userInput, recentHistory = [], options 
     userAdaptation,
     fairnessResult,
     cognitiveContext,
+    consciousnessState,
+    updatedConsciousness,
     trustScoreEvent,
     provenance: {
       source: 'bison_core',

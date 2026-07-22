@@ -4,6 +4,7 @@ import { getTokenBalance } from '@/lib/tokens';
 import { PageHeader } from '@/components/MicroAnimations';
 import { Switch } from '@/components/ui/switch';
 import { Coins, Globe, Zap, Music, Info, Shield } from 'lucide-react';
+import ThemeShop from '@/components/ThemeShop';
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -153,6 +154,8 @@ export default function Settings() {
             <input type="range" min="0" max="100" value={volume} onChange={e => { const v = +e.target.value; setVolume(v); updateSetting('audio_volume', v); }} className="w-full accent-current" style={{ accentColor: accent }} />
           </div>
         </div>
+
+        <ThemeShop />
 
         <div className="glass rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
