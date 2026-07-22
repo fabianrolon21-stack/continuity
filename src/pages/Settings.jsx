@@ -3,10 +3,11 @@ import { base44 } from '@/api/base44Client';
 import { getTokenBalance } from '@/lib/tokens';
 import { PageHeader } from '@/components/MicroAnimations';
 import { Switch } from '@/components/ui/switch';
-import { Coins, Globe, Zap, Music, Info, Shield } from 'lucide-react';
+import { Coins, Globe, Zap, Music, Info, Shield, Gauge } from 'lucide-react';
 import ThemeShop from '@/components/ThemeShop';
 import TokenShop from '@/components/TokenShop';
 import AccessibilityEnhancer from '@/components/AccessibilityEnhancer';
+import PerformanceModeSelector from '@/components/world/PerformanceModeSelector';
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -162,6 +163,17 @@ export default function Settings() {
         <TokenShop />
 
         <AccessibilityEnhancer />
+
+        <div className="glass rounded-xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Gauge className="w-4 h-4" style={{ color: accent }} />
+              <h3 className="font-heading font-semibold text-sm">World Performance</h3>
+            </div>
+            <PerformanceModeSelector />
+          </div>
+          <p className="text-xs text-muted-foreground">Controls animation density, particles, and visual effects for the living world.</p>
+        </div>
 
         <div className="glass rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">

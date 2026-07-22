@@ -1,0 +1,60 @@
+{
+  "name": "MemoryTree",
+  "type": "object",
+  "properties": {
+    "achievement_type": {
+      "type": "string",
+      "enum": [
+        "milestone",
+        "goal_completed",
+        "recovery",
+        "education",
+        "career",
+        "relationship",
+        "streak",
+        "personal"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "tree_species": {
+      "type": "string",
+      "enum": [
+        "oak",
+        "maple",
+        "cherry_blossom",
+        "redwood",
+        "willow",
+        "birch",
+        "pine",
+        "bonsai"
+      ]
+    },
+    "growth_stage": {
+      "type": "string",
+      "enum": [
+        "sapling",
+        "young",
+        "mature",
+        "ancient"
+      ],
+      "default": "sapling"
+    },
+    "plant_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "source_reference": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "achievement_type",
+    "title",
+    "tree_species"
+  ]
+}

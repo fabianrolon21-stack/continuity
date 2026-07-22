@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import BisonCompanion from '@/components/BisonCompanion';
 import { PageHeader } from '@/components/MicroAnimations';
 import CognitiveInsights from '@/components/CognitiveInsights';
 import BisonCare from '@/components/BisonCare';
 import DailyIntention from '@/components/DailyIntention';
+import LivingRoom from '@/components/world/LivingRoom';
+import PerformanceModeSelector from '@/components/world/PerformanceModeSelector';
 import { buildCognitiveContext } from '@/lib/bison/cognitiveContext';
 import { ClipboardCheck, BookOpen, MessageCircle, Users, ArrowRight } from 'lucide-react';
 
@@ -36,8 +37,6 @@ export default function Sanctuary() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-  const bisonMood = latestCheckin?.mood >= 7 ? 'happy' : latestCheckin?.mood <= 3 ? 'sad' : latestCheckin?.stress_level >= 7 ? 'anxious' : 'neutral';
-
   const quickActions = [
     { label: 'Check-in', path: '/checkin', icon: ClipboardCheck, color: 'hsl(42 63% 55%)' },
     { label: 'Journal', path: '/reflect', icon: BookOpen, color: 'hsl(48 67% 74%)' },
@@ -55,15 +54,23 @@ export default function Sanctuary() {
 
   return (
     <div>
-      <PageHeader title="Sanctuary" subtitle="Your private space for continuity" accent="hsl(120 40% 58%)" />
+      <div className="flex items-center justify-between">
+        <PageHeader title="Sanctuary" subtitle="Your living space" accent="hsl(120 40% 58%)" />
+        <div className="pr-6 lg:pr-10">
+          <PerformanceModeSelector />
+        </div>
+      </div>
 
       <div className="px-6 lg:px-10 pb-8 space-y-6">
-        <div className="glass rounded-2xl p-8 lg:p-12 flex flex-col items-center text-center relative overflow-hidden">
+        {/* The Living Room — Nintendo-style home */}
+        <LivingRoom />
+
+        {/* Mood snapshot */}
+        <div className="glass rounded-2xl p-6 flex flex-col items-center text-center relative overflow-hidden">
           <div className="absolute inset-0 pattern-overlay opacity-50" />
           <div className="relative z-10">
-            <p className="text-sm text-muted-foreground mb-2">{greeting}.</p>
-            <BisonCompanion mood={bisonMood} size="lg" />
-            <h2 className="font-heading text-xl font-semibold mt-4 text-foreground">
+            <p className="text-sm text-muted-foreground mb-1">{greeting}.</p>
+            <h2 className="font-heading text-xl font-semibold text-foreground">
               {latestCheckin
                 ? `Your mood today: ${latestCheckin.mood}/10`
                 : 'How are you feeling today?'}
