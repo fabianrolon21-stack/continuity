@@ -12,6 +12,7 @@ import { emit, EVENT_TYPES } from '@/lib/events';
 import SkillsAssessment from '@/components/SkillsAssessment';
 import SelfMirror from '@/components/SelfMirror';
 import ArchetypeDisplay from '@/components/ArchetypeDisplay';
+import ForecastPanel from '@/components/ForecastPanel';
 
 const ETHICAL_DIMENSIONS = [
   { id: 'honesty', label: 'Honesty', icon: Scale },
@@ -108,6 +109,9 @@ export default function Insights() {
           <TabsList className="bg-secondary/50 flex-wrap h-auto">
             <TabsTrigger value="philosophy">Philosophy</TabsTrigger>
             <TabsTrigger value="ethics">Ethics</TabsTrigger>
+            <TabsTrigger value="skills">Skills</TabsTrigger>
+            <TabsTrigger value="mirror">Mirror</TabsTrigger>
+            <TabsTrigger value="forecast">Forecast</TabsTrigger>
             <TabsTrigger value="archetypes">Archetypes</TabsTrigger>
             <TabsTrigger value="perspectives">Perspectives</TabsTrigger>
           </TabsList>
@@ -213,7 +217,23 @@ export default function Insights() {
             </div>
           </TabsContent>
 
+          <TabsContent value="skills" className="mt-4">
+            <SkillsAssessment />
+          </TabsContent>
+
+          <TabsContent value="forecast" className="mt-4">
+            <ForecastPanel />
+          </TabsContent>
+
+          <TabsContent value="mirror" className="mt-4">
+            <SelfMirror />
+          </TabsContent>
+
           <TabsContent value="archetypes" className="mt-4">
+            <ArchetypeDisplay />
+          </TabsContent>
+
+          <TabsContent value="archetype_info" className="mt-4 hidden">
             <p className="text-sm text-muted-foreground mb-4">Your archetypes evolve based on your data and reflections. These six represent core patterns of self.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {ARCHETYPES.map(a => (

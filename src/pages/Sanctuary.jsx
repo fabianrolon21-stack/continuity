@@ -4,6 +4,8 @@ import { base44 } from '@/api/base44Client';
 import BisonCompanion from '@/components/BisonCompanion';
 import { PageHeader } from '@/components/MicroAnimations';
 import CognitiveInsights from '@/components/CognitiveInsights';
+import BisonCare from '@/components/BisonCare';
+import DailyIntention from '@/components/DailyIntention';
 import { buildCognitiveContext } from '@/lib/bison/cognitiveContext';
 import { ClipboardCheck, BookOpen, MessageCircle, Users, ArrowRight } from 'lucide-react';
 
@@ -104,6 +106,10 @@ export default function Sanctuary() {
             );
           })}
         </div>
+
+        <BisonCare />
+
+        <DailyIntention />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="glass rounded-xl p-5">

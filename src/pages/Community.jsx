@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Send, Users, Shield, ArrowLeft, Plus } from 'lucide-react';
+import CommunityMatch from '@/components/CommunityMatch';
 
 const VIBE_OPTIONS = ['calm', 'reflective', 'deep', 'playful', 'energetic'];
 const DEFAULT_CHANNELS = [
@@ -112,7 +113,9 @@ export default function Community() {
           )}
 
           {profile && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <>
+            <CommunityMatch />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
               {channels.map(ch => (
                 <button key={ch.id} onClick={() => setActiveChannel(ch)} className="glass rounded-xl p-5 text-left hover:scale-[1.01] transition-transform">
                   <div className="flex items-center gap-2 mb-1">
@@ -124,6 +127,7 @@ export default function Community() {
                 </button>
               ))}
             </div>
+            </>
           )}
         </div>
       </div>

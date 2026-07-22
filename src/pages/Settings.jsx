@@ -5,6 +5,8 @@ import { PageHeader } from '@/components/MicroAnimations';
 import { Switch } from '@/components/ui/switch';
 import { Coins, Globe, Zap, Music, Info, Shield } from 'lucide-react';
 import ThemeShop from '@/components/ThemeShop';
+import TokenShop from '@/components/TokenShop';
+import AccessibilityEnhancer from '@/components/AccessibilityEnhancer';
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -156,6 +158,10 @@ export default function Settings() {
         </div>
 
         <ThemeShop />
+
+        <TokenShop />
+
+        <AccessibilityEnhancer />
 
         <div className="glass rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">

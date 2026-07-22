@@ -147,3 +147,35 @@
     height: 100dvh;
   }
 }
+
+@layer base {
+  .high-contrast {
+    --background: 268 20% 5%;
+    --foreground: 40 30% 98%;
+    --card: 268 18% 8%;
+    --border: 268 10% 35%;
+    --muted-foreground: 268 8% 75%;
+  }
+
+  .high-contrast .glass {
+    background: hsl(268 18% 8% / 0.9);
+    border: 1px solid hsl(268 10% 35% / 1);
+  }
+
+  .reduce-motion *,
+  .reduce-motion *::before,
+  .reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reduce-motion .animate-breathe,
+  .reduce-motion .animate-float,
+  .reduce-motion .animate-ripple,
+  .reduce-motion .animate-sparkle,
+  .reduce-motion .animate-pulse-soft {
+    animation: none !important;
+  }
+}

@@ -5,7 +5,9 @@ import { base44 } from '@/api/base44Client';
 import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield, Eye } from 'lucide-react';
 import BackgroundLayer from '@/components/BackgroundLayer';
 import AudioPlayer from '@/components/AudioPlayer';
+import OnboardingTutorial from '@/components/OnboardingTutorial';
 import { loadUserTheme } from '@/lib/ambiance/themeEngine';
+import { initLanguage } from '@/lib/localization';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Sanctuary', icon: Home, color: 'hsl(120 40% 58%)' },
@@ -27,12 +29,14 @@ export default function Layout() {
   useEffect(() => {
     base44.auth.me().then(u => { setTokenBalance(u?.token_balance || 0); setUserRole(u?.role); setDashboardEnabled(u?.dashboard_enabled ?? false); }).catch(() => {});
     loadUserTheme();
+    initLanguage();
   }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-background no-tap-highlight">
       <BackgroundLayer />
       <AudioPlayer />
+      <OnboardingTutorial />
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 flex-col border-r border-border bg-card/40 backdrop-blur-xl z-40">
         <div className="p-6 pb-4">
           <h1 className="font-heading text-xl font-bold text-gold tracking-tight">Continuity</h1>

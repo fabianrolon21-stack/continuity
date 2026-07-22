@@ -17,6 +17,7 @@ import { buildAutonomyContextString } from './betaAutonomyController';
 import { buildCognitiveContext, buildCognitiveContextString } from './cognitiveContext';
 import { createTrustEvent, TRUST_EVENTS } from './trustScoreCalculator';
 import { loadConsciousnessState, processMemory, classifyInteractionResult, buildConsciousnessContextString } from './consciousnessEngine';
+import { buildHumorContextString } from './reflectiveHumor';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -273,6 +274,9 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   if (phaseContext.consciousnessContext) {
     prompt += phaseContext.consciousnessContext;
   }
+  if (phaseContext.humorContext) {
+    prompt += phaseContext.humorContext;
+  }
   if (recurrence.detected) {
     prompt += `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\n`;
     prompt += `This recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\n`;
@@ -433,6 +437,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     autonomyContext: buildAutonomyContextString(),
     cognitiveContext: cognitiveContext ? buildCognitiveContextString(cognitiveContext) : null,
     consciousnessContext: buildConsciousnessContextString(consciousnessState),
+    humorContext: buildHumorContextString(userInput, mode, state, recurrence),
   };
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
 
