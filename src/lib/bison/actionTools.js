@@ -27,4 +27,25 @@ export const CONSENT_POLICY = {
 
 // Tool registry — no tools registered initially.
 // Tools are added here when their execution adapters are implemented and authorized.
-export const TOOL_REGISTRY = {};
+export const TOOL_REGISTRY = {
+  // Package 30 — External Oracle Consult
+  // Registered for transparency/permission visibility. Triggered via
+  // oracleIntegrator (state-detected), NOT via the action engine.
+  // consentPolicy ALWAYS_CONFIRM — user must enable capability in Settings.
+  ExternalOracleConsult: {
+    riskClass: TOOL_RISK_CLASS.EXTERNAL_ACTION,
+    consentPolicy: CONSENT_POLICY.ALWAYS_CONFIRM,
+    minimumComputeMode: 'FULL',
+    description: 'Consult an external LLM as an untrusted oracle. Output is epistemically verified before use.',
+    argumentSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', maxLength: 2000 },
+        model: { type: 'string' },
+      },
+      required: ['query'],
+    },
+    // No executionAdapter — this tool is triggered by the oracle integrator,
+    // not by the action engine's [ACTION_REQUEST] flow.
+  },
+};

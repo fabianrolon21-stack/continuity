@@ -156,6 +156,59 @@ export function isAuthorizedForProcessing(classification, userRole = 'user') {
   return true;
 }
 
+// Strip personal data aggressively before sending to an external oracle.
+// More aggressive than redactPII — uses 'restricted' level (highest strip).
+// Also strips relationship names from SavedMemory to avoid leaking the
+// user's social graph to external models.
+export async function stripForExternalTransmission(text) {
+  if (!text) return { cleanedQuery: text, redactionReport: { typesStripped: [], count: 0 } };
+
+  const strippedTypes = [];
+
+  // 1. Redact all PII at the highest level
+  let cleaned = redactPII(text, 'restricted');
+
+  if (cleaned !== text) {
+    strippedTypes.push('pii');
+  }
+
+  // 2. Strip relationship names from the user's social graph
+  let relationshipNames = [];
+  try {
+    const { base44 } = await import('@/api/base44Client');
+    const relationships = await base44.entities.Relationship.list('-created_date', 50).catch(() => []);
+    relationshipNames = relationships
+      .map(r => r.name)
+      .filter(name => name && name.length > 2);
+
+    for (const name of relationshipNames) {
+      const nameRegex = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+      if (nameRegex.test(cleaned)) {
+        cleaned = cleaned.replace(nameRegex, '[PERSON]');
+        strippedTypes.push('relationship_name');
+      }
+    }
+  } catch (e) {}
+
+  // 3. Strip any remaining email-like patterns (belt and suspenders)
+  const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+  if (emailPattern.test(cleaned)) {
+    cleaned = cleaned.replace(emailPattern, '[EMAIL]');
+    strippedTypes.push('email');
+  }
+
+  // Deduplicate stripped types
+  const uniqueTypes = [...new Set(strippedTypes)];
+
+  return {
+    cleanedQuery: cleaned,
+    redactionReport: {
+      typesStripped: uniqueTypes,
+      count: uniqueTypes.length,
+    },
+  };
+}
+
 // Redact PII from text for safe display/processing
 export function redactPII(text, classification = 'sensitive') {
   if (!text) return text;

@@ -52,6 +52,9 @@ export async function collectDashboardState(lastInteractionResult = null) {
     // Trust score
     const trustScore = calculateTrustScore(trustScoreState, null);
 
+    // Oracle consultation history (Package 30)
+    const oracleConsultations = await getOracleConsultationHistory();
+
     return {
       permissions: capabilities.map(c => ({ name: c.label, status: c.permissionStatus, available: c.available })),
       observationMode,
@@ -67,9 +70,38 @@ export async function collectDashboardState(lastInteractionResult = null) {
       constitutionalStatus,
       wellbeingState: lastInteractionResult?.wellbeingState || null,
       threats: lastInteractionResult?.threats || [],
+      oracleConsultations,
+      oracleConsultation: lastInteractionResult?.oracleConsultation || null,
     };
   } catch (e) {
     return null;
+  }
+}
+
+async function getOracleConsultationHistory() {
+  try {
+    const logs = await base44.entities.AuditLog.filter(
+      { action: 'EXTERNAL_ORACLE_CONSULT' },
+      '-created_date',
+      5
+    );
+    return (logs || []).map(log => {
+      let parsed = {};
+      try { parsed = JSON.parse(log.message || '{}'); } catch (e) {}
+      return {
+        requestId: log.id,
+        timestamp: log.timestamp,
+        model: parsed.model || 'unknown',
+        querySummary: parsed.querySummary || '',
+        result: log.result,
+        insightCount: parsed.insightCount || 0,
+        verificationStats: parsed.verificationStats || null,
+        redactionApplied: parsed.redactionApplied || false,
+        blocked: parsed.blocked || false,
+      };
+    });
+  } catch (e) {
+    return [];
   }
 }
 

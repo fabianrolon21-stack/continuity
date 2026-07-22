@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { getTokenBalance } from '@/lib/tokens';
 import { PageHeader } from '@/components/MicroAnimations';
 import { Switch } from '@/components/ui/switch';
-import { Coins, Globe, Zap, Music, Info, Shield, Gauge } from 'lucide-react';
+import { Coins, Globe, Zap, Music, Info, Shield, Gauge, ExternalLink } from 'lucide-react';
 import ThemeShop from '@/components/ThemeShop';
 import TokenShop from '@/components/TokenShop';
 import AccessibilityEnhancer from '@/components/AccessibilityEnhancer';
@@ -35,6 +35,11 @@ export default function Settings() {
   const [autoTone, setAutoTone] = useState(true);
   const [volume, setVolume] = useState(50);
   const [immuneEnabled, setImmuneEnabled] = useState(true);
+  const [oracleEnabled, setOracleEnabled] = useState(false);
+  const [oracleScience, setOracleScience] = useState(true);
+  const [oracleNews, setOracleNews] = useState(true);
+  const [oracleOpinion, setOracleOpinion] = useState(true);
+  const [oracleModel, setOracleModel] = useState('generic');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,6 +52,12 @@ export default function Settings() {
       setAutoTone(u?.auto_tone !== false);
       setVolume(u?.audio_volume || 50);
       setImmuneEnabled(u?.immune_enabled !== false);
+      const oracleSettings = u?.oracle_settings || {};
+      setOracleEnabled(!!oracleSettings.enabled);
+      setOracleScience(oracleSettings.query_science !== false);
+      setOracleNews(oracleSettings.query_news !== false);
+      setOracleOpinion(oracleSettings.query_opinion !== false);
+      setOracleModel(oracleSettings.preferred_model || 'generic');
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -57,6 +68,20 @@ export default function Settings() {
       setUser(prev => ({ ...prev, [key]: value }));
     } catch (e) {}
   };
+
+  const updateOracleSetting = async (field, value) => {
+    const current = user?.oracle_settings || {};
+    const updated = { ...current, [field]: value };
+    await updateSetting('oracle_settings', updated);
+  };
+
+  const ORACLE_MODELS = [
+    { key: 'generic', label: 'Default' },
+    { key: 'deepseek', label: 'DeepSeek' },
+    { key: 'gpt', label: 'GPT' },
+    { key: 'claude', label: 'Claude' },
+    { key: 'gemini', label: 'Gemini' },
+  ];
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen"><div className="w-8 h-8 border-2 border-muted/30 border-t-muted rounded-full animate-spin" /></div>;
@@ -123,6 +148,53 @@ export default function Settings() {
             </div>
             <Switch checked={immuneEnabled} onCheckedChange={v => { setImmuneEnabled(v); updateSetting('immune_enabled', v); }} />
           </div>
+        </div>
+
+        <div className="glass rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <ExternalLink className="w-4 h-4" style={{ color: accent }} />
+            <h3 className="font-heading font-semibold text-sm">External Oracle</h3>
+          </div>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-sm">Enable External AI Consultation</p>
+              <p className="text-xs text-muted-foreground">Let Bison consult other AI models as untrusted oracles. All output is epistemically verified.</p>
+            </div>
+            <Switch checked={oracleEnabled} onCheckedChange={v => { setOracleEnabled(v); updateOracleSetting('enabled', v); }} />
+          </div>
+          {oracleEnabled && (
+            <>
+              <div className="space-y-2 mb-4 pl-1 border-l-2 border-secondary/50 ml-1 pl-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Science queries</p>
+                  <Switch checked={oracleScience} onCheckedChange={v => { setOracleScience(v); updateOracleSetting('query_science', v); }} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">News / current events</p>
+                  <Switch checked={oracleNews} onCheckedChange={v => { setOracleNews(v); updateOracleSetting('query_news', v); }} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Opinion / perspective</p>
+                  <Switch checked={oracleOpinion} onCheckedChange={v => { setOracleOpinion(v); updateOracleSetting('query_opinion', v); }} />
+                </div>
+              </div>
+              <div className="mb-2">
+                <p className="text-xs text-muted-foreground mb-1">Preferred oracle model</p>
+                <div className="flex flex-wrap gap-2">
+                  {ORACLE_MODELS.map(m => (
+                    <button
+                      key={m.key}
+                      onClick={() => { setOracleModel(m.key); updateOracleSetting('preferred_model', m.key); }}
+                      className={`text-xs px-3 py-1.5 rounded-lg transition-all ${oracleModel === m.key ? 'bg-secondary text-foreground' : 'bg-secondary/30 text-muted-foreground'}`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground/70 mt-2">⚠ External queries use integration credits. Personal data is stripped before sending. Oracle output is never treated as authoritative.</p>
+            </>
+          )}
         </div>
 
         <div className="glass rounded-xl p-5">

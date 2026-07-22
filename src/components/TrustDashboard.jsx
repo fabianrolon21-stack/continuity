@@ -1,4 +1,4 @@
-import { Eye, Shield, Activity, Heart, Brain, Lock, CheckCircle, XCircle, AlertTriangle, ChevronDown, ChevronUp, Cpu, Scale } from 'lucide-react';
+import { Eye, Shield, Activity, Heart, Brain, Lock, CheckCircle, XCircle, AlertTriangle, ChevronDown, ChevronUp, Cpu, Scale, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 
 export default function TrustDashboard({ state, onToggle }) {
@@ -178,6 +178,35 @@ export default function TrustDashboard({ state, onToggle }) {
           </div>
         )}
       </div>
+
+      {/* Oracle Consultations (Package 30) */}
+      {state.oracleConsultations && state.oracleConsultations.length > 0 && (
+        <div className="glass rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <ExternalLink className="w-4 h-4 text-sky-accent" />
+            <h3 className="font-heading font-semibold text-sm text-sky-accent">External Oracle Consultations</h3>
+          </div>
+          <div className="space-y-2">
+            {state.oracleConsultations.map((oc, i) => (
+              <div key={i} className="text-xs border-l-2 border-sky-accent/30 pl-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-sky-accent">{oc.model}</span>
+                  <span className={`px-2 py-0.5 rounded-full ${oc.blocked ? 'bg-destructive/15 text-destructive' : oc.result === 'SUCCESS' ? 'bg-leaf/15 text-leaf' : 'bg-secondary text-muted-foreground'}`}>
+                    {oc.blocked ? 'BLOCKED' : oc.result}
+                  </span>
+                </div>
+                <p className="text-muted-foreground mt-0.5 truncate">"{oc.querySummary}"</p>
+                <div className="flex items-center gap-3 mt-1 text-muted-foreground/60">
+                  <span>{oc.insightCount} insight{oc.insightCount !== 1 ? 's' : ''}</span>
+                  {oc.redactionApplied && <span className="text-gold/60">PII stripped</span>}
+                  <span>{new Date(oc.timestamp).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-muted-foreground/60 mt-2">External oracle output is untrusted, epistemically verified, and never treated as authoritative.</p>
+        </div>
+      )}
 
       {/* Recent Memories */}
       <div className="glass rounded-xl p-5">
