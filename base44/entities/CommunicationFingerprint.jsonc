@@ -1,0 +1,47 @@
+{
+  "name": "CommunicationFingerprint",
+  "type": "object",
+  "properties": {
+    "vocabulary_patterns": {
+      "type": "string"
+    },
+    "sentence_structure": {
+      "type": "string"
+    },
+    "punctuation_habits": {
+      "type": "string"
+    },
+    "emoji_usage": {
+      "type": "string"
+    },
+    "humor_style": {
+      "type": "string"
+    },
+    "code_switching": {
+      "type": "string"
+    },
+    "slang_regional": {
+      "type": "string"
+    },
+    "response_rhythm": {
+      "type": "string"
+    },
+    "emotional_patterns": {
+      "type": "string"
+    },
+    "context_references": {
+      "type": "string"
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "default": 0
+    },
+    "sample_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": []
+}

@@ -2,7 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield, Eye } from 'lucide-react';
+import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield, Eye, Mic } from 'lucide-react';
 import BackgroundLayer from '@/components/BackgroundLayer';
 import AudioPlayer from '@/components/AudioPlayer';
 import OnboardingTutorial from '@/components/OnboardingTutorial';
@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { path: '/archives', label: 'Archives', icon: Archive, color: 'hsl(199 56% 64%)' },
   { path: '/insights', label: 'Insights', icon: Sparkles, color: 'hsl(265 41% 64%)' },
   { path: '/community', label: 'Community', icon: Users, color: 'hsl(21 73% 69%)' },
+  { path: '/voice', label: 'Voice', icon: Mic, color: 'hsl(265 41% 64%)' },
   { path: '/settings', label: 'Settings', icon: Settings, color: 'hsl(268 8% 60%)' },
 ];
 

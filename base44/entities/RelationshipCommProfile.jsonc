@@ -1,0 +1,66 @@
+{
+  "name": "RelationshipCommProfile",
+  "type": "object",
+  "properties": {
+    "relationship_name": {
+      "type": "string"
+    },
+    "relationship_category": {
+      "type": "string",
+      "enum": [
+        "boss",
+        "family",
+        "friend",
+        "coworker",
+        "professional",
+        "unknown"
+      ]
+    },
+    "communication_style": {
+      "type": "string"
+    },
+    "formality_level": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "warmth_level": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "humor_frequency": {
+      "type": "string",
+      "enum": [
+        "never",
+        "rare",
+        "occasional",
+        "frequent",
+        "constant"
+      ]
+    },
+    "vocabulary_distinctive": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sample_count": {
+      "type": "number",
+      "default": 0
+    },
+    "confidence_level": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ],
+      "default": "LOW"
+    }
+  },
+  "required": [
+    "relationship_name",
+    "relationship_category"
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "name": "CommunicationDraft",
+  "type": "object",
+  "properties": {
+    "relationship_name": {
+      "type": "string"
+    },
+    "relationship_category": {
+      "type": "string",
+      "enum": [
+        "boss",
+        "family",
+        "friend",
+        "coworker",
+        "professional",
+        "unknown"
+      ]
+    },
+    "context": {
+      "type": "string"
+    },
+    "user_intent": {
+      "type": "string"
+    },
+    "generated_text": {
+      "type": "string"
+    },
+    "authenticity_scores": {
+      "type": "string"
+    },
+    "authenticity_flags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "generic_ai_phrase",
+          "corporate_tone",
+          "tv_dialogue",
+          "personality_drift",
+          "relationship_mismatch",
+          "over_formalization"
+        ]
+      }
+    },
+    "review_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "edited",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "edited_text": {
+      "type": "string"
+    },
+    "difference_analysis": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "context",
+    "generated_text"
+  ]
+}

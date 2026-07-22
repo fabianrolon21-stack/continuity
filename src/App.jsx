@@ -18,6 +18,7 @@ import Community from '@/pages/Community';
 import Settings from '@/pages/Settings';
 import DeveloperControlPlane from '@/pages/DeveloperControlPlane';
 import TrustDashboard from '@/pages/TrustDashboard';
+import VoiceStudio from '@/pages/VoiceStudio';
 // Add page imports here
 
 const AuthenticatedApp = () => {
@@ -58,6 +59,7 @@ const AuthenticatedApp = () => {
         <Route path="/settings" element={<Settings />} />
         <Route path="/developer" element={<DeveloperControlPlane />} />
         <Route path="/trust" element={<TrustDashboard />} />
+        <Route path="/voice" element={<VoiceStudio />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

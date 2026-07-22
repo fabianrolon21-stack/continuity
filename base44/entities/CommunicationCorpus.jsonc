@@ -1,0 +1,48 @@
+{
+  "name": "CommunicationCorpus",
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "text",
+        "email",
+        "chat",
+        "note",
+        "social_post"
+      ]
+    },
+    "relationship_name": {
+      "type": "string"
+    },
+    "relationship_category": {
+      "type": "string",
+      "enum": [
+        "boss",
+        "family",
+        "friend",
+        "coworker",
+        "professional",
+        "unknown"
+      ]
+    },
+    "consent_verified": {
+      "type": "boolean",
+      "default": true
+    },
+    "is_analyzed": {
+      "type": "boolean",
+      "default": false
+    },
+    "analysis_result": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "text",
+    "source_type"
+  ]
+}
