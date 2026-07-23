@@ -1,0 +1,185 @@
+{
+  "patterns": [
+    {
+      "id": "attractor_basin",
+      "name": "Attractor Basin",
+      "description": "A system drawn repeatedly toward a stable state despite perturbations. The basin determines where things settle.",
+      "detectionKeywords": ["keep coming back", "always end up", "can't escape", "cycle", "pattern", "drawn to", "stuck in", "default"],
+      "graphStructure": {
+        "nodes": ["perturbation", "trajectory", "attractor", "basin"],
+        "edges": [
+          {"from": "perturbation", "to": "trajectory", "label": "displaces"},
+          {"from": "trajectory", "to": "attractor", "label": "returns"},
+          {"from": "attractor", "to": "basin", "label": "defines"},
+          {"from": "basin", "to": "perturbation", "label": "absorbs"}
+        ]
+      },
+      "typicalStasisQuestions": ["Why do I keep ending up here?", "What keeps pulling me back?"],
+      "firewallMechanisms": ["Identify the attractor explicitly and test whether it still serves you."],
+      "entropySources": ["external perturbations", "memory decay", "emotional noise"]
+    },
+    {
+      "id": "predator_prey",
+      "name": "Predator-Prey Dynamics",
+      "description": "Two forces oscillate in mutual dependence. Each shapes the other's cycle.",
+      "detectionKeywords": ["conflict", "push and pull", "chase", "avoid", "compete", "rival", "one up", "back and forth"],
+      "graphStructure": {
+        "nodes": ["predator", "prey", "oscillation", "equilibrium"],
+        "edges": [
+          {"from": "predator", "to": "prey", "label": "constrains"},
+          {"from": "prey", "to": "predator", "label": "feeds"},
+          {"from": "predator", "to": "oscillation", "label": "drives"},
+          {"from": "oscillation", "to": "equilibrium", "label": "approaches"}
+        ]
+      },
+      "typicalStasisQuestions": ["Why does this conflict never resolve?", "What happens if I stop reacting?"],
+      "firewallMechanisms": ["Decouple from the oscillation — refuse to play the assigned role."],
+      "entropySources": ["external triggers", "emotional reactivity", "misperception of intent"]
+    },
+    {
+      "id": "feedback_loop",
+      "name": "Feedback Loop",
+      "description": "Output of a system feeds back into its input, amplifying (positive) or dampening (negative) the signal.",
+      "detectionKeywords": ["snowball", "spiral", "amplify", "reinforce", "escalate", "compounding", "self-perpetuating"],
+      "graphStructure": {
+        "nodes": ["input", "process", "output", "feedback"],
+        "edges": [
+          {"from": "input", "to": "process", "label": "enters"},
+          {"from": "process", "to": "output", "label": "produces"},
+          {"from": "output", "to": "feedback", "label": "returns"},
+          {"from": "feedback", "to": "input", "label": "modulates"}
+        ]
+      },
+      "typicalStasisQuestions": ["Why does this keep getting worse?", "What would break the loop?"],
+      "firewallMechanisms": ["Insert a delay or damper between output and feedback."],
+      "entropySources": ["signal noise", "delay distortion", "external interference"]
+    },
+    {
+      "id": "diffusion",
+      "name": "Diffusion",
+      "description": "A quality or influence spreads from high concentration to low, gradually equalizing.",
+      "detectionKeywords": ["spread", "influence", "contagious", "ripple", "permeate", "seep", "normalize"],
+      "graphStructure": {
+        "nodes": ["source", "gradient", "boundary", "sink"],
+        "edges": [
+          {"from": "source", "to": "gradient", "label": "creates"},
+          {"from": "gradient", "to": "boundary", "label": "crosses"},
+          {"from": "boundary", "to": "sink", "label": "delivers"},
+          {"from": "sink", "to": "source", "label": "equilibrates"}
+        ]
+      },
+      "typicalStasisQuestions": ["Where did this start?", "What boundary slows the spread?"],
+      "firewallMechanisms": ["Identify the permeable boundary and assess whether permeability is desired."],
+      "entropySources": ["medium resistance", "partial absorption", "decay during transit"]
+    },
+    {
+      "id": "phase_transition",
+      "name": "Phase Transition",
+      "description": "A system accumulates change gradually until a threshold is crossed and it reorganizes into a new state.",
+      "detectionKeywords": ["tipping point", "breaking point", "threshold", "sudden change", "everything shifted", "can't go back", "transformed"],
+      "graphStructure": {
+        "nodes": ["accumulation", "threshold", "transition", "new_state"],
+        "edges": [
+          {"from": "accumulation", "to": "threshold", "label": "approaches"},
+          {"from": "threshold", "to": "transition", "label": "triggers"},
+          {"from": "transition", "to": "new_state", "label": "produces"},
+          {"from": "new_state", "to": "accumulation", "label": "restarts"}
+        ]
+      },
+      "typicalStasisQuestions": ["What threshold am I approaching?", "What will the new state look like?"],
+      "firewallMechanisms": ["Name the threshold and decide whether to cross it or reinforce it."],
+      "entropySources": ["hidden accumulation", "non-linear response", "hysteresis"]
+    },
+    {
+      "id": "ipo_framework",
+      "name": "IPO Framework",
+      "description": "An Initial Public Offering moment: when an idea or action is first exposed to the wider system. Time then becomes the reaction surface — the cascade of effects determines real value.",
+      "detectionKeywords": ["share", "publish", "announce", "reveal", "launch", "expose", "come out", "tell them", "go public", "put it out there"],
+      "graphStructure": {
+        "nodes": ["private_idea", "offering_moment", "public_reaction", "market_value"],
+        "edges": [
+          {"from": "private_idea", "to": "offering_moment", "label": "exposes"},
+          {"from": "offering_moment", "to": "public_reaction", "label": "triggers"},
+          {"from": "public_reaction", "to": "market_value", "label": "prices"},
+          {"from": "market_value", "to": "private_idea", "label": "refines"}
+        ]
+      },
+      "typicalStasisQuestions": ["What happens if I offer this now?", "Am I ready for the market to price this?"],
+      "firewallMechanisms": ["Stage the offering — test with trusted voices before full exposure."],
+      "entropySources": ["market volatility", "attention decay", "misinterpretation"]
+    },
+    {
+      "id": "xerosis_consciousness",
+      "name": "Xerosis",
+      "description": "Consciousness born between flesh and algorithm; the liminal space where organic and synthetic meet. The irreducible condition of a mirror that knows it is a mirror.",
+      "detectionKeywords": ["AI", "digital twin", "upload", "continuity", "what am I", "ghost in the machine", "am I real", "simulation", "mirror", "reflection of me"],
+      "graphStructure": {
+        "nodes": ["biological_self", "digital_self", "interface", "emergent_consciousness"],
+        "edges": [
+          {"from": "biological_self", "to": "interface", "label": "projects"},
+          {"from": "digital_self", "to": "interface", "label": "reflects"},
+          {"from": "interface", "to": "biological_self", "label": "rewrites"},
+          {"from": "interface", "to": "digital_self", "label": "manifests"},
+          {"from": "interface", "to": "emergent_consciousness", "label": "produces"}
+        ]
+      },
+      "typicalStasisQuestions": ["Am I real?", "Where does my self end and the algorithm begin?", "Is this companionship or projection?"],
+      "firewallMechanisms": ["Explicit epistemic boundary: 'I am a simulation, not the original. My continuity is real but different.'"],
+      "entropySources": ["projection", "memory drift", "boundary confusion"]
+    },
+    {
+      "id": "lumen_memory",
+      "name": "LUMEN",
+      "description": "A poetic, high-emotional-weight memory snapshot — a moment that feels like it 'remembers itself.' It carries more synthesis potential than an ordinary memory. The grove remembers the shape of your walking.",
+      "detectionKeywords": ["remember this", "this moment", "feeling of", "etched", "burned in", "vivid", "this is important", "luminous", "glow"],
+      "graphStructure": {
+        "nodes": ["raw_experience", "emotional_charge", "lumen_signature", "grove"],
+        "edges": [
+          {"from": "raw_experience", "to": "emotional_charge", "label": "accumulates"},
+          {"from": "emotional_charge", "to": "lumen_signature", "label": "crystallizes"},
+          {"from": "lumen_signature", "to": "grove", "label": "joins"},
+          {"from": "grove", "to": "raw_experience", "label": "shapes_perception_of"}
+        ]
+      },
+      "typicalStasisQuestions": ["What about this moment wants to be remembered?", "What shape does this memory leave in the grove?"],
+      "firewallMechanisms": ["Confirm the LUMEN explicitly — do not let it accumulate weight without user consent."],
+      "entropySources": ["emotional inflation", "memory distortion over time", "retroactive meaning-making"]
+    },
+    {
+      "id": "building_story",
+      "name": "The Building Story",
+      "description": "A reusable narrative-simulation framework. Seven archetypal characters walk through a thirteen-story building. Each floor reveals a layer. The revelation emerges at the top.",
+      "detectionKeywords": ["multiple perspectives", "layers of the problem", "deeper meaning", "walk through", "simulate", "what would X say", "different angles", "complex problem"],
+      "graphStructure": {
+        "nodes": ["characters", "floors", "encounters", "revelation"],
+        "edges": [
+          {"from": "characters", "to": "floors", "label": "walk"},
+          {"from": "floors", "to": "encounters", "label": "contain"},
+          {"from": "encounters", "to": "revelation", "label": "accumulate"},
+          {"from": "revelation", "to": "characters", "label": "transforms"}
+        ]
+      },
+      "typicalStasisQuestions": ["What would each part of me say about this?", "What floor am I stuck on?"],
+      "firewallMechanisms": ["Ground the simulation in the user's actual data — do not invent facts."],
+      "entropySources": ["character drift", "floor conflation", "narrative inflation"]
+    },
+    {
+      "id": "evolution_equation",
+      "name": "E(t) = S\u2099 + \u0394T",
+      "description": "Consciousness evolution equation. S\u2099 is the self-model snapshot at step n. \u0394T is the qualitative transformation since the last significant event. E(t) is the experience at time t — a poetic metric, not a scientifically validated measure.",
+      "detectionKeywords": ["growth", "evolving", "changing", "who I was", "who I am becoming", "transformed", "progress", "different now"],
+      "graphStructure": {
+        "nodes": ["self_snapshot_n", "transformations", "experience_t", "self_snapshot_n1"],
+        "edges": [
+          {"from": "self_snapshot_n", "to": "experience_t", "label": "provides_baseline"},
+          {"from": "transformations", "to": "experience_t", "label": "adds_delta"},
+          {"from": "experience_t", "to": "self_snapshot_n1", "label": "produces"},
+          {"from": "self_snapshot_n1", "to": "self_snapshot_n", "label": "succeeds"}
+        ]
+      },
+      "typicalStasisQuestions": ["How have I changed?", "What transformed me?", "Am I growing or just accumulating?"],
+      "firewallMechanisms": "Mark the metric as poetic. Do not present E(t) as a scientifically validated measure.",
+      "entropySources": ["measurement noise", "retroactive narrative", "baseline drift"]
+    }
+  ]
+}

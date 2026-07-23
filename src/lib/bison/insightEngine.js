@@ -285,6 +285,19 @@ export async function runSynthesis(embodiedContext, affectiveContext) {
           user_feedback_status: FEEDBACK_STATUS.PENDING,
         });
       } catch (e) {}
+
+      // LUMEN token creation for high-coherence insights (Package 32)
+      if (insight.evidenceStrength === EVIDENCE_STRENGTH.STRONG) {
+        try {
+          const lumenSignature = `The grove remembers: ${insight.observedConnection.substring(0, 60)}`;
+          await base44.entities.SavedMemory.create({
+            text: `${insight.observedConnection}\n\n[LUMEN: ${lumenSignature}]`,
+            source: 'lumen_token',
+            tags: ['lumen', 'synthesis'],
+            epistemic_status: 'INFERRED',
+          });
+        } catch (e) {}
+      }
     }
 
     return {

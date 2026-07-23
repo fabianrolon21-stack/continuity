@@ -72,9 +72,20 @@ export async function collectDashboardState(lastInteractionResult = null) {
       threats: lastInteractionResult?.threats || [],
       oracleConsultations,
       oracleConsultation: lastInteractionResult?.oracleConsultation || null,
+      evolutionState: user?.evolution_state || null,
+      lumenCount: await getLumenCount(),
     };
   } catch (e) {
     return null;
+  }
+}
+
+async function getLumenCount() {
+  try {
+    const lumens = await base44.entities.SavedMemory.filter({ source: 'lumen_token' });
+    return lumens?.length || 0;
+  } catch (e) {
+    return 0;
   }
 }
 
