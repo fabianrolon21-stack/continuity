@@ -34,6 +34,7 @@ import { computeHumanState, buildHumanStateContextString } from './humanState/hu
 import { determineCommunicationStyle, buildCommunicationAdaptationContextString } from './humanState/communicationAdaptation';
 import { buildStressPropagationContextString } from './humanState/stressPropagation';
 import { buildDecisionEcology, buildDecisionEcologyContextString } from './humanState/decisionEcology';
+import { orchestrator } from './runtime';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -343,6 +344,15 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   if (phaseContext.selfAnalysisContext) {
     prompt += phaseContext.selfAnalysisContext;
   }
+  if (phaseContext.temporalContext) {
+    prompt += phaseContext.temporalContext;
+  }
+  if (phaseContext.resourceContext) {
+    prompt += phaseContext.resourceContext;
+  }
+  if (phaseContext.failsafeContext) {
+    prompt += phaseContext.failsafeContext;
+  }
   if (phaseContext.empathyLoopContext) {
     prompt += phaseContext.empathyLoopContext;
   }
@@ -417,6 +427,9 @@ function getFallbackResponse(mode, recurrence) {
 // ═══════════════════════════════════════════════
 
 export async function processInteraction(userInput, recentHistory = [], options = {}) {
+  // 0a. Runtime orchestration — record interaction with the unified runtime
+  orchestrator.recordInteraction();
+
   // 0. Privacy isolation — classify and detect PII
   const privacyClass = classifyData(userInput, { isJournalEntry: true });
 
@@ -641,6 +654,9 @@ export async function processInteraction(userInput, recentHistory = [], options 
     communicationAdaptationContext: communicationStyle ? buildCommunicationAdaptationContextString(communicationStyle) : null,
     decisionEcologyContext: decisionEcology ? buildDecisionEcologyContextString(decisionEcology) : null,
     selfAnalysisContext: selfAnalysisResult ? buildSelfAnalysisContextString(selfAnalysisResult) : null,
+    temporalContext: orchestrator.getTemporalContext(),
+    resourceContext: orchestrator.getResourceContext(),
+    failsafeContext: orchestrator.getFailsafeContext(),
   };
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
 

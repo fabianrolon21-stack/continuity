@@ -7,6 +7,7 @@ import BackgroundLayer from '@/components/BackgroundLayer';
 import AudioPlayer from '@/components/AudioPlayer';
 import InteractionEffects from '@/components/environment/InteractionEffects';
 import OnboardingTutorial from '@/components/OnboardingTutorial';
+import { useOrchestrator } from '@/hooks/useOrchestrator';
 import { loadUserTheme } from '@/lib/ambiance/themeEngine';
 import { initLanguage } from '@/lib/localization';
 import { startPresenceLoop, recordInteraction, getPresenceState } from '@/lib/bison/presenceManager';
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
 ];
 
 export default function Layout() {
+  useOrchestrator();
   const location = useLocation();
   const [tokenBalance, setTokenBalance] = useState(null);
   const [userRole, setUserRole] = useState(null);
