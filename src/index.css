@@ -31,6 +31,8 @@
     --peach: 21 73% 69%;
     --starlight: 48 67% 74%;
     --radius: 0.75rem;
+    --atmospheric-glow-shadow: 0 0 20px hsl(42 63% 55% / 0.08), 0 4px 24px hsl(268 16% 5% / 0.4);
+    --atmospheric-glow-border: hsl(42 63% 55% / 0.1);
     --font-heading: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
     --font-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
     --font-display: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
@@ -45,6 +47,7 @@
   body {
     @apply bg-background text-foreground font-body;
     background: hsl(var(--background));
+    transition: background-color 3s ease-in-out;
   }
 }
 
@@ -75,9 +78,10 @@
   }
 
   .glass {
-    background: hsl(268 14% 14% / 0.6);
+    background: hsl(var(--card) / 0.6);
     backdrop-filter: blur(12px);
-    border: 1px solid hsl(268 10% 22% / 0.8);
+    border: 1px solid hsl(var(--border) / 0.8);
+    transition: background-color 3s ease-in-out, border-color 3s ease-in-out;
   }
 
   .animate-breathe {
@@ -156,8 +160,8 @@
   }
 
   .glass-glow {
-    box-shadow: 0 0 20px hsl(42 63% 55% / 0.08), 0 4px 24px hsl(268 16% 5% / 0.4);
-    border: 1px solid hsl(42 63% 55% / 0.1);
+    box-shadow: var(--atmospheric-glow-shadow);
+    border: 1px solid var(--atmospheric-glow-border);
   }
 
   .text-glow-gold {

@@ -11,6 +11,7 @@ import { useOrchestrator } from '@/hooks/useOrchestrator';
 import { loadUserTheme } from '@/lib/ambiance/themeEngine';
 import { initLanguage } from '@/lib/localization';
 import { startPresenceLoop, recordInteraction, getPresenceState } from '@/lib/bison/presenceManager';
+import { useAtmosphericLighting } from '@/lib/ambiance/atmosphericLighting';
 
 const NAV_ITEMS = [
   { path: '/', label: 'Sanctuary', icon: Home, color: 'hsl(120 40% 58%)' },
@@ -33,9 +34,13 @@ export default function Layout() {
   const [userRole, setUserRole] = useState(null);
   const [dashboardEnabled, setDashboardEnabled] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [staticBackground, setStaticBackground] = useState(false);
+  const [userBirthday, setUserBirthday] = useState(null);
+
+  useAtmosphericLighting({ userBirthday, enabled: !staticBackground });
 
   useEffect(() => {
-    base44.auth.me().then(u => { setTokenBalance(u?.token_balance || 0); setUserRole(u?.role); setDashboardEnabled(u?.dashboard_enabled ?? false); setReduceMotion(u?.accessibility_settings?.reduced_motion || false); }).catch(() => {});
+    base44.auth.me().then(u => { setTokenBalance(u?.token_balance || 0); setUserRole(u?.role); setDashboardEnabled(u?.dashboard_enabled ?? false); setReduceMotion(u?.accessibility_settings?.reduced_motion || false); setStaticBackground(u?.accessibility_settings?.static_background_mode || false); setUserBirthday(u?.birthday || null); }).catch(() => {});
     loadUserTheme();
     initLanguage();
     recordInteraction();

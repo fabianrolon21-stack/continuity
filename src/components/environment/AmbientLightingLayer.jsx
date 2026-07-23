@@ -5,6 +5,7 @@
 // Evening: orange warmth. Night: blue moonlight.
 // ═══════════════════════════════════════════════
 
+import { useState, useEffect } from 'react';
 import { getThemeProperties } from '@/lib/environment/themeProperties';
 import { getTimePeriod, TIME_PERIODS } from '@/lib/ambiance/timeOfDay';
 import { WEATHER_TYPES } from '@/lib/world/worldStateEngine';
@@ -24,10 +25,19 @@ export default function AmbientLightingLayer({
   weatherCondition = null,
   staticBackground = false,
 }) {
+  const [period, setPeriod] = useState(() => getTimePeriod());
+
+  useEffect(() => {
+    if (staticBackground) return;
+    const update = () => setPeriod(getTimePeriod());
+    update();
+    const interval = setInterval(update, 60000);
+    return () => clearInterval(interval);
+  }, [staticBackground]);
+
   if (staticBackground) return null;
 
   const props = getThemeProperties(themeId);
-  const period = getTimePeriod();
   const lighting = props.lighting[period] || props.lighting.night;
   const weatherTint = weatherCondition ? WEATHER_TINTS[weatherCondition] : null;
 
