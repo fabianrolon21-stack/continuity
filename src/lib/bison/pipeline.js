@@ -30,6 +30,10 @@ import { beginRuntimeCycle, completeRuntimeCycle, buildConstitutionalRuntimeCont
 import { getValueModel, buildValueModelContextString } from './identity/valueModel';
 import { getRecentReflections, buildReflectionContextString } from './identity/reflectionEngine';
 import { computeContinuityScore, computeIdentityMomentum, buildContinuityMomentumContextString } from './identity/continuityScore';
+import { computeHumanState, buildHumanStateContextString } from './humanState/humanStateModel';
+import { determineCommunicationStyle, buildCommunicationAdaptationContextString } from './humanState/communicationAdaptation';
+import { buildStressPropagationContextString } from './humanState/stressPropagation';
+import { buildDecisionEcology, buildDecisionEcologyContextString } from './humanState/decisionEcology';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -264,6 +268,12 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   if (phaseContext.selfModelContext) {
     prompt += phaseContext.selfModelContext;
   }
+  if (phaseContext.humanStateContext) {
+    prompt += phaseContext.humanStateContext;
+  }
+  if (phaseContext.stressPropagationContext) {
+    prompt += phaseContext.stressPropagationContext;
+  }
   if (phaseContext.affectiveContext) {
     prompt += buildAffectiveContextString(phaseContext.affectiveContext);
   }
@@ -323,6 +333,12 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   }
   if (phaseContext.bandwidthContext) {
     prompt += phaseContext.bandwidthContext;
+  }
+  if (phaseContext.communicationAdaptationContext) {
+    prompt += phaseContext.communicationAdaptationContext;
+  }
+  if (phaseContext.decisionEcologyContext) {
+    prompt += phaseContext.decisionEcologyContext;
   }
   if (phaseContext.empathyLoopContext) {
     prompt += phaseContext.empathyLoopContext;
@@ -457,6 +473,20 @@ export async function processInteraction(userInput, recentHistory = [], options 
     activeThreats: cognitiveLoad.activeThreats,
     avoidedTopics,
   });
+
+  // 2e-c. Human State Model (Base 44.2)
+  let humanState = null;
+  let communicationStyle = null;
+  let decisionEcology = null;
+  try {
+    humanState = await computeHumanState(userInput, { affectiveContext });
+    communicationStyle = determineCommunicationStyle(humanState, psychologyUser || {});
+  } catch (e) {}
+  if (/decide|decision|should i|choose|choice|option/i.test(userInput)) {
+    try {
+      decisionEcology = buildDecisionEcology(userInput, { constraints: humanState?.knownConstraints || [] });
+    } catch (e) {}
+  }
 
   // 2f. Curated knowledge retrieval (Phase 25)
   const curatedKnowledge = retrieveKnowledge(userInput);
@@ -593,6 +623,12 @@ export async function processInteraction(userInput, recentHistory = [], options 
     valueModelContext: valueModel ? buildValueModelContextString(valueModel) : null,
     continuityMomentumContext: (continuityScore || identityMomentum) ? buildContinuityMomentumContextString(continuityScore, identityMomentum) : null,
     reflectionContext: recentReflections?.length > 0 ? buildReflectionContextString(recentReflections) : null,
+    humanStateContext: humanState ? buildHumanStateContextString(humanState) : null,
+    stressPropagationContext: humanState?.stressDomains?.length > 0
+      ? buildStressPropagationContextString(humanState.stressDomains, humanState.stressDegradations)
+      : null,
+    communicationAdaptationContext: communicationStyle ? buildCommunicationAdaptationContextString(communicationStyle) : null,
+    decisionEcologyContext: decisionEcology ? buildDecisionEcologyContextString(decisionEcology) : null,
   };
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
 
@@ -722,6 +758,9 @@ export async function processInteraction(userInput, recentHistory = [], options 
     continuityScore: continuityScore || null,
     identityMomentum: identityMomentum || null,
     valueModel: valueModel || null,
+    humanState: humanState || null,
+    communicationStyle: communicationStyle || null,
+    decisionEcology: decisionEcology || null,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),
