@@ -7,6 +7,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { THEMES, setActiveTheme, purchaseTheme } from '@/lib/ambiance/themeEngine';
+import { getThemeProperties, DECORATIVE_ICONS } from '@/lib/environment/themeProperties';
 import { Palette, Coins, Check, Lock } from 'lucide-react';
 
 export default function ThemeShop({ onPurchase }) {
@@ -62,16 +63,35 @@ export default function ThemeShop({ onPurchase }) {
               style={isActive ? { borderColor: theme.color } : {}}
               onClick={() => handleSelect(theme.id)}
             >
-              {/* Theme preview swatch */}
-              <div className="flex gap-1.5 mb-3">
-                {Object.values(theme.tokens).slice(0, 5).map((val, i) => (
+              {/* Theme preview — gradient + decorative icons */}
+              {(() => {
+                const props = getThemeProperties(theme.id);
+                return (
                   <div
-                    key={i}
-                    className="w-6 h-6 rounded-full"
-                    style={{ background: `hsl(${val})` }}
-                  />
-                ))}
-              </div>
+                    className="relative h-20 rounded-lg overflow-hidden mb-3"
+                    style={{ background: `linear-gradient(135deg, hsl(${theme.tokens['--background']}), hsl(${theme.tokens['--card']}))` }}
+                  >
+                    {props.decorativeIcons.slice(0, 5).map((iconName, i) => {
+                      const Icon = DECORATIVE_ICONS[iconName] || DECORATIVE_ICONS.sparkle;
+                      return (
+                        <div
+                          key={i}
+                          className="absolute"
+                          style={{ left: `${10 + i * 20}%`, top: `${15 + (i % 2) * 45}%`, opacity: 0.12 }}
+                        >
+                          <Icon style={{ width: 18, height: 18, color: theme.color }} strokeWidth={1.5} />
+                        </div>
+                      );
+                    })}
+                    {props.particleType && (
+                      <div
+                        className="absolute top-2 right-2 w-2 h-2 rounded-full"
+                        style={{ background: props.particleColor, opacity: 0.6, boxShadow: `0 0 6px ${props.particleColor}` }}
+                      />
+                    )}
+                  </div>
+                );
+              })()}
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium" style={isActive ? { color: theme.color } : {}}>{theme.label}</p>

@@ -7,7 +7,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { audioEngine, TRACKS } from '@/lib/ambiance/audioEngine';
-import { Play, Pause, Volume2, VolumeX, Music } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Music, Cloud } from 'lucide-react';
+import { ambientAudioEngine, AMBIENT_SOUNDS } from '@/lib/environment/ambientAudioEngine';
 
 export default function AudioPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -15,6 +16,7 @@ export default function AudioPlayer() {
   const [volume, setVolume] = useState(50);
   const [autoTone, setAutoTone] = useState(true);
   const [expanded, setExpanded] = useState(false);
+  const [ambientSounds, setAmbientSounds] = useState([]);
 
   // Load saved preferences
   useEffect(() => {
@@ -27,6 +29,11 @@ export default function AudioPlayer() {
       setAutoTone(savedAutoTone);
       audioEngine.setVolume(savedVolume / 100);
       audioEngine.setAutoTone(savedAutoTone);
+      const savedAmbient = u?.ambient_sounds || [];
+      setAmbientSounds(savedAmbient);
+      if (u?.accessibility_settings?.disable_ambient_audio !== true) {
+        savedAmbient.forEach(s => ambientAudioEngine.play(s));
+      }
     }).catch(() => {});
   }, []);
 
@@ -74,6 +81,20 @@ export default function AudioPlayer() {
     }
   }, [autoTone, isPlaying, currentTrack, handleTrackChange]);
 
+  const toggleAmbientSound = useCallback(async (soundId) => {
+    if (ambientSounds.includes(soundId)) {
+      ambientAudioEngine.stop(soundId);
+      const updated = ambientSounds.filter(s => s !== soundId);
+      setAmbientSounds(updated);
+      try { await base44.auth.updateMe({ ambient_sounds: updated }); } catch (e) {}
+    } else {
+      ambientAudioEngine.play(soundId);
+      const updated = [...ambientSounds, soundId];
+      setAmbientSounds(updated);
+      try { await base44.auth.updateMe({ ambient_sounds: updated }); } catch (e) {}
+    }
+  }, [ambientSounds]);
+
   return (
     <div className="fixed bottom-20 lg:bottom-4 right-4 z-30">
       {expanded && (
@@ -117,6 +138,24 @@ export default function AudioPlayer() {
           >
             Auto Tone: {autoTone ? 'On' : 'Off'}
           </button>
+
+          <div className="border-t border-border/30 pt-2">
+            <div className="flex items-center gap-2 mb-2">
+              <Cloud className="w-3.5 h-3.5 text-leaf" />
+              <span className="text-[10px] font-medium text-leaf">Ambient Sounds</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1">
+              {Object.entries(AMBIENT_SOUNDS).map(([id, sound]) => (
+                <button
+                  key={id}
+                  onClick={() => toggleAmbientSound(id)}
+                  className={`text-[9px] px-1.5 py-1.5 rounded-lg transition-all ${ambientSounds.includes(id) ? 'bg-leaf/15 text-leaf border border-leaf/30' : 'bg-secondary/30 text-muted-foreground'}`}
+                >
+                  {sound.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
       <button

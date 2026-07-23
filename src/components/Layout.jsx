@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield, Eye, Mic, Sprout, Brain } from 'lucide-react';
 import BackgroundLayer from '@/components/BackgroundLayer';
 import AudioPlayer from '@/components/AudioPlayer';
+import InteractionEffects from '@/components/environment/InteractionEffects';
 import OnboardingTutorial from '@/components/OnboardingTutorial';
 import { loadUserTheme } from '@/lib/ambiance/themeEngine';
 import { initLanguage } from '@/lib/localization';
@@ -29,9 +30,10 @@ export default function Layout() {
   const [tokenBalance, setTokenBalance] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [dashboardEnabled, setDashboardEnabled] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(u => { setTokenBalance(u?.token_balance || 0); setUserRole(u?.role); setDashboardEnabled(u?.dashboard_enabled ?? false); }).catch(() => {});
+    base44.auth.me().then(u => { setTokenBalance(u?.token_balance || 0); setUserRole(u?.role); setDashboardEnabled(u?.dashboard_enabled ?? false); setReduceMotion(u?.accessibility_settings?.reduced_motion || false); }).catch(() => {});
     loadUserTheme();
     initLanguage();
     recordInteraction();
@@ -44,6 +46,7 @@ export default function Layout() {
     <div className="min-h-screen bg-background no-tap-highlight">
       <BackgroundLayer />
       <AudioPlayer />
+      <InteractionEffects reduceMotion={reduceMotion} />
       <OnboardingTutorial />
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 flex-col border-r border-border bg-card/40 backdrop-blur-xl z-40">
         <div className="p-6 pb-4">

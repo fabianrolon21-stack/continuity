@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Eye, Type, Zap, Volume2 } from 'lucide-react';
+import { Eye, Type, Zap, Volume2, Cloud, VolumeX, Mountain } from 'lucide-react';
 
 const FONT_SIZES = [
   { label: 'S', scale: 0.875 },
@@ -106,6 +106,42 @@ export default function AccessibilityEnhancer() {
         value={settings.screen_reader_hints}
         onChange={v => update('screen_reader_hints', v)}
       />
+
+      <div className="border-t border-border/30 pt-3 space-y-3">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Immersive Environment</p>
+
+        <ToggleRow
+          icon={Cloud}
+          label="Disable Weather Effects"
+          desc="Turn off rain, snow, and weather particles"
+          value={settings.disable_weather_effects}
+          onChange={v => update('disable_weather_effects', v)}
+        />
+
+        <ToggleRow
+          icon={VolumeX}
+          label="Disable Ambient Audio"
+          desc="Turn off nature and interior soundscapes"
+          value={settings.disable_ambient_audio}
+          onChange={v => update('disable_ambient_audio', v)}
+        />
+
+        <ToggleRow
+          icon={Eye}
+          label="Disable Decorative Patterns"
+          desc="Hide floating background motifs"
+          value={settings.disable_decorative_patterns}
+          onChange={v => update('disable_decorative_patterns', v)}
+        />
+
+        <ToggleRow
+          icon={Mountain}
+          label="Static Background"
+          desc="Replace animated environment with a static gradient"
+          value={settings.static_background_mode}
+          onChange={v => update('static_background_mode', v)}
+        />
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { getTokenBalance } from '@/lib/tokens';
 import { PageHeader } from '@/components/MicroAnimations';
 import { Switch } from '@/components/ui/switch';
-import { Coins, Globe, Zap, Music, Info, Shield, Gauge, ExternalLink, Brain } from 'lucide-react';
+import { Coins, Globe, Zap, Music, Info, Shield, Gauge, ExternalLink, Brain, CloudRain } from 'lucide-react';
 import ThemeShop from '@/components/ThemeShop';
 import TokenShop from '@/components/TokenShop';
 import AccessibilityEnhancer from '@/components/AccessibilityEnhancer';
@@ -35,6 +35,7 @@ export default function Settings() {
   const [autoTone, setAutoTone] = useState(true);
   const [volume, setVolume] = useState(50);
   const [immuneEnabled, setImmuneEnabled] = useState(true);
+  const [weatherPermission, setWeatherPermission] = useState(false);
   const [oracleEnabled, setOracleEnabled] = useState(false);
   const [oracleScience, setOracleScience] = useState(true);
   const [oracleNews, setOracleNews] = useState(true);
@@ -54,6 +55,7 @@ export default function Settings() {
       setAutoTone(u?.auto_tone !== false);
       setVolume(u?.audio_volume || 50);
       setImmuneEnabled(u?.immune_enabled !== false);
+      setWeatherPermission(u?.weather_permission || false);
       const oracleSettings = u?.oracle_settings || {};
       setOracleEnabled(!!oracleSettings.enabled);
       setOracleScience(oracleSettings.query_science !== false);
@@ -165,6 +167,36 @@ export default function Settings() {
               <p className="text-xs text-muted-foreground">Detect phishing, spam, and sensitive data in messages</p>
             </div>
             <Switch checked={immuneEnabled} onCheckedChange={v => { setImmuneEnabled(v); updateSetting('immune_enabled', v); }} />
+          </div>
+        </div>
+
+        <div className="glass rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <CloudRain className="w-4 h-4" style={{ color: accent }} />
+            <h3 className="font-heading font-semibold text-sm">Weather</h3>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm">Use Real Weather</p>
+              <p className="text-xs text-muted-foreground">Use your local weather to influence the environment. Falls back to simulation if unavailable.</p>
+            </div>
+            <Switch checked={weatherPermission} onCheckedChange={async (v) => {
+              if (v && navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                  async (pos) => {
+                    setWeatherPermission(true);
+                    await updateSetting('weather_permission', true);
+                    await updateSetting('weather_lat', pos.coords.latitude);
+                    await updateSetting('weather_lon', pos.coords.longitude);
+                  },
+                  () => { setWeatherPermission(false); },
+                  { timeout: 10000 }
+                );
+              } else {
+                setWeatherPermission(false);
+                updateSetting('weather_permission', false);
+              }
+            }} />
           </div>
         </div>
 
