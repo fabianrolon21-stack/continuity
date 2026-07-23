@@ -165,10 +165,10 @@ export async function completeRuntimeCycle(input, response, runtimeContext, inte
       timestamp: new Date().toISOString(),
       input: (input || '').substring(0, 100),
       response: (response || '').substring(0, 100),
-      whatChanged: interactionResult.state?.intent || 'perspective explored',
-      whatRemainedStable: identity.version > 0 ? 'core values maintained' : 'initial state',
-      whatWasLearned: interactionResult.insightContext?.detected ? 'new connection surfaced' : null,
-      whatRemainsUnknown: interactionResult.state?.domain || 'full context',
+      whatChanged: [interactionResult.state?.intent || 'perspective explored'],
+      whatRemainedStable: [identity.version > 0 ? 'core values maintained' : 'initial state'],
+      whatWasLearned: interactionResult.insightContext?.detected ? ['new connection surfaced'] : [],
+      whatRemainsUnknown: [interactionResult.state?.domain || 'full context'],
       verified: false, // only verified learning affects identity
     };
 

@@ -118,7 +118,7 @@ export async function computeIdentityMomentum() {
     const interactionFactor = Math.min(1, interactionCount / 50);
 
     // Recent changes = lower momentum (easier to change)
-    const recentChanges = reflections.filter(r => r.whatChanged?.length > 0).slice(-5).length;
+    const recentChanges = reflections.filter(r => Array.isArray(r.whatChanged) && r.whatChanged.length > 0).slice(-5).length;
     const changeFactor = Math.max(0, 1 - (recentChanges * 0.15));
 
     const momentum = Math.round((interactionFactor * 0.6 + changeFactor * 0.4) * 100) / 100;

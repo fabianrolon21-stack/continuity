@@ -110,9 +110,9 @@ export function buildReflectionContextString(reflections) {
   for (const r of recent) {
     const verified = r.verified ? '✓ verified' : 'pending';
     parts.push(`[${verified}] ${r.timestamp}`);
-    if (r.whatChanged?.length > 0) parts.push(`  Changed: ${r.whatChanged.join('; ')}`);
-    if (r.whatWasLearned?.length > 0) parts.push(`  Learned: ${r.whatWasLearned.join('; ')}`);
-    if (r.whatRemainsUnknown?.length > 0) parts.push(`  Unknown: ${r.whatRemainsUnknown.join('; ')}`);
+    if (Array.isArray(r.whatChanged) && r.whatChanged.length > 0) parts.push(`  Changed: ${r.whatChanged.join('; ')}`);
+    if (Array.isArray(r.whatWasLearned) && r.whatWasLearned.length > 0) parts.push(`  Learned: ${r.whatWasLearned.join('; ')}`);
+    if (Array.isArray(r.whatRemainsUnknown) && r.whatRemainsUnknown.length > 0) parts.push(`  Unknown: ${r.whatRemainsUnknown.join('; ')}`);
   }
 
   parts.push('\nOnly verified learning affects identity. Experiences alone never update identity.');
