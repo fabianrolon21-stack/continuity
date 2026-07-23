@@ -23,7 +23,7 @@ import { computeCognitiveLoad, evaluateBreaker, tripBreaker, deriveAttachmentAnx
 import { determineMask, checkAvoidedTopics, buildMaskingContextString } from './psychology/chameleonEngine';
 import { processThought, buildEmpathyLoopContextString } from './psychology/empathyLoop';
 import { isDND, DND_STATUS_MESSAGE } from './psychology/systemState';
-import { runMetaSystemicInsight, buildMetaInsightContextString, detectMetaInsightRequest, detectBuildingStoryRequest } from './metaSystemInsightEngine';
+import { runMetaSystemicInsight, buildMetaInsightContextString, detectMetaInsightRequest, detectBuildingStoryRequest, runSelfAnalysis, buildSelfAnalysisContextString, detectSelfAnalysisRequest } from './metaSystemInsightEngine';
 import { runBuildingStorySimulation, buildBuildingStoryContextString } from './simulation/buildingStory';
 import { computeEvolutionScore, buildEvolutionContextString, recordTransformation } from './consciousness/evolutionTracker';
 import { beginRuntimeCycle, completeRuntimeCycle, buildConstitutionalRuntimeContextString } from './constitutionalRuntime';
@@ -340,6 +340,9 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   if (phaseContext.decisionEcologyContext) {
     prompt += phaseContext.decisionEcologyContext;
   }
+  if (phaseContext.selfAnalysisContext) {
+    prompt += phaseContext.selfAnalysisContext;
+  }
   if (phaseContext.empathyLoopContext) {
     prompt += phaseContext.empathyLoopContext;
   }
@@ -565,7 +568,15 @@ export async function processInteraction(userInput, recentHistory = [], options 
   let metaInsightResult = null;
   if (detectMetaInsightRequest(userInput) && !breakerResult.tripped) {
     try {
-      metaInsightResult = await runMetaSystemicInsight(userInput, { isDeveloper: options.isDeveloper });
+      metaInsightResult = await runMetaSystemicInsight(userInput, { isDeveloper: options.isDeveloper, humanState });
+    } catch (e) {}
+  }
+
+  // 5j-b2. Self-analysis (Base 44.3)
+  let selfAnalysisResult = null;
+  if (detectSelfAnalysisRequest(userInput) && !breakerResult.tripped) {
+    try {
+      selfAnalysisResult = await runSelfAnalysis({ isDeveloper: options.isDeveloper });
     } catch (e) {}
   }
 
@@ -629,6 +640,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
       : null,
     communicationAdaptationContext: communicationStyle ? buildCommunicationAdaptationContextString(communicationStyle) : null,
     decisionEcologyContext: decisionEcology ? buildDecisionEcologyContextString(decisionEcology) : null,
+    selfAnalysisContext: selfAnalysisResult ? buildSelfAnalysisContextString(selfAnalysisResult) : null,
   };
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
 
@@ -761,6 +773,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     humanState: humanState || null,
     communicationStyle: communicationStyle || null,
     decisionEcology: decisionEcology || null,
+    selfAnalysisResult: selfAnalysisResult || null,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),
