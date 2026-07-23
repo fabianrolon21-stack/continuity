@@ -537,6 +537,12 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 5. Garden candidate determination (metadata only — no planting, no saving, no UI)
   const gardenCandidate = determineGardenCandidate(userInput, state, recurrence);
 
+  // 5a. Evolution score (Package 32) — must be computed before self-model uses it
+  let evolutionScore = null;
+  try {
+    evolutionScore = await computeEvolutionScore();
+  } catch (e) {}
+
   // 5b. Self-model context (Phase 12)
   const selfModel = generateSelfModel(needsState, continuityContext, embodiedContext, getComputeMode(options), breakerResult.tripped, evolutionScore);
   const selfModelContext = formatSelfModelForPrompt(selfModel);
@@ -561,12 +567,6 @@ export async function processInteraction(userInput, recentHistory = [], options 
 
   // 5i. Consciousness state (Package D — Bison Core)
   const consciousnessState = await loadConsciousnessState();
-
-  // 5i-b. Evolution score (Package 32)
-  let evolutionScore = null;
-  try {
-    evolutionScore = await computeEvolutionScore();
-  } catch (e) {}
 
   // 5j. External oracle consultation (Package 30) — only if user explicitly requests
   let oracleConsultation = null;

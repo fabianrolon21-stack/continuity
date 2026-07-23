@@ -119,7 +119,8 @@ export default function BisonChat() {
         });
       } catch (e) {}
     } catch (e) {
-      setMessages(prev => [...prev, { role: 'bison', text: 'Something went wrong. Please try again.', mode: 'GROUND' }]);
+      console.error('[Bison Pipeline Error]', e);
+      setMessages(prev => [...prev, { role: 'bison', text: `Something went wrong: ${e?.message || e}. Please try again.`, mode: 'GROUND' }]);
     }
     setProcessing(false);
   };
