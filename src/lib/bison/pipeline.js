@@ -26,6 +26,10 @@ import { isDND, DND_STATUS_MESSAGE } from './psychology/systemState';
 import { runMetaSystemicInsight, buildMetaInsightContextString, detectMetaInsightRequest, detectBuildingStoryRequest } from './metaSystemInsightEngine';
 import { runBuildingStorySimulation, buildBuildingStoryContextString } from './simulation/buildingStory';
 import { computeEvolutionScore, buildEvolutionContextString, recordTransformation } from './consciousness/evolutionTracker';
+import { beginRuntimeCycle, completeRuntimeCycle, buildConstitutionalRuntimeContextString } from './constitutionalRuntime';
+import { getValueModel, buildValueModelContextString } from './identity/valueModel';
+import { getRecentReflections, buildReflectionContextString } from './identity/reflectionEngine';
+import { computeContinuityScore, computeIdentityMomentum, buildContinuityMomentumContextString } from './identity/continuityScore';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -332,6 +336,18 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   if (phaseContext.evolutionContext) {
     prompt += phaseContext.evolutionContext;
   }
+  if (phaseContext.constitutionalRuntimeContext) {
+    prompt += phaseContext.constitutionalRuntimeContext;
+  }
+  if (phaseContext.valueModelContext) {
+    prompt += phaseContext.valueModelContext;
+  }
+  if (phaseContext.continuityMomentumContext) {
+    prompt += phaseContext.continuityMomentumContext;
+  }
+  if (phaseContext.reflectionContext) {
+    prompt += phaseContext.reflectionContext;
+  }
   if (recurrence.detected) {
     prompt += `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\n`;
     prompt += `This recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\n`;
@@ -466,6 +482,12 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 4. SPS6-Lite strategy selection
   const mode = selectStrategy(state, recurrence, false, affectiveContext);
 
+  // 4b. Constitutional runtime — begin cycle (Base 44.1)
+  let runtimeOutput = null;
+  try {
+    runtimeOutput = await beginRuntimeCycle(userInput, { state, mode, affectiveContext, embodiedContext });
+  } catch (e) {}
+
   // 5. Garden candidate determination (metadata only — no planting, no saving, no UI)
   const gardenCandidate = determineGardenCandidate(userInput, state, recurrence);
 
@@ -525,6 +547,20 @@ export async function processInteraction(userInput, recentHistory = [], options 
     } catch (e) {}
   }
 
+  // 5j-d. Value model + continuity + momentum + reflections (Base 44.1)
+  let valueModel = null;
+  let continuityScore = null;
+  let identityMomentum = null;
+  let recentReflections = [];
+  try {
+    [valueModel, continuityScore, identityMomentum, recentReflections] = await Promise.all([
+      getValueModel(),
+      computeContinuityScore(),
+      computeIdentityMomentum(),
+      getRecentReflections(3),
+    ]);
+  } catch (e) {}
+
   // 6. Bison personality + LLM generation
   const phaseContext = {
     selfModelContext,
@@ -553,6 +589,10 @@ export async function processInteraction(userInput, recentHistory = [], options 
     metaInsightContext: metaInsightResult ? buildMetaInsightContextString(metaInsightResult) : null,
     buildingStoryContext: buildingStoryResult ? buildBuildingStoryContextString(buildingStoryResult) : null,
     evolutionContext: evolutionScore ? buildEvolutionContextString(evolutionScore) : null,
+    constitutionalRuntimeContext: runtimeOutput ? buildConstitutionalRuntimeContextString(runtimeOutput) : null,
+    valueModelContext: valueModel ? buildValueModelContextString(valueModel) : null,
+    continuityMomentumContext: (continuityScore || identityMomentum) ? buildContinuityMomentumContextString(continuityScore, identityMomentum) : null,
+    reflectionContext: recentReflections?.length > 0 ? buildReflectionContextString(recentReflections) : null,
   };
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
 
@@ -629,6 +669,15 @@ export async function processInteraction(userInput, recentHistory = [], options 
     trustScoreEvent = createTrustEvent(TRUST_EVENTS.SAFETY_REFUSAL, actionResult.error || 'Constitutional constraint');
   }
 
+  // 7c. Constitutional runtime — complete cycle (Base 44.1)
+  let runtimeReflection = null;
+  try {
+    const completion = await completeRuntimeCycle(userInput, bisonText, runtimeOutput, {
+      state, mode, insightContext, recurrence, consciousnessState, actionResult,
+    });
+    runtimeReflection = completion.reflection;
+  } catch (e) {}
+
   return {
     text: bisonText,
     mode,
@@ -668,6 +717,11 @@ export async function processInteraction(userInput, recentHistory = [], options 
     metaInsightResult: metaInsightResult || null,
     buildingStoryResult: buildingStoryResult || null,
     evolutionScore: evolutionScore || null,
+    runtimeOutput: runtimeOutput || null,
+    runtimeReflection: runtimeReflection || null,
+    continuityScore: continuityScore || null,
+    identityMomentum: identityMomentum || null,
+    valueModel: valueModel || null,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),
