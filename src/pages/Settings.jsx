@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { getTokenBalance } from '@/lib/tokens';
 import { PageHeader } from '@/components/MicroAnimations';
 import { Switch } from '@/components/ui/switch';
-import { Coins, Globe, Zap, Music, Info, Shield, Gauge, ExternalLink } from 'lucide-react';
+import { Coins, Globe, Zap, Music, Info, Shield, Gauge, ExternalLink, Brain } from 'lucide-react';
 import ThemeShop from '@/components/ThemeShop';
 import TokenShop from '@/components/TokenShop';
 import AccessibilityEnhancer from '@/components/AccessibilityEnhancer';
@@ -40,6 +40,8 @@ export default function Settings() {
   const [oracleNews, setOracleNews] = useState(true);
   const [oracleOpinion, setOracleOpinion] = useState(true);
   const [oracleModel, setOracleModel] = useState('generic');
+  const [avoidedTopics, setAvoidedTopics] = useState([]);
+  const [newTopic, setNewTopic] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -58,6 +60,7 @@ export default function Settings() {
       setOracleNews(oracleSettings.query_news !== false);
       setOracleOpinion(oracleSettings.query_opinion !== false);
       setOracleModel(oracleSettings.preferred_model || 'generic');
+      setAvoidedTopics(u?.avoided_topics || []);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -73,6 +76,21 @@ export default function Settings() {
     const current = user?.oracle_settings || {};
     const updated = { ...current, [field]: value };
     await updateSetting('oracle_settings', updated);
+  };
+
+  const addAvoidedTopic = async () => {
+    const topic = newTopic.trim().toLowerCase();
+    if (!topic || avoidedTopics.includes(topic)) return;
+    const updated = [...avoidedTopics, topic];
+    setAvoidedTopics(updated);
+    setNewTopic('');
+    await updateSetting('avoided_topics', updated);
+  };
+
+  const removeAvoidedTopic = async (topic) => {
+    const updated = avoidedTopics.filter(t => t !== topic);
+    setAvoidedTopics(updated);
+    await updateSetting('avoided_topics', updated);
   };
 
   const ORACLE_MODELS = [
@@ -228,6 +246,44 @@ export default function Settings() {
             </div>
             <input type="range" min="0" max="100" value={volume} onChange={e => { const v = +e.target.value; setVolume(v); updateSetting('audio_volume', v); }} className="w-full accent-current" style={{ accentColor: accent }} />
           </div>
+        </div>
+
+        <div className="glass rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Brain className="w-4 h-4" style={{ color: accent }} />
+            <h3 className="font-heading font-semibold text-sm">Avoided Topics</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">Topics Bison will avoid bringing up unprompted. You control this list — Bison never secretly infers topics to avoid.</p>
+          <div className="flex gap-2 mb-3">
+            <input
+              type="text"
+              value={newTopic}
+              onChange={e => setNewTopic(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') addAvoidedTopic(); }}
+              placeholder="e.g. politics, religion..."
+              className="flex-1 bg-secondary/30 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-gold/40"
+              style={{ color: 'hsl(40 20% 92%)' }}
+            />
+            <button
+              onClick={addAvoidedTopic}
+              disabled={!newTopic.trim()}
+              className="px-4 py-2 rounded-lg bg-secondary text-sm font-medium disabled:opacity-30 transition-opacity"
+            >
+              Add
+            </button>
+          </div>
+          {avoidedTopics.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {avoidedTopics.map(topic => (
+                <span key={topic} className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-secondary/50">
+                  {topic}
+                  <button onClick={() => removeAvoidedTopic(topic)} className="text-muted-foreground hover:text-destructive ml-0.5">×</button>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground/60">No avoided topics set.</p>
+          )}
         </div>
 
         <ThemeShop />

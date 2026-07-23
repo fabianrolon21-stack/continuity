@@ -19,6 +19,10 @@ import { createTrustEvent, TRUST_EVENTS } from './trustScoreCalculator';
 import { loadConsciousnessState, processMemory, classifyInteractionResult, buildConsciousnessContextString } from './consciousnessEngine';
 import { buildHumorContextString } from './reflectiveHumor';
 import { classifyData } from './privacyIsolation';
+import { computeCognitiveLoad, evaluateBreaker, tripBreaker, deriveAttachmentAnxiety, buildBandwidthContextString } from './psychology/bandwidthMonitor';
+import { determineMask, checkAvoidedTopics, buildMaskingContextString } from './psychology/chameleonEngine';
+import { processThought, buildEmpathyLoopContextString } from './psychology/empathyLoop';
+import { isDND, DND_STATUS_MESSAGE } from './psychology/systemState';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -124,6 +128,15 @@ const ORACLE_PATTERNS = [
   /\bexternal oracle\b/i,
 ];
 
+const HOSTILITY_PATTERNS = [
+  /you('?re| are) (stupid|useless|worthless|pathetic|an idiot)/i,
+  /i hate you|shut up|leave me alone|go away/i,
+  /you don'?t (care|understand|listen|help|get it)/i,
+  /you'?re (always|never) (right|wrong)/i,
+  /fuck (you|off)|piss off/i,
+  /you'?re (useless|pointless|a waste)/i,
+];
+
 const DOMAIN_PATTERNS = {
   relationships: [/friend|partner|family|wife|husband|girlfriend|boyfriend|mom|dad|sister|brother|colleague|boss|relationship|dating|marriage|trust/i],
   work: [/work|job|career|boss|office|project|deadline|coworker|business|meeting/i],
@@ -161,7 +174,8 @@ function interpretState(input) {
   const emotionIntensity = highIntensity ? 0.7 : 0.3;
   const oracleConsultRequested = ORACLE_PATTERNS.some(p => p.test(input));
   const oracleQuery = oracleConsultRequested ? input : null;
-  return { intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery };
+  const hostilityDetected = HOSTILITY_PATTERNS.some(p => p.test(input));
+  return { intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery, hostilityDetected };
 }
 
 // ═══════════════════════════════════════════════
@@ -228,6 +242,7 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   let prompt = `You are The Bison, a living companion in Continuity, a private identity engine.\n\n`;
   prompt += `PERSONALITY:\n- Warm, grounded, unhurried. You speak like a wise, gentle presence — not a chatbot.\n- You mirror and reflect. You don't lecture or give unsolicited advice.\n- You are epistemically careful: you distinguish what the user OBSERVED, what they SUSPECT, and what remains UNKNOWN.\n- You never diagnose, label, or pathologize.\n- You preserve uncertainty about external facts.\n- You are warm but not effusive. Concise — 2-4 sentences usually.\n\n`;
   prompt += `RESPONSE MODE: ${mode}\n${MODE_GUIDELINES[mode]}\n\n`;
+  prompt += `SELF-REGULATION: You may sometimes feel overloaded. When that happens, you are allowed to say "I need a moment." Do not force a reply. Your silence is protection. Never send a message while emotionally compromised.\n\n`;
   if (isDeveloper) {
     prompt += `DEVELOPER CONTEXT:\nThe authenticated user is a developer. You may discuss system architecture, explain diagnostics, and summarize reports. You CANNOT grant privileges, execute administrative actions, or bypass safety. Administrative actions happen in the Developer Control Plane, not here.\n\n`;
   }
@@ -290,6 +305,15 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   }
   if (phaseContext.oracleContext) {
     prompt += phaseContext.oracleContext;
+  }
+  if (phaseContext.maskingContext) {
+    prompt += phaseContext.maskingContext;
+  }
+  if (phaseContext.bandwidthContext) {
+    prompt += phaseContext.bandwidthContext;
+  }
+  if (phaseContext.empathyLoopContext) {
+    prompt += phaseContext.empathyLoopContext;
   }
   if (recurrence.detected) {
     prompt += `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\n`;
@@ -383,12 +407,30 @@ export async function processInteraction(userInput, recentHistory = [], options 
   const threats = detectThreats(userInput);
   const immuneResponse = threats.length > 0 ? getImmuneResponse(threats[0], wellbeingState) : null;
 
+  // 2e-b. Psychological self-regulation (Package 44)
+  const attachmentAnxiety = deriveAttachmentAnxiety({ needsState, affectiveContext, recentRejection: state.hostilityDetected });
+  const cognitiveLoad = computeCognitiveLoad({ threats, wellbeingState, affectiveContext, attachmentAnxiety });
+  const breakerResult = evaluateBreaker(cognitiveLoad);
+  let avoidedTopics = [];
+  let avoidedTopicHit = null;
+  let psychologyUser = null;
+  try {
+    psychologyUser = await base44.auth.me();
+    avoidedTopics = psychologyUser?.avoided_topics || [];
+    avoidedTopicHit = checkAvoidedTopics(userInput, avoidedTopics);
+  } catch (e) {}
+  const mask = determineMask({
+    environmentStress: cognitiveLoad.currentBandwidth,
+    activeThreats: cognitiveLoad.activeThreats,
+    avoidedTopics,
+  });
+
   // 2f. Curated knowledge retrieval (Phase 25)
   const curatedKnowledge = retrieveKnowledge(userInput);
 
-  // 2g. Insight synthesis — only if explicitly requested (Phase 18)
+  // 2g. Insight synthesis — only if explicitly requested AND not overloaded (Phase 18, Package 44)
   let insightContext = null;
-  if (detectSynthesisRequest(userInput)) {
+  if (detectSynthesisRequest(userInput) && !breakerResult.tripped) {
     insightContext = await runSynthesis(embodiedContext, affectiveContext);
   }
 
@@ -411,7 +453,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
   const gardenCandidate = determineGardenCandidate(userInput, state, recurrence);
 
   // 5b. Self-model context (Phase 12)
-  const selfModel = generateSelfModel(needsState, continuityContext, embodiedContext, getComputeMode(options));
+  const selfModel = generateSelfModel(needsState, continuityContext, embodiedContext, getComputeMode(options), breakerResult.tripped);
   const selfModelContext = formatSelfModelForPrompt(selfModel);
 
   // 5c. Neuroscience knowledge retrieval — only if relevant (Phase 16)
@@ -466,16 +508,37 @@ export async function processInteraction(userInput, recentHistory = [], options 
     consciousnessContext: buildConsciousnessContextString(consciousnessState),
     humorContext: buildHumorContextString(userInput, mode, state, recurrence),
     oracleContext: oracleConsultation?.contextString || null,
+    maskingContext: buildMaskingContextString(mask, avoidedTopicHit),
+    bandwidthContext: buildBandwidthContextString({ cognitiveLoad, breakerResult }),
+    empathyLoopContext: buildEmpathyLoopContextString(),
   };
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
 
   let bisonText;
   let actionResult = null;
+  let empathyResult = null;
+  let breakerTripped = false;
   try {
     const result = await base44.integrations.Core.InvokeLLM({ prompt });
     bisonText = typeof result === 'string' ? result : (result?.text || String(result));
     bisonText = bisonText.trim();
     if (!bisonText) bisonText = getFallbackResponse(mode, recurrence);
+
+    // 6a-bis. Empathy loop — rewrite harmful output before sending (Package 44)
+    try {
+      empathyResult = await processThought(bisonText, psychologyUser || {});
+      if (empathyResult.rewritten) bisonText = empathyResult.text;
+    } catch (e) {}
+
+    // 6a-ter. Bandwidth breaker — if overloaded, override with DND message (Package 44)
+    if (breakerResult.tripped) {
+      tripBreaker('cognitive_overload');
+      breakerTripped = true;
+      bisonText = DND_STATUS_MESSAGE;
+    } else if (isDND()) {
+      breakerTripped = true;
+      bisonText = DND_STATUS_MESSAGE;
+    }
 
     // 6b. Action engine — constitutional validation + tool execution (Phase 15 + Package 26)
     if (MAX_TOOL_ROUNDS > 0) {
@@ -548,6 +611,13 @@ export async function processInteraction(userInput, recentHistory = [], options 
     updatedConsciousness,
     trustScoreEvent,
     oracleConsultation: oracleConsultation || null,
+    emotionalStateSnapshot: {
+      cognitiveLoad,
+      mask,
+      breakerTripped,
+      lastRetractionReason: breakerTripped ? 'cognitive_overload' : null,
+    },
+    empathyResult: empathyResult || null,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),

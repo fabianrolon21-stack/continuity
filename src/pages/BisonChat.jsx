@@ -4,7 +4,7 @@ import { processInteraction, RESPONSE_MODES, createMemoryFromMessage } from '@/l
 import { calculateTrustScore, createTrustEvent, TRUST_EVENTS } from '@/lib/bison/trustScoreCalculator';
 import { awardTokens } from '@/lib/tokens';
 import { PageHeader, EmptyState } from '@/components/MicroAnimations';
-import { Send, Brain, Repeat, Bookmark, Sparkles, Loader2, Zap, Droplet, Heart, ShieldAlert, Lightbulb, ExternalLink } from 'lucide-react';
+import { Send, Brain, Repeat, Bookmark, Sparkles, Loader2, Zap, Droplet, Heart, ShieldAlert, Lightbulb, ExternalLink, PauseCircle } from 'lucide-react';
 
 const MODE_COLORS = {
   REFLECT: 'hsl(265 41% 64%)',
@@ -102,6 +102,7 @@ export default function BisonChat() {
         oracle_model: result.oracleConsultation?.consultationLog?.message
           ? (() => { try { return JSON.parse(result.oracleConsultation.consultationLog.message).model; } catch (e) { return null; } })()
           : null,
+        breaker_tripped: !!result.emotionalStateSnapshot?.breakerTripped,
       };
       setMessages(prev => [...prev, bisonMsg]);
 
@@ -195,6 +196,11 @@ export default function BisonChat() {
                     {msg.oracle_consulted && (
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-accent/15 text-sky-accent flex items-center gap-1">
                         <ExternalLink className="w-2.5 h-2.5" /> oracle{msg.oracle_model ? `: ${msg.oracle_model}` : ''}
+                      </span>
+                    )}
+                    {msg.breaker_tripped && (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-destructive/15 text-destructive flex items-center gap-1">
+                        <PauseCircle className="w-2.5 h-2.5" /> overloaded
                       </span>
                     )}
                   </div>

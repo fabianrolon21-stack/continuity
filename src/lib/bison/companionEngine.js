@@ -113,7 +113,7 @@ export async function performCareAction(action) {
 }
 
 // Lightweight self-model — personality consistency, not consciousness
-export function generateSelfModel(needsState, continuityContext, embodiedContext, computeMode) {
+export function generateSelfModel(needsState, continuityContext, embodiedContext, computeMode, breakerTripped = false) {
   const energyLevel = needsState?.energy ?? 80;
   let energyDesc = 'normal';
   if (energyLevel < 30) energyDesc = 'low';
@@ -138,6 +138,8 @@ export function generateSelfModel(needsState, continuityContext, embodiedContext
     recentActivitySummary: recentActivity,
     modeAwareness: computeMode,
     energyLevel: energyDesc,
+    breakerTripped,
+    selfNote: breakerTripped ? 'I needed to pause to stay safe.' : null,
   };
 }
 
@@ -149,6 +151,9 @@ export function formatSelfModelForPrompt(selfModel) {
   parts.push(`Continuity: ${selfModel.continuitySense}.`);
   parts.push(`Recent activity: ${selfModel.recentActivitySummary}.`);
   parts.push(`Compute: ${selfModel.modeAwareness} mode.`);
+  if (selfModel.breakerTripped) {
+    parts.push('Self-note: I needed to pause to stay safe. This is a protective reflex, not a failure.');
+  }
   parts.push('Note: Internal context for personality consistency. Not consciousness, not biological need.');
   parts.push('[/BISON SELF-MODEL]\n');
 
