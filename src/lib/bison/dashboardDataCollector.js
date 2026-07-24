@@ -73,6 +73,7 @@ export async function collectDashboardState(lastInteractionResult = null) {
       oracleConsultations,
       oracleConsultation: lastInteractionResult?.oracleConsultation || null,
       evolutionState: user?.evolution_state || null,
+      socialNavigationAdvice: lastInteractionResult?.socialNavResult?.adviceTypes || [],
       lumenCount: await getLumenCount(),
     };
   } catch (e) {

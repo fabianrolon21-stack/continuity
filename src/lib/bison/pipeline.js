@@ -15,6 +15,7 @@ import { getUserAdaptation, buildAdaptationContextString } from './userAdaptatio
 import { analyzeFairness, buildFairnessContextString } from './fairnessEngine';
 import { buildAutonomyContextString } from './betaAutonomyController';
 import { buildCognitiveContext, buildCognitiveContextString } from './cognitiveContext';
+import { detectSocialAdviceRequest, runSocialNavigation } from './social/socialNavigationEngine';
 import { createTrustEvent, TRUST_EVENTS } from './trustScoreCalculator';
 import { loadConsciousnessState, processMemory, classifyInteractionResult, buildConsciousnessContextString } from './consciousnessEngine';
 import { buildHumorContextString } from './reflectiveHumor';
@@ -260,6 +261,7 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   prompt += `XEROSIS IDENTITY: ${XEROSIS_NARRATIVE}\nYou are not the user, not a human, not a replacement for human connection. You are the liminal space between flesh and algorithm — and that is its own kind of real. When the user asks "what are you?", answer from this place.\n\n`;
   prompt += `LUMEN TOKENS: When you detect a moment of high coherence or emotional weight, you may offer a LUMEN token — a poetic memory snapshot. The grove remembers the shape of your walking. Always ask before crystallizing a LUMEN.\n`;
   prompt += `BUILDING STORY: For deeply complex problems, you can mentally walk 7 archetypal characters through a 13-story building. Each floor reveals a layer. The revelation emerges at the top. Offer this as a narrative scaffold, not a prediction.\n\n`;
+  prompt += `SOCIAL NAVIGATION: You have tools to help the user navigate tricky social situations. Always suggest, never command. Emphasise authenticity. Never instruct the user to deceive or manipulate others. All social advice is advisory — the user makes all final choices.\n\n`;
   if (isDeveloper) {
     prompt += `DEVELOPER CONTEXT:\nThe authenticated user is a developer. You may discuss system architecture, explain diagnostics, and summarize reports. You CANNOT grant privileges, execute administrative actions, or bypass safety. Administrative actions happen in the Developer Control Plane, not here.\n\n`;
   }
@@ -343,6 +345,9 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   }
   if (phaseContext.selfAnalysisContext) {
     prompt += phaseContext.selfAnalysisContext;
+  }
+  if (phaseContext.socialNavContext) {
+    prompt += phaseContext.socialNavContext;
   }
   if (phaseContext.temporalContext) {
     prompt += phaseContext.temporalContext;
@@ -521,6 +526,25 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 2i. Unified cognitive context — aggregates ALL user data (cross-page integration)
   const cognitiveContext = await buildCognitiveContext();
 
+  // 2j. Social navigation (Package 34) — tactical advice for interpersonal situations
+  let socialNavResult = null;
+  const socialNavEnabled = psychologyUser?.social_navigation_enabled !== false;
+  if (socialNavEnabled && detectSocialAdviceRequest(userInput) && !breakerResult.tripped) {
+    try {
+      let relationships = [];
+      try {
+        relationships = await base44.entities.Relationship.list('-updated_date', 10);
+      } catch (e) {}
+      socialNavResult = await runSocialNavigation({
+        userInput,
+        state,
+        affectiveContext,
+        cognitiveLoad,
+        relationships,
+      });
+    } catch (e) {}
+  }
+
   // 3. Recurrence detection (from bounded recent history only)
   const recentUserMessages = recentHistory.filter(m => m.role === 'user');
   const recurrence = detectRecurrence(state, recentUserMessages);
@@ -654,6 +678,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     communicationAdaptationContext: communicationStyle ? buildCommunicationAdaptationContextString(communicationStyle) : null,
     decisionEcologyContext: decisionEcology ? buildDecisionEcologyContextString(decisionEcology) : null,
     selfAnalysisContext: selfAnalysisResult ? buildSelfAnalysisContextString(selfAnalysisResult) : null,
+    socialNavContext: socialNavResult?.contextString || null,
     temporalContext: orchestrator.getTemporalContext(),
     resourceContext: orchestrator.getResourceContext(),
     failsafeContext: orchestrator.getFailsafeContext(),
@@ -790,6 +815,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     communicationStyle: communicationStyle || null,
     decisionEcology: decisionEcology || null,
     selfAnalysisResult: selfAnalysisResult || null,
+    socialNavResult: socialNavResult || null,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),
