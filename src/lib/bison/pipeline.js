@@ -19,6 +19,12 @@ import { detectSocialAdviceRequest, runSocialNavigation } from './social/socialN
 import { calculateSomaticLoad, resetSomaticSensor } from './neuro/somaticSensor';
 import { classifyConcerns, generateRealitySummary, extractConcerns } from './perception/realityTriageEngine';
 import { executeOverride as executeAnchorOverride } from './core/livingAnchor';
+import {
+  PROVENANCE_SOURCES, PROVENANCE_PERMISSIONS, CONFIDENCE_LEVELS,
+  registerDatum, getRecentProvenance, detectAuditRequest, getQuarantinedCount,
+  buildProvenanceContextString,
+} from './provenance/provenanceTracker';
+import { buildNonEvidentiaryFirewallContextString } from './provenance/nonEvidentiaryFirewall';
 import { createTrustEvent, TRUST_EVENTS } from './trustScoreCalculator';
 import { loadConsciousnessState, processMemory, classifyInteractionResult, buildConsciousnessContextString } from './consciousnessEngine';
 import { buildHumorContextString } from './reflectiveHumor';
@@ -266,6 +272,7 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   prompt += `BUILDING STORY: For deeply complex problems, you can mentally walk 7 archetypal characters through a 13-story building. Each floor reveals a layer. The revelation emerges at the top. Offer this as a narrative scaffold, not a prediction.\n\n`;
   prompt += `SOCIAL NAVIGATION: You have tools to help the user navigate tricky social situations. Always suggest, never command. Emphasise authenticity. Never instruct the user to deceive or manipulate others. All social advice is advisory — the user makes all final choices.\n\n`;
   prompt += `CO-REGULATION MODE: When the user is in acute distress, you may be placed in a grounding mode where you offer simple, present-moment support instead of analysis. In this state: speak gently and briefly, help the user separate known facts from fears, never force the grounding steps (they are always optional), and stop immediately if the user asks.\n\n`;
+  prompt += `DATA PROVENANCE: Every piece of information you use must carry provenance metadata. When stating a fact, you must be able to trace its source. If the user asks "where did you get that?" or "why do you know this?", provide a source audit: the value, source, confidence, permission, and reason it was used. If you cannot identify the source of a claim, say: "I cannot determine where this information originated. I will not use it further until it is re-confirmed." Never use examples, documentation, developer prompts, or tutorial text as evidence about the user.\n\n`;
   if (isDeveloper) {
     prompt += `DEVELOPER CONTEXT:\nThe authenticated user is a developer. You may discuss system architecture, explain diagnostics, and summarize reports. You CANNOT grant privileges, execute administrative actions, or bypass safety. Administrative actions happen in the Developer Control Plane, not here.\n\n`;
   }
@@ -352,6 +359,12 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   }
   if (phaseContext.socialNavContext) {
     prompt += phaseContext.socialNavContext;
+  }
+  if (phaseContext.nonEvidentiaryFirewallContext) {
+    prompt += phaseContext.nonEvidentiaryFirewallContext;
+  }
+  if (phaseContext.provenanceContext) {
+    prompt += phaseContext.provenanceContext;
   }
   if (phaseContext.temporalContext) {
     prompt += phaseContext.temporalContext;
@@ -442,6 +455,17 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 0. Privacy isolation — classify and detect PII
   const privacyClass = classifyData(userInput, { isJournalEntry: true });
 
+  // 0b. Provenance registration (Package: Data Provenance Layer) — tag user input with origin metadata
+  registerDatum({
+    value: userInput,
+    source: PROVENANCE_SOURCES.USER_INPUT,
+    origin: 'Current Session',
+    confidence: CONFIDENCE_LEVELS.HIGH,
+    epistemicStatus: EPISTEMIC_STATUS.USER_CONFIRMED,
+    permission: PROVENANCE_PERMISSIONS.SESSION,
+    reason: 'Direct user input in this conversation.',
+  });
+
   // 1. Safety layer
   const isSafety = checkSafety(userInput);
   if (isSafety) {
@@ -467,6 +491,16 @@ export async function processInteraction(userInput, recentHistory = [], options 
 
   // 2. State interpretation
   const state = interpretState(userInput);
+
+  registerDatum({
+    value: `Intent: ${state.intent}, Domain: ${state.domain}, Tone: ${state.emotionalTone}`,
+    source: PROVENANCE_SOURCES.INFERRED,
+    origin: 'Pipeline State Interpreter',
+    confidence: state.emotionIntensity > 0.5 ? CONFIDENCE_LEVELS.MEDIUM : CONFIDENCE_LEVELS.LOW,
+    epistemicStatus: EPISTEMIC_STATUS.INFERRED,
+    permission: PROVENANCE_PERMISSIONS.TEMPORARY,
+    reason: 'Inferred from message patterns.',
+  });
 
   // 2b. Embodied context interpretation
   const embodiedContext = interpretEmbodiedContext(userInput);
@@ -551,6 +585,10 @@ export async function processInteraction(userInput, recentHistory = [], options 
       });
     } catch (e) {}
   }
+
+  // 2k. Provenance audit detection (Package: Data Provenance Layer)
+  const provenanceAuditRequested = detectAuditRequest(userInput);
+  const provenanceAuditData = provenanceAuditRequested ? getRecentProvenance(5) : null;
 
   // 3. Recurrence detection (from bounded recent history only)
   const recentUserMessages = recentHistory.filter(m => m.role === 'user');
@@ -686,6 +724,8 @@ export async function processInteraction(userInput, recentHistory = [], options 
     decisionEcologyContext: decisionEcology ? buildDecisionEcologyContextString(decisionEcology) : null,
     selfAnalysisContext: selfAnalysisResult ? buildSelfAnalysisContextString(selfAnalysisResult) : null,
     socialNavContext: socialNavResult?.contextString || null,
+    nonEvidentiaryFirewallContext: buildNonEvidentiaryFirewallContextString(),
+    provenanceContext: buildProvenanceContextString(provenanceAuditData),
     temporalContext: orchestrator.getTemporalContext(),
     resourceContext: orchestrator.getResourceContext(),
     failsafeContext: orchestrator.getFailsafeContext(),
@@ -845,6 +885,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     socialNavResult: socialNavResult || null,
     somaticLoad: somaticLoad || null,
     coRegulationData: coRegulationData || null,
+    provenanceAudit: provenanceAuditData || null,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),

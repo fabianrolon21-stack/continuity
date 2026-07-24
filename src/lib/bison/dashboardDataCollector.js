@@ -10,6 +10,7 @@ import { listCapabilities } from '@/lib/security/deviceAccess';
 import { getImmuneMemory } from '@/lib/bison/immuneSystem';
 import { getComputeMode } from '@/lib/bison/pipeline';
 import { calculateTrustScore } from '@/lib/bison/trustScoreCalculator';
+import { getQuarantinedCount } from '@/lib/bison/provenance/provenanceTracker';
 
 export async function collectDashboardState(lastInteractionResult = null) {
   try {
@@ -82,6 +83,11 @@ export async function collectDashboardState(lastInteractionResult = null) {
             realitySummary: lastInteractionResult.coRegulationData.realitySummary,
           }
         : null,
+      provenanceStats: {
+        registeredCount: lastInteractionResult?.provenanceAudit?.length || 0,
+        quarantinedCount: getQuarantinedCount(),
+        auditRequested: !!lastInteractionResult?.provenanceAudit,
+      },
       lumenCount: await getLumenCount(),
     };
   } catch (e) {
