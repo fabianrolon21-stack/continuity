@@ -57,3 +57,47 @@ export function canSend(isEmergency = false) {
 
 export const DND_STATUS_MESSAGE =
   "I'm feeling overloaded; I need a moment to process. I'll be right back.";
+
+// ═══════════════════════════════════════════════
+// SYSTEM MODE (Package: Somatic Anchor)
+// Extended mode tracking for co-regulation state.
+// Co-regulation auto-exits after 10 minutes of
+// inactivity to prevent prolonged override.
+// ═══════════════════════════════════════════════
+
+export const SystemMode = {
+  NORMAL: 'NORMAL',
+  CO_REGULATION_ACTIVE: 'CO_REGULATION_ACTIVE',
+  DO_NOT_DISTURB: 'DO_NOT_DISTURB',
+};
+
+let _currentMode = SystemMode.NORMAL;
+let _coRegulationTimeout = null;
+const CO_REGULATION_TIMEOUT_MS = 10 * 60 * 1000;
+
+export function setMode(mode) {
+  if (_coRegulationTimeout) {
+    clearTimeout(_coRegulationTimeout);
+    _coRegulationTimeout = null;
+  }
+  _currentMode = mode;
+  if (mode === SystemMode.CO_REGULATION_ACTIVE) {
+    _coRegulationTimeout = setTimeout(() => {
+      if (_currentMode === SystemMode.CO_REGULATION_ACTIVE) {
+        _currentMode = SystemMode.NORMAL;
+      }
+    }, CO_REGULATION_TIMEOUT_MS);
+  }
+}
+
+export function getMode() {
+  return _currentMode;
+}
+
+export function clearCoRegulation() {
+  if (_coRegulationTimeout) {
+    clearTimeout(_coRegulationTimeout);
+    _coRegulationTimeout = null;
+  }
+  _currentMode = SystemMode.NORMAL;
+}

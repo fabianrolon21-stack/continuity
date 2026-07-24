@@ -74,6 +74,14 @@ export async function collectDashboardState(lastInteractionResult = null) {
       oracleConsultation: lastInteractionResult?.oracleConsultation || null,
       evolutionState: user?.evolution_state || null,
       socialNavigationAdvice: lastInteractionResult?.socialNavResult?.adviceTypes || [],
+      coRegulationEvent: lastInteractionResult?.coRegulationData?.anchorResult
+        ? {
+            triggered: true,
+            exited: lastInteractionResult.coRegulationData.anchorResult.exitCoRegulation,
+            concerns: lastInteractionResult.coRegulationData.concerns,
+            realitySummary: lastInteractionResult.coRegulationData.realitySummary,
+          }
+        : null,
       lumenCount: await getLumenCount(),
     };
   } catch (e) {

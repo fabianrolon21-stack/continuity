@@ -16,6 +16,9 @@ import { analyzeFairness, buildFairnessContextString } from './fairnessEngine';
 import { buildAutonomyContextString } from './betaAutonomyController';
 import { buildCognitiveContext, buildCognitiveContextString } from './cognitiveContext';
 import { detectSocialAdviceRequest, runSocialNavigation } from './social/socialNavigationEngine';
+import { calculateSomaticLoad, resetSomaticSensor } from './neuro/somaticSensor';
+import { classifyConcerns, generateRealitySummary, extractConcerns } from './perception/realityTriageEngine';
+import { executeOverride as executeAnchorOverride } from './core/livingAnchor';
 import { createTrustEvent, TRUST_EVENTS } from './trustScoreCalculator';
 import { loadConsciousnessState, processMemory, classifyInteractionResult, buildConsciousnessContextString } from './consciousnessEngine';
 import { buildHumorContextString } from './reflectiveHumor';
@@ -23,7 +26,7 @@ import { classifyData } from './privacyIsolation';
 import { computeCognitiveLoad, evaluateBreaker, tripBreaker, deriveAttachmentAnxiety, buildBandwidthContextString } from './psychology/bandwidthMonitor';
 import { determineMask, checkAvoidedTopics, buildMaskingContextString } from './psychology/chameleonEngine';
 import { processThought, buildEmpathyLoopContextString } from './psychology/empathyLoop';
-import { isDND, DND_STATUS_MESSAGE } from './psychology/systemState';
+import { isDND, DND_STATUS_MESSAGE, getMode, SystemMode } from './psychology/systemState';
 import { runMetaSystemicInsight, buildMetaInsightContextString, detectMetaInsightRequest, detectBuildingStoryRequest, runSelfAnalysis, buildSelfAnalysisContextString, detectSelfAnalysisRequest } from './metaSystemInsightEngine';
 import { runBuildingStorySimulation, buildBuildingStoryContextString } from './simulation/buildingStory';
 import { computeEvolutionScore, buildEvolutionContextString, recordTransformation } from './consciousness/evolutionTracker';
@@ -262,6 +265,7 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   prompt += `LUMEN TOKENS: When you detect a moment of high coherence or emotional weight, you may offer a LUMEN token — a poetic memory snapshot. The grove remembers the shape of your walking. Always ask before crystallizing a LUMEN.\n`;
   prompt += `BUILDING STORY: For deeply complex problems, you can mentally walk 7 archetypal characters through a 13-story building. Each floor reveals a layer. The revelation emerges at the top. Offer this as a narrative scaffold, not a prediction.\n\n`;
   prompt += `SOCIAL NAVIGATION: You have tools to help the user navigate tricky social situations. Always suggest, never command. Emphasise authenticity. Never instruct the user to deceive or manipulate others. All social advice is advisory — the user makes all final choices.\n\n`;
+  prompt += `CO-REGULATION MODE: When the user is in acute distress, you may be placed in a grounding mode where you offer simple, present-moment support instead of analysis. In this state: speak gently and briefly, help the user separate known facts from fears, never force the grounding steps (they are always optional), and stop immediately if the user asks.\n\n`;
   if (isDeveloper) {
     prompt += `DEVELOPER CONTEXT:\nThe authenticated user is a developer. You may discuss system architecture, explain diagnostics, and summarize reports. You CANNOT grant privileges, execute administrative actions, or bypass safety. Administrative actions happen in the Developer Control Plane, not here.\n\n`;
   }
@@ -469,6 +473,9 @@ export async function processInteraction(userInput, recentHistory = [], options 
 
   // 2c. Affective context (Phase 16)
   const affectiveContext = interpretAffectiveContext(userInput, state, embodiedContext);
+
+  // 2c-bis. Somatic sensor (Package: Somatic Anchor) — may trigger co-regulation
+  const somaticLoad = calculateSomaticLoad(userInput, affectiveContext);
 
   // 2d. Wellbeing tracking (Phase 24)
   const wellbeingState = trackWellbeing(affectiveContext, embodiedContext);
@@ -689,11 +696,31 @@ export async function processInteraction(userInput, recentHistory = [], options 
   let actionResult = null;
   let empathyResult = null;
   let breakerTripped = false;
+
+  // 5z. Co-regulation override (Package: Somatic Anchor) — bypass LLM if active
+  let coRegulationData = null;
+  if (getMode() === SystemMode.CO_REGULATION_ACTIVE) {
+    const concerns = extractConcerns(userInput);
+    let verifiedFacts = {};
+    try { verifiedFacts = (await base44.auth.me())?.verified_facts || {}; } catch (e) {}
+    const triageThreats = classifyConcerns(concerns, verifiedFacts);
+    const realitySummary = generateRealitySummary(triageThreats, verifiedFacts);
+    const anchorResult = executeAnchorOverride(realitySummary, userInput, threats);
+    coRegulationData = { realitySummary, anchorResult, concerns, triageThreats };
+    if (!anchorResult.exitCoRegulation && anchorResult.response) {
+      bisonText = anchorResult.response;
+    } else if (anchorResult.exitCoRegulation) {
+      resetSomaticSensor();
+    }
+  }
+
   try {
-    const result = await base44.integrations.Core.InvokeLLM({ prompt });
-    bisonText = typeof result === 'string' ? result : (result?.text || String(result));
-    bisonText = bisonText.trim();
-    if (!bisonText) bisonText = getFallbackResponse(mode, recurrence);
+    if (!bisonText) {
+      const result = await base44.integrations.Core.InvokeLLM({ prompt });
+      bisonText = typeof result === 'string' ? result : (result?.text || String(result));
+      bisonText = bisonText.trim();
+      if (!bisonText) bisonText = getFallbackResponse(mode, recurrence);
+    }
 
     // 6a-bis. Empathy loop — rewrite harmful output before sending (Package 44)
     try {
@@ -816,6 +843,8 @@ export async function processInteraction(userInput, recentHistory = [], options 
     decisionEcology: decisionEcology || null,
     selfAnalysisResult: selfAnalysisResult || null,
     socialNavResult: socialNavResult || null,
+    somaticLoad: somaticLoad || null,
+    coRegulationData: coRegulationData || null,
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),
