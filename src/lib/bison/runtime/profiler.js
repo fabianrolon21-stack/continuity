@@ -1,20 +1,36 @@
 // ═══════════════════════════════════════════════
-// PROFILER (Package 45)
+// PROFILER (Package 45 + Part I)
 // Lightweight timing utility for every pipeline phase.
-// Measures: planning, context build, prompt assembly, LLM, total.
+// Reports to RuntimeAuthority so every number originates
+// from the runtime — never the LLM.
 // ═══════════════════════════════════════════════
+
+import { recordPlannerTime, recordContextBuildTime, recordLLMLatency } from './runtimeAuthority';
 
 const _timings = {};
 
 export function startTimer(name) {
-  _timings[name] = { start: Date.now(), end: null, duration: null };
+  _timings[name] = { start: _now(), end: null, duration: null };
 }
 
 export function endTimer(name) {
   const timing = _timings[name];
   if (!timing) return;
-  timing.end = Date.now();
+  timing.end = _now();
   timing.duration = timing.end - timing.start;
+
+  // Report to RuntimeAuthority
+  const ms = Math.round(timing.duration);
+  if (name === 'planning') recordPlannerTime(ms);
+  else if (name === 'total' || name === 'cognitive' || name === 'identity' || name === 'evolution' || name === 'humanState') {
+    recordContextBuildTime(ms);
+  } else if (name === 'llm') {
+    recordLLMLatency(ms);
+  }
+}
+
+function _now() {
+  return typeof performance !== 'undefined' ? performance.now() : Date.now();
 }
 
 export function getTimings() {
@@ -34,10 +50,7 @@ export function getProfileSummary() {
     if (duration == null) continue;
     phases[name] = duration;
   }
-  return {
-    phases,
-    totalMs: total,
-  };
+  return { phases, totalMs: total };
 }
 
 export function clearTimings() {

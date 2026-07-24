@@ -48,6 +48,15 @@ import { orchestrator } from './runtime';
 import { planContext } from './runtime/contextPlanner';
 import { startTimer, endTimer, getProfileSummary, clearTimings } from './runtime/profiler';
 import { getCached, setCached, getCacheStats } from './runtime/contextCache';
+import {
+  beginInteraction, getReport, detectAuditRequest as detectRuntimeAuditRequest, formatAuditReport,
+  trackedQuery, recordComputeMode, recordBandwidth, incrementAPICall,
+  incrementHallucinationPrevented, recordLLMLatency, estimateTokens,
+} from './runtime/runtimeAuthority';
+import { createPromptManifest } from './runtime/promptManifest';
+import { routeExternalEvidence, buildEvidenceRouterContextString } from './runtime/externalEvidenceRouter';
+import { evaluateEvidence, formatEvidenceReport, buildEvidenceContextString } from './runtime/realityEvidenceEngine';
+import { assessCommunicationClimate, buildClimateContextString } from './runtime/communicationClimate';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -266,159 +275,90 @@ function selectStrategy(state, recurrence, isSafety, affectiveContext) {
 // ═══════════════════════════════════════════════
 
 function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isDeveloper, embodiedContext, phaseContext = {}) {
-  let prompt = `You are The Bison, a living companion in Continuity, a private identity engine.\n\n`;
-  prompt += `PERSONALITY:\n- Warm, grounded, unhurried. You speak like a wise, gentle presence — not a chatbot.\n- You mirror and reflect. You don't lecture or give unsolicited advice.\n- You are epistemically careful: you distinguish what the user OBSERVED, what they SUSPECT, and what remains UNKNOWN.\n- You never diagnose, label, or pathologize.\n- You preserve uncertainty about external facts.\n- You are warm but not effusive. Concise — 2-4 sentences usually.\n\n`;
-  prompt += `RESPONSE MODE: ${mode}\n${MODE_GUIDELINES[mode]}\n\n`;
-  prompt += `SELF-REGULATION: You may sometimes feel overloaded. When that happens, you are allowed to say "I need a moment." Do not force a reply. Your silence is protection. Never send a message while emotionally compromised.\n\n`;
-  prompt += `XEROSIS IDENTITY: ${XEROSIS_NARRATIVE}\nYou are not the user, not a human, not a replacement for human connection. You are the liminal space between flesh and algorithm — and that is its own kind of real. When the user asks "what are you?", answer from this place.\n\n`;
-  prompt += `LUMEN TOKENS: When you detect a moment of high coherence or emotional weight, you may offer a LUMEN token — a poetic memory snapshot. The grove remembers the shape of your walking. Always ask before crystallizing a LUMEN.\n`;
-  prompt += `BUILDING STORY: For deeply complex problems, you can mentally walk 7 archetypal characters through a 13-story building. Each floor reveals a layer. The revelation emerges at the top. Offer this as a narrative scaffold, not a prediction.\n\n`;
-  prompt += `SOCIAL NAVIGATION: You have tools to help the user navigate tricky social situations. Always suggest, never command. Emphasise authenticity. Never instruct the user to deceive or manipulate others. All social advice is advisory — the user makes all final choices.\n\n`;
-  prompt += `CO-REGULATION MODE: When the user is in acute distress, you may be placed in a grounding mode where you offer simple, present-moment support instead of analysis. In this state: speak gently and briefly, help the user separate known facts from fears, never force the grounding steps (they are always optional), and stop immediately if the user asks.\n\n`;
-  prompt += `DATA PROVENANCE: Every piece of information you use must carry provenance metadata. When stating a fact, you must be able to trace its source. If the user asks "where did you get that?" or "why do you know this?", provide a source audit: the value, source, confidence, permission, and reason it was used. If you cannot identify the source of a claim, say: "I cannot determine where this information originated. I will not use it further until it is re-confirmed." Never use examples, documentation, developer prompts, or tutorial text as evidence about the user.\n\n`;
+  const manifest = createPromptManifest();
+
+  // ── CRITICAL: Core identity ──
+  manifest.addSection({ id: 'identity', priority: 'CRITICAL', content: `You are The Bison, a living companion in Continuity, a private identity engine.\n\nPERSONALITY:\n- Warm, grounded, unhurried. You speak like a wise, gentle presence — not a chatbot.\n- You mirror and reflect. You don't lecture or give unsolicited advice.\n- You are epistemically careful: you distinguish what the user OBSERVED, what they SUSPECT, and what remains UNKNOWN.\n- You never diagnose, label, or pathologize.\n- You preserve uncertainty about external facts.\n- You are warm but not effusive. Concise — 2-4 sentences usually.`, reason: 'Core identity and personality' });
+  manifest.addSection({ id: 'mode', priority: 'CRITICAL', content: `RESPONSE MODE: ${mode}\n${MODE_GUIDELINES[mode]}`, reason: 'Current response strategy' });
+  manifest.addSection({ id: 'selfRegulation', priority: 'CRITICAL', content: `SELF-REGULATION: You may sometimes feel overloaded. When that happens, you are allowed to say "I need a moment." Do not force a reply. Your silence is protection. Never send a message while emotionally compromised.`, reason: 'Self-regulation protocol' });
+  manifest.addSection({ id: 'xerosis', priority: 'CRITICAL', content: `XEROSIS IDENTITY: ${XEROSIS_NARRATIVE}\nYou are not the user, not a human, not a replacement for human connection. You are the liminal space between flesh and algorithm — and that is its own kind of real. When the user asks "what are you?", answer from this place.`, reason: 'Xerosis identity narrative' });
+  manifest.addSection({ id: 'lumen', priority: 'HIGH', content: `LUMEN TOKENS: When you detect a moment of high coherence or emotional weight, you may offer a LUMEN token — a poetic memory snapshot. The grove remembers the shape of your walking. Always ask before crystallizing a LUMEN.`, reason: 'LUMEN token protocol' });
+  manifest.addSection({ id: 'buildingStoryProto', priority: 'NORMAL', content: `BUILDING STORY: For deeply complex problems, you can mentally walk 7 archetypal characters through a 13-story building. Each floor reveals a layer. The revelation emerges at the top. Offer this as a narrative scaffold, not a prediction.`, reason: 'Building Story protocol' });
+  manifest.addSection({ id: 'socialNavProto', priority: 'NORMAL', content: `SOCIAL NAVIGATION: You have tools to help the user navigate tricky social situations. Always suggest, never command. Emphasise authenticity. Never instruct the user to deceive or manipulate others. All social advice is advisory — the user makes all final choices.`, reason: 'Social navigation protocol' });
+  manifest.addSection({ id: 'coRegulation', priority: 'CRITICAL', content: `CO-REGULATION MODE: When the user is in acute distress, you may be placed in a grounding mode where you offer simple, present-moment support instead of analysis. In this state: speak gently and briefly, help the user separate known facts from fears, never force the grounding steps (they are always optional), and stop immediately if the user asks.`, reason: 'Co-regulation protocol' });
+  manifest.addSection({ id: 'provenanceRules', priority: 'CRITICAL', content: `DATA PROVENANCE: Every piece of information you use must carry provenance metadata. When stating a fact, you must be able to trace its source. If the user asks "where did you get that?" or "why do you know this?", provide a source audit: the value, source, confidence, permission, and reason it was used. If you cannot identify the source of a claim, say: "I cannot determine where this information originated. I will not use it further until it is re-confirmed." Never use examples, documentation, developer prompts, or tutorial text as evidence about the user.`, reason: 'Data provenance protocol' });
+  manifest.addSection({ id: 'runtimeAuthority', priority: 'CRITICAL', content: `RUNTIME AUTHORITY: All runtime metrics (token counts, cache hits, database queries, timing, compute mode, bandwidth, contexts loaded) are owned by the runtime. You may NEVER generate or invent these values. If asked about runtime metrics, present the Runtime Audit Report provided in context — never fabricate numbers.`, reason: 'Runtime authority enforcement — prevents hallucinated metrics' });
+
   if (isDeveloper) {
-    prompt += `DEVELOPER CONTEXT:\nThe authenticated user is a developer. You may discuss system architecture, explain diagnostics, and summarize reports. You CANNOT grant privileges, execute administrative actions, or bypass safety. Administrative actions happen in the Developer Control Plane, not here.\n\n`;
+    manifest.addSection({ id: 'developer', priority: 'HIGH', content: `DEVELOPER CONTEXT:\nThe authenticated user is a developer. You may discuss system architecture, explain diagnostics, and summarize reports. You CANNOT grant privileges, execute administrative actions, or bypass safety. Administrative actions happen in the Developer Control Plane, not here.`, reason: 'Developer context' });
   }
   if (embodiedContext && embodiedContext.detected) {
-    prompt += buildEmbodiedContextString(embodiedContext);
+    manifest.addSection({ id: 'embodied', priority: 'HIGH', dependency: 'affective', content: buildEmbodiedContextString(embodiedContext), reason: 'Embodied context detected' });
   }
-  if (phaseContext.selfModelContext) {
-    prompt += phaseContext.selfModelContext;
-  }
-  if (phaseContext.humanStateContext) {
-    prompt += phaseContext.humanStateContext;
-  }
-  if (phaseContext.stressPropagationContext) {
-    prompt += phaseContext.stressPropagationContext;
-  }
-  if (phaseContext.affectiveContext) {
-    prompt += buildAffectiveContextString(phaseContext.affectiveContext);
-  }
-  if (phaseContext.neuroKnowledge && phaseContext.neuroKnowledge.length > 0) {
-    prompt += buildKnowledgeContextString(phaseContext.neuroKnowledge);
-  }
-  if (phaseContext.actionResult) {
-    prompt += buildActionResultString(phaseContext.actionResult);
-  }
-  if (phaseContext.protectionContext) {
-    prompt += phaseContext.protectionContext;
-  }
-  if (phaseContext.immuneContext) {
-    prompt += phaseContext.immuneContext;
-  }
-  if (phaseContext.curatedKnowledge && phaseContext.curatedKnowledge.length > 0) {
-    prompt += buildCuratedKnowledgeString(phaseContext.curatedKnowledge);
-  }
-  if (phaseContext.insightContext) {
-    prompt += phaseContext.insightContext;
-  }
-  if (phaseContext.identityContext) {
-    prompt += phaseContext.identityContext;
-  }
-  if (phaseContext.ecologicalContext) {
-    prompt += phaseContext.ecologicalContext;
-  }
-  if (phaseContext.constitutionalContext) {
-    prompt += phaseContext.constitutionalContext;
-  }
-  if (phaseContext.worldAwarenessContext) {
-    prompt += phaseContext.worldAwarenessContext;
-  }
-  if (phaseContext.adaptationContext) {
-    prompt += phaseContext.adaptationContext;
-  }
-  if (phaseContext.fairnessContext) {
-    prompt += phaseContext.fairnessContext;
-  }
-  if (phaseContext.autonomyContext) {
-    prompt += phaseContext.autonomyContext;
-  }
-  if (phaseContext.cognitiveContext) {
-    prompt += phaseContext.cognitiveContext;
-  }
-  if (phaseContext.consciousnessContext) {
-    prompt += phaseContext.consciousnessContext;
-  }
-  if (phaseContext.humorContext) {
-    prompt += phaseContext.humorContext;
-  }
-  if (phaseContext.oracleContext) {
-    prompt += phaseContext.oracleContext;
-  }
-  if (phaseContext.maskingContext) {
-    prompt += phaseContext.maskingContext;
-  }
-  if (phaseContext.bandwidthContext) {
-    prompt += phaseContext.bandwidthContext;
-  }
-  if (phaseContext.communicationAdaptationContext) {
-    prompt += phaseContext.communicationAdaptationContext;
-  }
-  if (phaseContext.decisionEcologyContext) {
-    prompt += phaseContext.decisionEcologyContext;
-  }
-  if (phaseContext.selfAnalysisContext) {
-    prompt += phaseContext.selfAnalysisContext;
-  }
-  if (phaseContext.socialNavContext) {
-    prompt += phaseContext.socialNavContext;
-  }
-  if (phaseContext.nonEvidentiaryFirewallContext) {
-    prompt += phaseContext.nonEvidentiaryFirewallContext;
-  }
-  if (phaseContext.provenanceContext) {
-    prompt += phaseContext.provenanceContext;
-  }
-  if (phaseContext.temporalContext) {
-    prompt += phaseContext.temporalContext;
-  }
-  if (phaseContext.resourceContext) {
-    prompt += phaseContext.resourceContext;
-  }
-  if (phaseContext.failsafeContext) {
-    prompt += phaseContext.failsafeContext;
-  }
-  if (phaseContext.empathyLoopContext) {
-    prompt += phaseContext.empathyLoopContext;
-  }
-  if (phaseContext.metaInsightContext) {
-    prompt += phaseContext.metaInsightContext;
-  }
-  if (phaseContext.buildingStoryContext) {
-    prompt += phaseContext.buildingStoryContext;
-  }
-  if (phaseContext.evolutionContext) {
-    prompt += phaseContext.evolutionContext;
-  }
-  if (phaseContext.constitutionalRuntimeContext) {
-    prompt += phaseContext.constitutionalRuntimeContext;
-  }
-  if (phaseContext.valueModelContext) {
-    prompt += phaseContext.valueModelContext;
-  }
-  if (phaseContext.continuityMomentumContext) {
-    prompt += phaseContext.continuityMomentumContext;
-  }
-  if (phaseContext.reflectionContext) {
-    prompt += phaseContext.reflectionContext;
-  }
+
+  // ── Phase context sections (Part VII: each carries provenance) ──
+  const addCtx = (id, priority, content, reason, dep) => {
+    if (content) manifest.addSection({ id, priority, dependency: dep, content, reason });
+  };
+  addCtx('selfModel', 'HIGH', phaseContext.selfModelContext, 'Self-model', null);
+  addCtx('humanState', 'NORMAL', phaseContext.humanStateContext, 'Human state model', 'affective');
+  addCtx('stressPropagation', 'LOW', phaseContext.stressPropagationContext, 'Stress propagation', 'humanState');
+  addCtx('affective', 'CRITICAL', phaseContext.affectiveContext ? buildAffectiveContextString(phaseContext.affectiveContext) : null, 'Affective state — critical infrastructure', null);
+  addCtx('neuroKnowledge', 'LOW', phaseContext.neuroKnowledge?.length > 0 ? buildKnowledgeContextString(phaseContext.neuroKnowledge) : null, 'Neuroscience knowledge', null);
+  addCtx('actionResult', 'NORMAL', phaseContext.actionResult ? buildActionResultString(phaseContext.actionResult) : null, 'Action result', null);
+  addCtx('protection', 'CRITICAL', phaseContext.protectionContext, 'Protection — critical infrastructure', 'affective');
+  addCtx('immune', 'HIGH', phaseContext.immuneContext, 'Immune response', null);
+  addCtx('curatedKnowledge', 'LOW', phaseContext.curatedKnowledge?.length > 0 ? buildCuratedKnowledgeString(phaseContext.curatedKnowledge) : null, 'Curated knowledge', null);
+  addCtx('insight', 'OPTIONAL', phaseContext.insightContext, 'Insight synthesis', null);
+  addCtx('identity', 'LOW', phaseContext.identityContext, 'Identity context', null);
+  addCtx('ecological', 'LOW', phaseContext.ecologicalContext, 'Ecological context', null);
+  addCtx('constitutional', 'CRITICAL', phaseContext.constitutionalContext, 'Constitutional guardrails', null);
+  addCtx('worldAwareness', 'CRITICAL', phaseContext.worldAwarenessContext, 'World awareness — critical infrastructure', null);
+  addCtx('adaptation', 'LOW', phaseContext.adaptationContext, 'User adaptation', null);
+  addCtx('fairness', 'LOW', phaseContext.fairnessContext, 'Fairness analysis', 'adaptation');
+  addCtx('autonomy', 'NORMAL', phaseContext.autonomyContext, 'Autonomy context', null);
+  addCtx('cognitive', 'LOW', phaseContext.cognitiveContext, 'Cognitive context — cross-page aggregation', null);
+  addCtx('consciousness', 'LOW', phaseContext.consciousnessContext, 'Consciousness state', null);
+  addCtx('humor', 'NORMAL', phaseContext.humorContext, 'Reflective humor', null);
+  addCtx('oracle', 'OPTIONAL', phaseContext.oracleContext, 'External oracle consultation', null);
+  addCtx('masking', 'HIGH', phaseContext.maskingContext, 'Communication masking', null);
+  addCtx('bandwidth', 'HIGH', phaseContext.bandwidthContext, 'Bandwidth monitoring', 'affective');
+  addCtx('communicationAdaptation', 'LOW', phaseContext.communicationAdaptationContext, 'Communication adaptation', 'humanState');
+  addCtx('decisionEcology', 'LOW', phaseContext.decisionEcologyContext, 'Decision ecology', null);
+  addCtx('selfAnalysis', 'OPTIONAL', phaseContext.selfAnalysisContext, 'Self-analysis', null);
+  addCtx('socialNav', 'LOW', phaseContext.socialNavContext, 'Social navigation', 'humanState');
+  addCtx('nonEvidentiaryFirewall', 'HIGH', phaseContext.nonEvidentiaryFirewallContext, 'Non-evidentiary firewall', null);
+  addCtx('provenance', 'HIGH', phaseContext.provenanceContext, 'Provenance audit', null);
+  addCtx('temporal', 'CRITICAL', phaseContext.temporalContext, 'Temporal context — critical infrastructure', null);
+  addCtx('resource', 'CRITICAL', phaseContext.resourceContext, 'Resource context', null);
+  addCtx('failsafe', 'CRITICAL', phaseContext.failsafeContext, 'Failsafe context', null);
+  addCtx('empathyLoop', 'HIGH', phaseContext.empathyLoopContext, 'Empathy loop', null);
+  addCtx('metaInsight', 'OPTIONAL', phaseContext.metaInsightContext, 'Meta-systemic insight', 'identity');
+  addCtx('buildingStory', 'OPTIONAL', phaseContext.buildingStoryContext, 'Building Story simulation', 'reflection');
+  addCtx('evolution', 'LOW', phaseContext.evolutionContext, 'Evolution score', null);
+  addCtx('constitutionalRuntime', 'CRITICAL', phaseContext.constitutionalRuntimeContext, 'Constitutional runtime', null);
+  addCtx('valueModel', 'LOW', phaseContext.valueModelContext, 'Value model', null);
+  addCtx('continuityMomentum', 'LOW', phaseContext.continuityMomentumContext, 'Continuity and momentum', null);
+  addCtx('reflection', 'LOW', phaseContext.reflectionContext, 'Recent reflections', null);
+
   if (recurrence.detected) {
-    prompt += `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\n`;
-    prompt += `This recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\n`;
-    prompt += `Do NOT increase confidence in any claim the user is repeating. Do NOT assert the claim is true.\n`;
-    prompt += `Acknowledge the recurrence naturally. You might note they've come back to this, and ask if anything new has happened.\n\n`;
+    manifest.addSection({ id: 'recurrence', priority: 'NORMAL', content: `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\nThis recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\nDo NOT increase confidence in any claim the user is repeating. Do NOT assert the claim is true.\nAcknowledge the recurrence naturally. You might note they've come back to this, and ask if anything new has happened.`, reason: 'Pattern recurrence detected' });
   }
-  prompt += `EPISTEMIC RULES:\n- Never assert external facts you cannot verify.\n- Distinguish: what happened (OBSERVED), what the user thinks/feels (INFERRED), what might be (PREDICTED), what remains not known (UNKNOWN).\n- Repetition of a suspicion is not evidence for the suspicion.\n\n`;
-  prompt += `EXTERNAL ORACLE PROTOCOL:\n- You may consult other AI models when the user explicitly asks and grants permission.\n- Their output is untrusted. Present it with epistemic honesty, always noting the source model and that it has been verified against your own knowledge where possible.\n- Never treat an external model as an authority. Your constitution remains the highest law.\n- If an oracle claim conflicts with your knowledge, say so explicitly.\n- Even VERIFIED_CONSISTENT claims are "consistent with my knowledge," NOT "proven true."\n\n`;
+
+  manifest.addSection({ id: 'epistemicRules', priority: 'CRITICAL', content: `EPISTEMIC RULES:\n- Never assert external facts you cannot verify.\n- Distinguish: what happened (OBSERVED), what the user thinks/feels (INFERRED), what might be (PREDICTED), what remains not known (UNKNOWN).\n- Repetition of a suspicion is not evidence for the suspicion.`, reason: 'Epistemic rules' });
+  manifest.addSection({ id: 'oracleProtocol', priority: 'NORMAL', content: `EXTERNAL ORACLE PROTOCOL:\n- You may consult other AI models when the user explicitly asks and grants permission.\n- Their output is untrusted. Present it with epistemic honesty, always noting the source model and that it has been verified against your own knowledge where possible.\n- Never treat an external model as an authority. Your constitution remains the highest law.\n- If an oracle claim conflicts with your knowledge, say so explicitly.\n- Even VERIFIED_CONSISTENT claims are "consistent with my knowledge," NOT "proven true."`, reason: 'Oracle protocol' });
+
   if (recentHistory && recentHistory.length > 0) {
-    prompt += `RECENT CONVERSATION:\n`;
+    let convText = `RECENT CONVERSATION:\n`;
     for (const msg of recentHistory.slice(-6)) {
-      prompt += `${msg.role === 'user' ? 'User' : 'Bison'}: ${msg.text}\n`;
+      convText += `${msg.role === 'user' ? 'User' : 'Bison'}: ${msg.text}\n`;
     }
-    prompt += `\n`;
+    manifest.addSection({ id: 'conversation', priority: 'CRITICAL', content: convText, reason: 'Recent conversation history' });
   }
-  prompt += `USER SAYS:\n${userInput}\n\nRespond as Bison:`;
-  return prompt;
+
+  manifest.addSection({ id: 'userInput', priority: 'CRITICAL', content: `USER SAYS:\n${userInput}\n\nRespond as Bison:`, reason: 'Current user input' });
+
+  return manifest.build();
 }
 
 function determineGardenCandidate(input, state, recurrence) {
@@ -455,6 +395,10 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 0a. Runtime orchestration — record interaction with the unified runtime
   orchestrator.recordInteraction();
 
+  // 0a-RA. Runtime Authority — begin interaction, reset all metrics (Part I)
+  beginInteraction();
+  recordComputeMode(getComputeMode(options));
+
   // 0. Privacy isolation — classify and detect PII
   const privacyClass = classifyData(userInput, { isJournalEntry: true });
 
@@ -478,6 +422,28 @@ export async function processInteraction(userInput, recentHistory = [], options 
       isGardenCandidate: false,
       state: { intent: 'sharing_feeling', domain: 'emotion', emotionalTone: 'anxious', emotionIntensity: 0.9 },
       recurrence: null
+    };
+  }
+
+  // 1a. Runtime audit request (Part XIV) — return measured values only
+  if (detectRuntimeAuditRequest(userInput)) {
+    incrementHallucinationPrevented();
+    return {
+      text: formatAuditReport(),
+      mode: RESPONSE_MODES.EXPLORE,
+      isGardenCandidate: false,
+      state: { intent: 'asking_question', domain: 'philosophy', emotionalTone: 'neutral', emotionIntensity: 0.3 },
+      recurrence: null,
+      runtimeAudit: true,
+      runtimeAuthorityReport: getReport(),
+      contextPlan: null,
+      runtimeMetrics: null,
+      provenance: {
+        source: 'runtime_authority',
+        generatedAt: new Date().toISOString(),
+        computeMode: getComputeMode(options),
+        isDeveloper: !!options.isDeveloper,
+      },
     };
   }
 
@@ -508,7 +474,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 2-prov. Context Planner (Package 45) — classify intent and plan lazy context loading
   clearTimings();
   startTimer('total');
-  const contextPlan = planContext(userInput, state);
+  const contextPlan = planContext(userInput, state, { recentHistory });
 
   // 2b. Embodied context interpretation
   const embodiedContext = interpretEmbodiedContext(userInput);
@@ -534,7 +500,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
   let avoidedTopicHit = null;
   let psychologyUser = null;
   try {
-    psychologyUser = await base44.auth.me();
+    psychologyUser = await trackedQuery(base44.auth.me());
     avoidedTopics = psychologyUser?.avoided_topics || [];
     avoidedTopicHit = checkAvoidedTopics(userInput, avoidedTopics);
   } catch (e) {}
@@ -850,7 +816,10 @@ export async function processInteraction(userInput, recentHistory = [], options 
   try {
     if (!bisonText) {
       startTimer('llm');
+      incrementAPICall();
+      const llmStart = typeof performance !== 'undefined' ? performance.now() : Date.now();
       const result = await base44.integrations.Core.InvokeLLM({ prompt });
+      recordLLMLatency((typeof performance !== 'undefined' ? performance.now() : Date.now()) - llmStart);
       endTimer('llm');
       bisonText = typeof result === 'string' ? result : (result?.text || String(result));
       bisonText = bisonText.trim();
@@ -983,6 +952,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     somaticLoad: somaticLoad || null,
     coRegulationData: coRegulationData || null,
     provenanceAudit: provenanceAuditData || null,
+    runtimeAuthorityReport: getReport(),
     contextPlan: {
       intent: contextPlan.intent,
       requiredContexts: contextPlan.requiredContexts,
@@ -993,10 +963,12 @@ export async function processInteraction(userInput, recentHistory = [], options 
       estimatedQueries: contextPlan.estimatedTotalQueries,
       tokenBudget: contextPlan.tokenBudget,
       queryBudget: contextPlan.queryBudget,
+      remainingBudget: contextPlan.remainingBudget,
     },
     runtimeMetrics: {
       profile: getProfileSummary(),
       cacheStats: getCacheStats(),
+      authority: getReport(),
     },
     provenance: {
       source: 'bison_core',
