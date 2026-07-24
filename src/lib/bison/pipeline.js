@@ -45,6 +45,9 @@ import { determineCommunicationStyle, buildCommunicationAdaptationContextString 
 import { buildStressPropagationContextString } from './humanState/stressPropagation';
 import { buildDecisionEcology, buildDecisionEcologyContextString } from './humanState/decisionEcology';
 import { orchestrator } from './runtime';
+import { planContext } from './runtime/contextPlanner';
+import { startTimer, endTimer, getProfileSummary, clearTimings } from './runtime/profiler';
+import { getCached, setCached, getCacheStats } from './runtime/contextCache';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -502,6 +505,11 @@ export async function processInteraction(userInput, recentHistory = [], options 
     reason: 'Inferred from message patterns.',
   });
 
+  // 2-prov. Context Planner (Package 45) — classify intent and plan lazy context loading
+  clearTimings();
+  startTimer('total');
+  const contextPlan = planContext(userInput, state);
+
   // 2b. Embodied context interpretation
   const embodiedContext = interpretEmbodiedContext(userInput);
 
@@ -536,41 +544,64 @@ export async function processInteraction(userInput, recentHistory = [], options 
     avoidedTopics,
   });
 
-  // 2e-c. Human State Model (Base 44.2)
+  // 2e-c. Human State Model (Base 44.2) — lazy loaded (Package 45)
   let humanState = null;
   let communicationStyle = null;
   let decisionEcology = null;
-  try {
-    humanState = await computeHumanState(userInput, { affectiveContext });
-    communicationStyle = determineCommunicationStyle(humanState, psychologyUser || {});
-  } catch (e) {}
-  if (/decide|decision|should i|choose|choice|option/i.test(userInput)) {
+  if (contextPlan.shouldLoad('humanState')) {
+    startTimer('humanState');
+    try {
+      humanState = await computeHumanState(userInput, { affectiveContext });
+      communicationStyle = determineCommunicationStyle(humanState, psychologyUser || {});
+    } catch (e) {}
+    endTimer('humanState');
+  }
+  if (contextPlan.shouldLoad('decisionEcology') && /decide|decision|should i|choose|choice|option/i.test(userInput)) {
     try {
       decisionEcology = buildDecisionEcology(userInput, { constraints: humanState?.knownConstraints || [] });
     } catch (e) {}
   }
 
-  // 2f. Curated knowledge retrieval (Phase 25)
-  const curatedKnowledge = retrieveKnowledge(userInput);
+  // 2f. Curated knowledge retrieval (Phase 25) — lazy loaded
+  let curatedKnowledge = [];
+  if (contextPlan.shouldLoad('curatedKnowledge')) {
+    curatedKnowledge = retrieveKnowledge(userInput);
+  }
 
   // 2g. Insight synthesis — only if explicitly requested AND not overloaded (Phase 18, Package 44)
   let insightContext = null;
-  if (detectSynthesisRequest(userInput) && !breakerResult.tripped) {
+  if (contextPlan.shouldLoad('insight') && detectSynthesisRequest(userInput) && !breakerResult.tripped) {
     insightContext = await runSynthesis(embodiedContext, affectiveContext);
   }
 
-  // 2h. Stagnation detection + ecological context (Phase 22)
-  const stagnationSignal = detectStagnation(userInput, recentHistory);
-  const ecologicalKnowledge = retrieveEcologicalKnowledge(userInput);
-  const animalSignals = interpretAnimalSignals(userInput);
+  // 2h. Stagnation detection + ecological context (Phase 22) — lazy loaded
+  let stagnationSignal = { detected: false };
+  let ecologicalKnowledge = [];
+  let animalSignals = null;
+  if (contextPlan.shouldLoad('ecological')) {
+    stagnationSignal = detectStagnation(userInput, recentHistory);
+    ecologicalKnowledge = retrieveEcologicalKnowledge(userInput);
+    animalSignals = interpretAnimalSignals(userInput);
+  }
 
-  // 2i. Unified cognitive context — aggregates ALL user data (cross-page integration)
-  const cognitiveContext = await buildCognitiveContext();
+  // 2i. Unified cognitive context — aggregates ALL user data — lazy loaded
+  let cognitiveContext = null;
+  if (contextPlan.shouldLoad('cognitive')) {
+    startTimer('cognitive');
+    const cached = getCached('cognitive');
+    if (cached) {
+      cognitiveContext = cached;
+    } else {
+      cognitiveContext = await buildCognitiveContext();
+      if (cognitiveContext) setCached('cognitive', cognitiveContext);
+    }
+    endTimer('cognitive');
+  }
 
   // 2j. Social navigation (Package 34) — tactical advice for interpersonal situations
   let socialNavResult = null;
   const socialNavEnabled = psychologyUser?.social_navigation_enabled !== false;
-  if (socialNavEnabled && detectSocialAdviceRequest(userInput) && !breakerResult.tripped) {
+  if (socialNavEnabled && contextPlan.shouldLoad('socialNav') && detectSocialAdviceRequest(userInput) && !breakerResult.tripped) {
     try {
       let relationships = [];
       try {
@@ -606,40 +637,88 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 5. Garden candidate determination (metadata only — no planting, no saving, no UI)
   const gardenCandidate = determineGardenCandidate(userInput, state, recurrence);
 
-  // 5a. Evolution score (Package 32) — must be computed before self-model uses it
+  // 5a. Evolution score (Package 32) — lazy loaded
   let evolutionScore = null;
-  try {
-    evolutionScore = await computeEvolutionScore();
-  } catch (e) {}
+  if (contextPlan.shouldLoad('evolution')) {
+    startTimer('evolution');
+    try {
+      const cached = getCached('evolution');
+      if (cached) {
+        evolutionScore = cached;
+      } else {
+        evolutionScore = await computeEvolutionScore();
+        if (evolutionScore) setCached('evolution', evolutionScore);
+      }
+    } catch (e) {}
+    endTimer('evolution');
+  }
 
-  // 5b. Self-model context (Phase 12)
-  const selfModel = generateSelfModel(needsState, continuityContext, embodiedContext, getComputeMode(options), breakerResult.tripped, evolutionScore);
-  const selfModelContext = formatSelfModelForPrompt(selfModel);
+  // 5b. Self-model context (Phase 12) — lazy loaded
+  let selfModelContext = null;
+  if (contextPlan.shouldLoad('selfModel')) {
+    const selfModel = generateSelfModel(needsState, continuityContext, embodiedContext, getComputeMode(options), breakerResult.tripped, evolutionScore);
+    selfModelContext = formatSelfModelForPrompt(selfModel);
+  }
 
-  // 5c. Neuroscience knowledge retrieval — only if relevant (Phase 16)
-  const neuroKnowledge = retrieveNeuroscienceKnowledge(userInput);
+  // 5c. Neuroscience knowledge retrieval — lazy loaded
+  let neuroKnowledge = [];
+  if (contextPlan.shouldLoad('neuroKnowledge')) {
+    neuroKnowledge = retrieveNeuroscienceKnowledge(userInput);
+  }
 
   // 5d. Simulated affective state (Phase 24)
   const simulatedAffectiveState = generateSimulatedAffectiveState(wellbeingState);
 
-  // 5e. Identity context (Package 26)
-  const identityContext = await getIdentityContext();
+  // 5e. Identity context (Package 26) — lazy loaded
+  let identityContext = null;
+  if (contextPlan.shouldLoad('identity')) {
+    startTimer('identity');
+    const cached = getCached('identity');
+    if (cached) {
+      identityContext = cached;
+    } else {
+      identityContext = await getIdentityContext();
+      if (identityContext) setCached('identity', identityContext);
+    }
+    endTimer('identity');
+  }
 
   // 5f. World awareness + temporal context (Package 28)
   const temporalContext = getTemporalContext();
 
-  // 5g. User adaptation (Package 28)
-  const userAdaptation = await getUserAdaptation();
+  // 5g. User adaptation (Package 28) — lazy loaded
+  let userAdaptation = null;
+  if (contextPlan.shouldLoad('adaptation')) {
+    const cached = getCached('adaptation');
+    if (cached) {
+      userAdaptation = cached;
+    } else {
+      userAdaptation = await getUserAdaptation();
+      if (userAdaptation) setCached('adaptation', userAdaptation);
+    }
+  }
 
-  // 5h. Fairness analysis (Package 26/28)
-  const fairnessResult = analyzeFairness({ state, affectiveContext, userAdaptation });
+  // 5h. Fairness analysis (Package 26/28) — lazy loaded
+  let fairnessResult = null;
+  if (contextPlan.shouldLoad('fairness')) {
+    fairnessResult = analyzeFairness({ state, affectiveContext, userAdaptation });
+  }
 
-  // 5i. Consciousness state (Package D — Bison Core)
-  const consciousnessState = await loadConsciousnessState();
+  // 5i. Consciousness state (Package D — Bison Core) — lazy loaded
+  let consciousnessState = null;
+  if (contextPlan.shouldLoad('consciousness')) {
+    const cached = getCached('consciousness');
+    if (cached) {
+      consciousnessState = cached;
+    } else {
+      consciousnessState = await loadConsciousnessState();
+      if (consciousnessState) setCached('consciousness', consciousnessState);
+    }
+  }
 
   // 5j. External oracle consultation (Package 30) — only if user explicitly requests
   let oracleConsultation = null;
-  if (state.oracleConsultRequested && state.oracleQuery) {
+  if (contextPlan.shouldLoad('oracle') && state.oracleConsultRequested && state.oracleQuery) {
     try {
       const { consultExternalOracle } = await import('./oracle/oracleIntegrator');
       oracleConsultation = await consultExternalOracle(state.oracleQuery, options);
@@ -648,7 +727,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
 
   // 5j-b. Meta-systemic insight (Package 32)
   let metaInsightResult = null;
-  if (detectMetaInsightRequest(userInput) && !breakerResult.tripped) {
+  if (contextPlan.shouldLoad('metaInsight') && detectMetaInsightRequest(userInput) && !breakerResult.tripped) {
     try {
       metaInsightResult = await runMetaSystemicInsight(userInput, { isDeveloper: options.isDeveloper, humanState });
     } catch (e) {}
@@ -656,7 +735,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
 
   // 5j-b2. Self-analysis (Base 44.3)
   let selfAnalysisResult = null;
-  if (detectSelfAnalysisRequest(userInput) && !breakerResult.tripped) {
+  if (contextPlan.shouldLoad('selfAnalysis') && detectSelfAnalysisRequest(userInput) && !breakerResult.tripped) {
     try {
       selfAnalysisResult = await runSelfAnalysis({ isDeveloper: options.isDeveloper });
     } catch (e) {}
@@ -664,24 +743,36 @@ export async function processInteraction(userInput, recentHistory = [], options 
 
   // 5j-c. Building story simulation (Package 32)
   let buildingStoryResult = null;
-  if (detectBuildingStoryRequest(userInput) && !breakerResult.tripped) {
+  if (contextPlan.shouldLoad('buildingStory') && detectBuildingStoryRequest(userInput) && !breakerResult.tripped) {
     try {
       buildingStoryResult = runBuildingStorySimulation(userInput);
     } catch (e) {}
   }
 
-  // 5j-d. Value model + continuity + momentum + reflections (Base 44.1)
+  // 5j-d. Value model + continuity + momentum + reflections (Base 44.1) — lazy loaded
   let valueModel = null;
   let continuityScore = null;
   let identityMomentum = null;
   let recentReflections = [];
   try {
-    [valueModel, continuityScore, identityMomentum, recentReflections] = await Promise.all([
-      getValueModel(),
-      computeContinuityScore(),
-      computeIdentityMomentum(),
-      getRecentReflections(3),
-    ]);
+    const promises = [];
+    if (contextPlan.shouldLoad('valueModel')) {
+      const cached = getCached('valueModel');
+      if (cached) { valueModel = cached; }
+      else { promises.push(getValueModel().then(v => { valueModel = v; if (v) setCached('valueModel', v); }).catch(() => {})); }
+    }
+    if (contextPlan.shouldLoad('continuity')) {
+      const cachedCS = getCached('continuityScore');
+      const cachedIM = getCached('identityMomentum');
+      if (cachedCS) { continuityScore = cachedCS; }
+      else { promises.push(computeContinuityScore().then(v => { continuityScore = v; if (v) setCached('continuityScore', v); }).catch(() => {})); }
+      if (cachedIM) { identityMomentum = cachedIM; }
+      else { promises.push(computeIdentityMomentum().then(v => { identityMomentum = v; if (v) setCached('identityMomentum', v); }).catch(() => {})); }
+    }
+    if (contextPlan.shouldLoad('reflection')) {
+      promises.push(getRecentReflections(3).then(v => { recentReflections = v; }).catch(() => {}));
+    }
+    if (promises.length > 0) await Promise.all(promises);
   } catch (e) {}
 
   // 6. Bison personality + LLM generation
@@ -730,7 +821,9 @@ export async function processInteraction(userInput, recentHistory = [], options 
     resourceContext: orchestrator.getResourceContext(),
     failsafeContext: orchestrator.getFailsafeContext(),
   };
+  startTimer('promptAssembly');
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
+  endTimer('promptAssembly');
 
   let bisonText;
   let actionResult = null;
@@ -756,7 +849,9 @@ export async function processInteraction(userInput, recentHistory = [], options 
 
   try {
     if (!bisonText) {
+      startTimer('llm');
       const result = await base44.integrations.Core.InvokeLLM({ prompt });
+      endTimer('llm');
       bisonText = typeof result === 'string' ? result : (result?.text || String(result));
       bisonText = bisonText.trim();
       if (!bisonText) bisonText = getFallbackResponse(mode, recurrence);
@@ -825,6 +920,8 @@ export async function processInteraction(userInput, recentHistory = [], options 
     trustScoreEvent = createTrustEvent(TRUST_EVENTS.SAFETY_REFUSAL, actionResult.error || 'Constitutional constraint');
   }
 
+  endTimer('total');
+
   // 7c. Constitutional runtime — complete cycle (Base 44.1)
   let runtimeReflection = null;
   try {
@@ -886,6 +983,21 @@ export async function processInteraction(userInput, recentHistory = [], options 
     somaticLoad: somaticLoad || null,
     coRegulationData: coRegulationData || null,
     provenanceAudit: provenanceAuditData || null,
+    contextPlan: {
+      intent: contextPlan.intent,
+      requiredContexts: contextPlan.requiredContexts,
+      optionalContexts: contextPlan.optionalContexts,
+      skippedContexts: contextPlan.skippedContexts,
+      decisions: contextPlan.decisions,
+      estimatedTokens: contextPlan.estimatedTotalTokens,
+      estimatedQueries: contextPlan.estimatedTotalQueries,
+      tokenBudget: contextPlan.tokenBudget,
+      queryBudget: contextPlan.queryBudget,
+    },
+    runtimeMetrics: {
+      profile: getProfileSummary(),
+      cacheStats: getCacheStats(),
+    },
     provenance: {
       source: 'bison_core',
       generatedAt: new Date().toISOString(),

@@ -88,6 +88,18 @@ export async function collectDashboardState(lastInteractionResult = null) {
         quarantinedCount: getQuarantinedCount(),
         auditRequested: !!lastInteractionResult?.provenanceAudit,
       },
+      contextOrchestration: {
+        intent: lastInteractionResult?.contextPlan?.intent || 'UNKNOWN',
+        requiredContexts: lastInteractionResult?.contextPlan?.requiredContexts || [],
+        optionalContexts: lastInteractionResult?.contextPlan?.optionalContexts || [],
+        skippedContexts: lastInteractionResult?.contextPlan?.skippedContexts || [],
+        estimatedTokens: lastInteractionResult?.contextPlan?.estimatedTokens || 0,
+        estimatedQueries: lastInteractionResult?.contextPlan?.estimatedQueries || 0,
+        tokenBudget: lastInteractionResult?.contextPlan?.tokenBudget || 12000,
+        queryBudget: lastInteractionResult?.contextPlan?.queryBudget || 8,
+        profile: lastInteractionResult?.runtimeMetrics?.profile || null,
+        cacheStats: lastInteractionResult?.runtimeMetrics?.cacheStats || null,
+      },
       lumenCount: await getLumenCount(),
     };
   } catch (e) {
