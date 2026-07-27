@@ -7,7 +7,8 @@
 // ═══════════════════════════════════════════════
 
 import { base44 } from '@/api/base44Client';
-import { emit, EVENT_TYPES } from '@/lib/events/eventBus';
+import { emit } from '@/lib/events/eventBus';
+import { EVENT_TYPES } from '@/lib/events/eventTypes';
 
 // ── Achievement Definitions ──
 
@@ -117,6 +118,69 @@ export const ACHIEVEMENTS = [
     icon: 'heart',
     color: 'hsl(21 73% 69%)',
   },
+  {
+    id: 'grass_toucher',
+    title: 'Grass Toucher',
+    description: 'Seven check-ins. "The grass says hello."',
+    icon: 'sprout',
+    color: 'hsl(120 40% 58%)',
+  },
+  {
+    id: 'window_watcher',
+    title: 'Window Watcher',
+    description: 'Experienced every weather type in the Sanctuary.',
+    icon: 'cloud',
+    color: 'hsl(199 56% 64%)',
+  },
+  {
+    id: 'tiny_forest',
+    title: 'Tiny Forest',
+    description: 'Grew twenty plants in your garden.',
+    icon: 'trees',
+    color: 'hsl(140 45% 45%)',
+  },
+  {
+    id: 'professional_overthinker',
+    title: 'Professional Overthinker',
+    description: '200 journal entries. It shows.',
+    icon: 'brain',
+    color: 'hsl(265 41% 64%)',
+  },
+  {
+    id: 'one_more_entry',
+    title: 'One More Entry',
+    description: '365 journals. A full year of words.',
+    icon: 'book',
+    color: 'hsl(48 67% 74%)',
+  },
+  {
+    id: 'cave_explorer',
+    title: 'Cave Explorer',
+    description: 'Unlocked the Cave habitat.',
+    icon: 'gem',
+    color: 'hsl(265 41% 64%)',
+  },
+  {
+    id: 'castle_resident',
+    title: 'Castle Resident',
+    description: 'Unlocked the Castle habitat.',
+    icon: 'castle',
+    color: 'hsl(42 63% 55%)',
+  },
+  {
+    id: 'sleep_is_important',
+    title: 'Sleep Is Important',
+    description: 'Watched Bison fall asleep fifty times. "Please lower your voice."',
+    icon: 'moon',
+    color: 'hsl(240 40% 70%)',
+  },
+  {
+    id: 'constant_companion',
+    title: 'Constant Companion',
+    description: 'One year together. Thank you.',
+    icon: 'heart',
+    color: 'hsl(42 63% 55%)',
+  },
 ];
 
 // ── Load / Save ──
@@ -172,6 +236,15 @@ export async function checkAchievements(context = {}) {
   if (context.firstInsight) unlocked.push('first_insight');
   if (context.ascensionLevel >= 1) unlocked.push('level_1');
   if (context.ascensionLevel >= 5) unlocked.push('level_5');
+  if (context.checkInCount >= 7) unlocked.push('grass_toucher');
+  if (context.weatherTypesSeen >= 8) unlocked.push('window_watcher');
+  if (context.plantCount >= 20) unlocked.push('tiny_forest');
+  if (context.journalCount >= 200) unlocked.push('professional_overthinker');
+  if (context.journalCount >= 365) unlocked.push('one_more_entry');
+  if (context.unlockedHabitats?.includes('cave')) unlocked.push('cave_explorer');
+  if (context.unlockedHabitats?.includes('castle')) unlocked.push('castle_resident');
+  if (context.sleepWatchCount >= 50) unlocked.push('sleep_is_important');
+  if (context.accountAgeDays >= 365) unlocked.push('constant_companion');
 
   const newlyUnlocked = [];
   for (const id of unlocked) {

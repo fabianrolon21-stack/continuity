@@ -5,7 +5,9 @@ import { PageHeader } from '@/components/MicroAnimations';
 import CognitiveInsights from '@/components/CognitiveInsights';
 import BisonCare from '@/components/BisonCare';
 import DailyIntention from '@/components/DailyIntention';
-import LivingRoom from '@/components/world/LivingRoom';
+import SanctuaryScene from '@/components/sanctuary/SanctuaryScene';
+import HabitatSelector from '@/components/sanctuary/HabitatSelector';
+import { getSanctuaryConfig } from '@/lib/sanctuary/habitats';
 import PerformanceModeSelector from '@/components/world/PerformanceModeSelector';
 import { buildCognitiveContext } from '@/lib/bison/cognitiveContext';
 import SessionContinuityBanner from '@/components/SessionContinuityBanner';
@@ -17,6 +19,8 @@ export default function Sanctuary() {
   const [tokenBalance, setTokenBalance] = useState(0);
   const [companionState, setCompanionState] = useState(null);
   const [cognitiveContext, setCognitiveContext] = useState(null);
+  const [sanctuaryConfig, setSanctuaryConfig] = useState(null);
+  const [accountAgeDays, setAccountAgeDays] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,6 +34,10 @@ export default function Sanctuary() {
       setLatestJournal(journals?.[0] || null);
       setTokenBalance(user?.token_balance || 0);
       setCompanionState(user?.companion_state || null);
+      setSanctuaryConfig(getSanctuaryConfig(user));
+      if (user?.created_date) {
+        setAccountAgeDays(Math.floor((Date.now() - new Date(user.created_date).getTime()) / 86400000));
+      }
       setCognitiveContext(cogContext);
       setLoading(false);
     });
@@ -64,11 +72,23 @@ export default function Sanctuary() {
       </div>
 
       <div className="px-6 lg:px-10 pb-8 space-y-6">
-        {/* The Living Room — Nintendo-style home */}
-        <LivingRoom />
+        {/* The Living Sanctuary — Bison at the center of a living world */}
+        <SanctuaryScene
+          config={sanctuaryConfig}
+          energy={companionState?.energy ?? 80}
+          accountAgeDays={accountAgeDays}
+        />
+        <HabitatSelector
+          config={sanctuaryConfig}
+          tokenBalance={tokenBalance}
+          onUpdate={(cfg, bal) => {
+            setSanctuaryConfig(cfg);
+            if (bal != null) setTokenBalance(bal);
+          }}
+        />
 
         {/* Mood snapshot */}
-        <div className="glass rounded-2xl p-6 flex flex-col items-center text-center relative overflow-hidden">
+        <div className="glass framed rounded-2xl p-6 flex flex-col items-center text-center relative overflow-hidden">
           <div className="absolute inset-0 pattern-overlay opacity-50" />
           <div className="relative z-10">
             <p className="text-sm text-muted-foreground mb-1">{greeting}.</p>
@@ -105,7 +125,7 @@ export default function Sanctuary() {
               <Link
                 key={action.path}
                 to={action.path}
-                className="glass rounded-xl p-4 hover:scale-[1.02] transition-transform group"
+                className="glass framed rounded-xl p-4 hover:scale-[1.02] transition-transform group"
               >
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ backgroundColor: `${action.color}1a` }}>
                   <Icon className="w-5 h-5" style={{ color: action.color }} />
@@ -121,7 +141,7 @@ export default function Sanctuary() {
         <DailyIntention />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="glass rounded-xl p-5">
+          <div className="glass framed rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-heading font-semibold text-sm text-leaf">Latest Check-in</h3>
               <Link to="/checkin" className="text-xs text-muted-foreground hover:text-foreground">View all</Link>
@@ -150,7 +170,7 @@ export default function Sanctuary() {
             )}
           </div>
 
-          <div className="glass rounded-xl p-5">
+          <div className="glass framed rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-heading font-semibold text-sm text-starlight">Latest Journal</h3>
               <Link to="/reflect" className="text-xs text-muted-foreground hover:text-foreground">View all</Link>
@@ -175,7 +195,7 @@ export default function Sanctuary() {
 
         {cognitiveContext && <CognitiveInsights context={cognitiveContext} />}
 
-        <div className="glass rounded-xl p-5 flex items-center gap-4">
+        <div className="glass framed rounded-xl p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-gold/10 flex items-center justify-center">
             <span className="text-lg font-bold text-gold">{tokenBalance}</span>
           </div>
