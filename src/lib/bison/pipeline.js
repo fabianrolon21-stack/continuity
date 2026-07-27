@@ -63,6 +63,8 @@ import { scoreNaturalness } from './naturalConversation/naturalnessScorer';
 import { estimateDepth } from './naturalConversation/depthController';
 import { adaptVocabulary } from './naturalConversation/vocabularyAdapter';
 import { shouldAllowHumor, recordHumorUsage, recordInteraction } from './naturalConversation/humorThrottle';
+import { resetScheduler, runModule } from './runtime/executionScheduler';
+import { captureDiagnostics } from './runtime/runtimeDiagnostics';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -417,6 +419,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
   beginInteraction();
   recordComputeMode(getComputeMode(options));
   recordInteraction();
+  resetScheduler();
 
   // 0. Privacy isolation — classify and detect PII
   const privacyClass = classifyData(userInput, { isJournalEntry: true });
@@ -540,10 +543,10 @@ export async function processInteraction(userInput, recentHistory = [], options 
   let decisionEcology = null;
   if (contextPlan.shouldLoad('humanState')) {
     startTimer('humanState');
-    try {
-      humanState = await computeHumanState(userInput, { affectiveContext });
-      communicationStyle = determineCommunicationStyle(humanState, psychologyUser || {});
-    } catch (e) {}
+    humanState = await runModule('humanState', () => computeHumanState(userInput, { affectiveContext }));
+    if (humanState) {
+      communicationStyle = await runModule('communicationAdaptation', async () => determineCommunicationStyle(humanState, psychologyUser || {}));
+    }
     endTimer('humanState');
   }
   if (contextPlan.shouldLoad('decisionEcology') && /decide|decision|should i|choose|choice|option/i.test(userInput)) {
@@ -578,13 +581,13 @@ export async function processInteraction(userInput, recentHistory = [], options 
   let cognitiveContext = null;
   if (contextPlan.shouldLoad('cognitive')) {
     startTimer('cognitive');
-    const cached = getCached('cognitive');
-    if (cached) {
-      cognitiveContext = cached;
-    } else {
-      cognitiveContext = await buildCognitiveContext();
-      if (cognitiveContext) setCached('cognitive', cognitiveContext);
-    }
+    cognitiveContext = await runModule('cognitive', async () => {
+      const cached = getCached('cognitive');
+      if (cached) return cached;
+      const value = await buildCognitiveContext();
+      if (value) setCached('cognitive', value);
+      return value;
+    });
     endTimer('cognitive');
   }
 
@@ -631,15 +634,13 @@ export async function processInteraction(userInput, recentHistory = [], options 
   let evolutionScore = null;
   if (contextPlan.shouldLoad('evolution')) {
     startTimer('evolution');
-    try {
+    evolutionScore = await runModule('evolution', async () => {
       const cached = getCached('evolution');
-      if (cached) {
-        evolutionScore = cached;
-      } else {
-        evolutionScore = await computeEvolutionScore();
-        if (evolutionScore) setCached('evolution', evolutionScore);
-      }
-    } catch (e) {}
+      if (cached) return cached;
+      const value = await computeEvolutionScore();
+      if (value) setCached('evolution', value);
+      return value;
+    });
     endTimer('evolution');
   }
 
@@ -663,13 +664,13 @@ export async function processInteraction(userInput, recentHistory = [], options 
   let identityContext = null;
   if (contextPlan.shouldLoad('identity')) {
     startTimer('identity');
-    const cached = getCached('identity');
-    if (cached) {
-      identityContext = cached;
-    } else {
-      identityContext = await getIdentityContext();
-      if (identityContext) setCached('identity', identityContext);
-    }
+    identityContext = await runModule('identity', async () => {
+      const cached = getCached('identity');
+      if (cached) return cached;
+      const value = await getIdentityContext();
+      if (value) setCached('identity', value);
+      return value;
+    });
     endTimer('identity');
   }
 
@@ -1012,6 +1013,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
       profile: getProfileSummary(),
       cacheStats: getCacheStats(),
       authority: getReport(),
+      diagnostics: captureDiagnostics(contextPlan),
     },
     provenance: {
       source: 'bison_core',
