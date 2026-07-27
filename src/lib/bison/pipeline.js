@@ -1035,9 +1035,21 @@ export async function processInteraction(userInput, recentHistory = [], options 
 // ═══════════════════════════════════════════════
 
 export function createMemoryFromMessage(messageText) {
+  // Package 46.1: every memory carries full provenance —
+  // origin, confidence, permission scope, and verification history.
   return {
     text: messageText,
     epistemic_status: EPISTEMIC_STATUS.USER_CONFIRMED,
+    origin: 'Bison conversation — user explicitly saved this message.',
+    confidence: 'high',
+    permission_scope: 'PERSISTENT',
+    verification_state: 'USER_CONFIRMED',
+    verification_history: [{
+      from_state: 'CREATED',
+      to_state: 'USER_CONFIRMED',
+      reason: 'User explicitly marked this message to remember.',
+      timestamp: new Date().toISOString(),
+    }],
   };
 }
 

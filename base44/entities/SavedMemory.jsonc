@@ -24,6 +24,69 @@
       "items": {
         "type": "string"
       }
+    },
+    "origin": {
+      "type": "string"
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium"
+    },
+    "permission_scope": {
+      "type": "string",
+      "enum": [
+        "SESSION",
+        "PERSISTENT",
+        "TEMPORARY",
+        "EXPLICIT_ONLY"
+      ],
+      "default": "PERSISTENT"
+    },
+    "verification_state": {
+      "type": "string",
+      "enum": [
+        "OBSERVED",
+        "USER_CONFIRMED",
+        "CORRECTED",
+        "CONTRADICTED",
+        "ARCHIVED"
+      ],
+      "default": "OBSERVED"
+    },
+    "verification_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from_state": {
+            "type": "string"
+          },
+          "to_state": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "corrected_text": {
+      "type": "string"
+    },
+    "is_compressed": {
+      "type": "boolean",
+      "default": false
+    },
+    "compression_period": {
+      "type": "string"
     }
   },
   "required": [

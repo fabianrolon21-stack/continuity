@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Archive, Trash2, PawPrint, Cpu, MapPin, Utensils, Clock, Play } from 'lucide-react';
+import { Plus, Archive, Trash2, PawPrint, Cpu, MapPin, Utensils, Clock, Play, ShieldCheck } from 'lucide-react';
 import EventTimeline from '@/components/EventTimeline';
 import MemoryReplay from '@/components/MemoryReplay';
+import MemoryIntegrityPanel from '@/components/memory/MemoryIntegrityPanel';
 
 const CATEGORIES = [
   { id: 'animals', label: 'Animals', icon: PawPrint, color: 'hsl(120 40% 58%)' },
@@ -89,6 +90,9 @@ export default function Archives() {
             <TabsTrigger value="replay" className="flex items-center gap-1.5">
               <Play className="w-3.5 h-3.5" /> Replay
             </TabsTrigger>
+            <TabsTrigger value="integrity" className="flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5" /> Integrity
+            </TabsTrigger>
           </TabsList>
 
           {CATEGORIES.map(cat => (
@@ -164,6 +168,10 @@ export default function Archives() {
 
           <TabsContent value="replay" className="mt-4">
             <MemoryReplay />
+          </TabsContent>
+
+          <TabsContent value="integrity" className="mt-4">
+            <MemoryIntegrityPanel />
           </TabsContent>
         </Tabs>
       </div>

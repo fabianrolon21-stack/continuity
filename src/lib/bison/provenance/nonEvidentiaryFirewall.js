@@ -18,7 +18,40 @@ export const NON_EVIDENTIARY_TYPES = {
   DEVELOPER_PROMPT: 'DEVELOPER_PROMPT',
   SAMPLE_CONVERSATION: 'SAMPLE_CONVERSATION',
   TUTORIAL_TEXT: 'TUTORIAL_TEXT',
+  TEST_FIXTURE: 'TEST_FIXTURE',
 };
+
+// ── Pattern-based detection (Package 46.5) ──
+// Text that looks like examples, fixtures, or documentation
+// is flagged so it never enters semantic memory or reasoning.
+
+const NON_EVIDENTIARY_TEXT_PATTERNS = [
+  { pattern: /lorem ipsum/i, type: 'TEST_FIXTURE' },
+  { pattern: /\btest fixture\b|\bunit test\b|\bmock data\b/i, type: 'TEST_FIXTURE' },
+  { pattern: /\bjohn doe\b|\bjane doe\b/i, type: 'TEST_FIXTURE' },
+  { pattern: /^example:|\bsample conversation\b/i, type: 'SAMPLE_CONVERSATION' },
+  { pattern: /this is (just )?(an? )?(example|test|sample|demo|placeholder)/i, type: 'EXAMPLE_ONLY' },
+  { pattern: /\bdeveloper prompt\b|\bsystem prompt\b/i, type: 'DEVELOPER_PROMPT' },
+  { pattern: /\btutorial\b.*\bstep \d/i, type: 'TUTORIAL_TEXT' },
+];
+
+// Returns the matched non-evidentiary type, or null if the text is clean.
+export function detectNonEvidentiaryText(text) {
+  if (!text || typeof text !== 'string') return null;
+  for (const { pattern, type } of NON_EVIDENTIARY_TEXT_PATTERNS) {
+    if (pattern.test(text)) return type;
+  }
+  return null;
+}
+
+// Guard for evidence boundaries (memory creation, compression, synthesis).
+export function assertEvidentiary(text) {
+  const type = detectNonEvidentiaryText(text);
+  if (type) {
+    return { allowed: false, reason: `Classified as ${type} — non-evidentiary data cannot become evidence about the user.` };
+  }
+  return { allowed: true, reason: null };
+}
 
 const NON_EVIDENTIARY_FLAG = '_classification';
 
