@@ -65,6 +65,7 @@ import { adaptVocabulary } from './naturalConversation/vocabularyAdapter';
 import { shouldAllowHumor, recordHumorUsage, recordInteraction } from './naturalConversation/humorThrottle';
 import { resetScheduler, runModule } from './runtime/executionScheduler';
 import { captureDiagnostics } from './runtime/runtimeDiagnostics';
+import { loadWellbeingForecast, buildWellbeingForecastContextString } from './wellbeing/forecastEngine';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -353,6 +354,7 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   addCtx('resource', 'CRITICAL', phaseContext.resourceContext, 'Resource context', null);
   addCtx('failsafe', 'CRITICAL', phaseContext.failsafeContext, 'Failsafe context', null);
   addCtx('continuity', 'HIGH', phaseContext.continuityContext, 'Session continuity — cross-session awareness', null);
+  addCtx('wellbeingForecast', 'LOW', phaseContext.wellbeingForecastContext, 'Wellbeing trend forecast — deterministic, data-driven', null);
   addCtx('empathyLoop', 'HIGH', phaseContext.empathyLoopContext, 'Empathy loop', null);
   addCtx('metaInsight', 'OPTIONAL', phaseContext.metaInsightContext, 'Meta-systemic insight', 'identity');
   addCtx('buildingStory', 'OPTIONAL', phaseContext.buildingStoryContext, 'Building Story simulation', 'reflection');
@@ -675,6 +677,20 @@ export async function processInteraction(userInput, recentHistory = [], options 
     endTimer('identity');
   }
 
+  // 5f-wb. Wellbeing forecast (Package 48) — lazy loaded, deterministic trend analysis
+  let wellbeingForecast = null;
+  if (contextPlan.shouldLoad('wellbeingForecast')) {
+    startTimer('wellbeingForecast');
+    const cached = getCached('wellbeingForecast');
+    if (cached) {
+      wellbeingForecast = cached;
+    } else {
+      wellbeingForecast = await runModule('wellbeingForecast', async () => loadWellbeingForecast());
+      if (wellbeingForecast) setCached('wellbeingForecast', wellbeingForecast);
+    }
+    endTimer('wellbeingForecast');
+  }
+
   // 5f. World awareness + temporal context (Package 28)
   const temporalContext = getTemporalContext();
 
@@ -823,6 +839,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     resourceContext: orchestrator.getResourceContext(),
     failsafeContext: orchestrator.getFailsafeContext(),
     continuityContext: orchestrator.getContinuityContext(),
+    wellbeingForecastContext: wellbeingForecast ? buildWellbeingForecastContextString(wellbeingForecast) : null,
   };
   startTimer('promptAssembly');
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);

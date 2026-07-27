@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Plus, Calendar } from 'lucide-react';
+import { Plus, Calendar, TrendingUp } from 'lucide-react';
+import WellbeingTrendsPanel from '@/components/wellbeing/WellbeingTrendsPanel';
 import { emit, EVENT_TYPES } from '@/lib/events';
 import { incrementCheckIn } from '@/lib/bison/ascensionEngine';
 
@@ -166,6 +167,17 @@ export default function CheckIn() {
           </div>
         )}
       </div>
+
+      {/* Wellbeing Trends (Package 48) */}
+      {checkins.length >= 3 && (
+        <div className="px-6 lg:px-10 pb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="w-4 h-4 text-leaf" />
+            <h2 className="font-heading text-lg font-semibold text-leaf">Trends & Forecast</h2>
+          </div>
+          <WellbeingTrendsPanel />
+        </div>
+      )}
     </div>
   );
 }

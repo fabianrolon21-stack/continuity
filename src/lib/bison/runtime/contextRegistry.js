@@ -69,6 +69,7 @@ export const CONTEXT_MODULES = {
   communicationAdaptation:{ priority: PRIORITIES.LOW, estimatedTokens: 200, minimumTokens: 50, estimatedQueries: 0, dependencies: ['humanState'], cacheable: false, optional: true },
   decisionEcology:        { priority: PRIORITIES.LOW, estimatedTokens: 150, minimumTokens: 50, estimatedQueries: 0, dependencies: [], cacheable: false, optional: true },
   socialNav:              { priority: PRIORITIES.LOW, estimatedTokens: 400, minimumTokens: 200, estimatedQueries: 1, dependencies: [], cacheable: false, optional: false },
+  wellbeingForecast:      { priority: PRIORITIES.LOW, estimatedTokens: 300, minimumTokens: 100, estimatedQueries: 1, dependencies: [], cacheable: true, cacheTTL: 60000, optional: true },
 
   // ── OPTIONAL (explicit request only) ──
   metaInsight:            { priority: PRIORITIES.OPTIONAL, estimatedTokens: 500, minimumTokens: 200, estimatedQueries: 3, dependencies: ['reflection', 'identity', 'cognitive'], cacheable: false, optional: true },
