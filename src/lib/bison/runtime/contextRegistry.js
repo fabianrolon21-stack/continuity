@@ -71,6 +71,7 @@ export const CONTEXT_MODULES = {
   socialNav:              { priority: PRIORITIES.LOW, estimatedTokens: 400, minimumTokens: 200, estimatedQueries: 1, dependencies: [], cacheable: false, optional: false },
   wellbeingForecast:      { priority: PRIORITIES.LOW, estimatedTokens: 300, minimumTokens: 100, estimatedQueries: 1, dependencies: [], cacheable: true, cacheTTL: 60000, optional: true },
   correlationPatterns:    { priority: PRIORITIES.LOW, estimatedTokens: 350, minimumTokens: 100, estimatedQueries: 1, dependencies: [], cacheable: true, cacheTTL: 60000, optional: true },
+  wellbeingInterventions: { priority: PRIORITIES.LOW, estimatedTokens: 400, minimumTokens: 100, estimatedQueries: 2, dependencies: [], cacheable: true, cacheTTL: 60000, optional: true },
 
   // ── OPTIONAL (explicit request only) ──
   metaInsight:            { priority: PRIORITIES.OPTIONAL, estimatedTokens: 500, minimumTokens: 200, estimatedQueries: 3, dependencies: ['reflection', 'identity', 'cognitive'], cacheable: false, optional: true },

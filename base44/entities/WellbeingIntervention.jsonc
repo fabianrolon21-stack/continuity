@@ -1,0 +1,55 @@
+{
+  "name": "WellbeingIntervention",
+  "type": "object",
+  "properties": {
+    "intervention_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "trigger_reason": {
+      "type": "string"
+    },
+    "target_metrics": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "estimated_effort": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "low"
+    },
+    "evidence_basis": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected",
+        "completed",
+        "snoozed"
+      ],
+      "default": "pending"
+    },
+    "outcome_note": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "intervention_id",
+    "title",
+    "status"
+  ]
+}

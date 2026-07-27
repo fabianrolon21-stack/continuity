@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Plus, Calendar, TrendingUp, GitCompare } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, GitCompare, Sparkles } from 'lucide-react';
 import WellbeingTrendsPanel from '@/components/wellbeing/WellbeingTrendsPanel';
 import PatternCorrelationsPanel from '@/components/wellbeing/PatternCorrelationsPanel';
+import InterventionSuggestionsPanel from '@/components/wellbeing/InterventionSuggestionsPanel';
 import { emit, EVENT_TYPES } from '@/lib/events';
 import { incrementCheckIn } from '@/lib/bison/ascensionEngine';
 
@@ -188,6 +189,17 @@ export default function CheckIn() {
             <h2 className="font-heading text-lg font-semibold text-sky-accent">Pattern Correlations</h2>
           </div>
           <PatternCorrelationsPanel />
+        </div>
+      )}
+
+      {/* Intervention Suggestions (Package 50) */}
+      {checkins.length >= 3 && (
+        <div className="px-6 lg:px-10 pb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-4 h-4 text-peach" />
+            <h2 className="font-heading text-lg font-semibold text-peach">Suggestions for You</h2>
+          </div>
+          <InterventionSuggestionsPanel />
         </div>
       )}
     </div>
