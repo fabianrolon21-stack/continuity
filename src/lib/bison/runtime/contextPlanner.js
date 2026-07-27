@@ -24,7 +24,7 @@ import {
 const ALWAYS_LOADED = [
   'constitutional', 'runtime', 'protection', 'world', 'temporal',
   'affective', 'immune', 'selfModel', 'bandwidth', 'masking',
-  'empathyLoop', 'provenance', 'nonEvidentiaryFirewall',
+  'empathyLoop', 'provenance', 'nonEvidentiaryFirewall', 'constantCircle',
 ];
 
 // ── Intent classification patterns ──
@@ -61,9 +61,9 @@ const EXPLICIT_REQUEST_CHECKS = {
 
 const INTENT_OPTIONALS = {
   GENERAL_CHAT: ['humanState', 'humor', 'consciousness', 'wellbeingForecast', 'correlationPatterns', 'wellbeingInterventions', 'wellbeingNarrative'],
-  EMOTIONAL_SUPPORT: ['consciousness', 'stressPropagation', 'communicationAdaptation', 'humor', 'wellbeingForecast', 'correlationPatterns', 'wellbeingInterventions', 'wellbeingNarrative'],
+  EMOTIONAL_SUPPORT: ['consciousness', 'stressPropagation', 'communicationAdaptation', 'humor', 'wellbeingForecast', 'correlationPatterns', 'wellbeingInterventions', 'wellbeingNarrative', 'emergentMeaning'],
   SOCIAL: ['socialNav', 'communicationAdaptation'],
-  SELF_REFLECTION: ['reflection', 'valueModel', 'continuity'],
+  SELF_REFLECTION: ['reflection', 'valueModel', 'continuity', 'emergentMeaning'],
   META_ANALYSIS: ['evolution', 'consciousness', 'continuity'],
   BUILDING_STORY: [],
   ORACLE: [],

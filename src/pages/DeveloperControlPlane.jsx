@@ -10,6 +10,7 @@ import { listCapabilities } from '@/lib/security/deviceAccess';
 import { getComputeMode } from '@/lib/bison/pipeline';
 import RuntimeDiagnosticsPanel from '@/components/developer/RuntimeDiagnosticsPanel';
 import ModuleOrchestratorDashboard from '@/components/developer/ModuleOrchestratorDashboard';
+import SpinProtocolPanel from '@/components/developer/SpinProtocolPanel';
 import { Shield, Activity, AlertTriangle, FileText, Bug, Lock, Hash, Cpu, Power, Ban, CheckCircle, XCircle } from 'lucide-react';
 
 export default function DeveloperControlPlane() {
@@ -123,6 +124,9 @@ export default function DeveloperControlPlane() {
 
         {/* Runtime Diagnostics (Package 45.5) */}
         <RuntimeDiagnosticsPanel accent={accent} />
+
+        {/* Spin Protocol Log (Package 38) */}
+        <SpinProtocolPanel />
 
         {/* Incident Controls */}
         <div className="glass rounded-xl p-5">

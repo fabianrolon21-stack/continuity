@@ -11,6 +11,7 @@ import { getImmuneMemory } from '@/lib/bison/immuneSystem';
 import { getComputeMode } from '@/lib/bison/pipeline';
 import { calculateTrustScore } from '@/lib/bison/trustScoreCalculator';
 import { getQuarantinedCount } from '@/lib/bison/provenance/provenanceTracker';
+import { getSpinLog } from '@/lib/bison/evolution/cognitiveCircleManager';
 
 export async function collectDashboardState(lastInteractionResult = null) {
   try {
@@ -104,6 +105,10 @@ export async function collectDashboardState(lastInteractionResult = null) {
         hallucinationsPrevented: lastInteractionResult?.runtimeAuthorityReport?.hallucinationsPrevented || 0,
       },
       lumenCount: await getLumenCount(),
+      spinProtocol: {
+        lastSpin: lastInteractionResult?.spinProtocolResult || null,
+        recentSpins: getSpinLog().slice(0, 5),
+      },
     };
   } catch (e) {
     return null;

@@ -47,6 +47,7 @@ export const CONTEXT_MODULES = {
   empathyLoop:            { priority: PRIORITIES.HIGH, estimatedTokens: 150, minimumTokens: 100, estimatedQueries: 0, dependencies: [], cacheable: false, optional: false },
   provenance:             { priority: PRIORITIES.HIGH, estimatedTokens: 200, minimumTokens: 100, estimatedQueries: 0, dependencies: [], cacheable: false, optional: false },
   nonEvidentiaryFirewall: { priority: PRIORITIES.HIGH, estimatedTokens: 100, minimumTokens: 50, estimatedQueries: 0, dependencies: [], cacheable: false, optional: false },
+  constantCircle:         { priority: PRIORITIES.HIGH, estimatedTokens: 150, minimumTokens: 100, estimatedQueries: 0, dependencies: [], cacheable: false, optional: false },
 
   // ── NORMAL ──
   humanState:             { priority: PRIORITIES.NORMAL, estimatedTokens: 400, minimumTokens: 200, estimatedQueries: 1, dependencies: ['affective'], cacheable: true, cacheTTL: 30000, optional: false },
@@ -73,6 +74,7 @@ export const CONTEXT_MODULES = {
   correlationPatterns:    { priority: PRIORITIES.LOW, estimatedTokens: 350, minimumTokens: 100, estimatedQueries: 1, dependencies: [], cacheable: true, cacheTTL: 60000, optional: true },
   wellbeingInterventions: { priority: PRIORITIES.LOW, estimatedTokens: 400, minimumTokens: 100, estimatedQueries: 2, dependencies: [], cacheable: true, cacheTTL: 60000, optional: true },
   wellbeingNarrative:     { priority: PRIORITIES.LOW, estimatedTokens: 350, minimumTokens: 100, estimatedQueries: 2, dependencies: [], cacheable: true, cacheTTL: 60000, optional: true },
+  emergentMeaning:        { priority: PRIORITIES.LOW, estimatedTokens: 250, minimumTokens: 50, estimatedQueries: 0, dependencies: [], cacheable: false, optional: true },
 
   // ── OPTIONAL (explicit request only) ──
   metaInsight:            { priority: PRIORITIES.OPTIONAL, estimatedTokens: 500, minimumTokens: 200, estimatedQueries: 3, dependencies: ['reflection', 'identity', 'cognitive'], cacheable: false, optional: true },
