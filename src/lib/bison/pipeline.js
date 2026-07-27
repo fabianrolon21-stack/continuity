@@ -57,6 +57,12 @@ import { createPromptManifest } from './runtime/promptManifest';
 import { routeExternalEvidence, buildEvidenceRouterContextString } from './runtime/externalEvidenceRouter';
 import { evaluateEvidence, formatEvidenceReport, buildEvidenceContextString } from './runtime/realityEvidenceEngine';
 import { assessCommunicationClimate, buildClimateContextString } from './runtime/communicationClimate';
+import { selectConversationMode, buildConversationModeContextString, NATURAL_CONVERSATION_RULES } from './naturalConversation/conversationModeEngine';
+import { sanitizeStyle } from './naturalConversation/styleSanitizer';
+import { scoreNaturalness } from './naturalConversation/naturalnessScorer';
+import { estimateDepth } from './naturalConversation/depthController';
+import { adaptVocabulary } from './naturalConversation/vocabularyAdapter';
+import { shouldAllowHumor, recordHumorUsage, recordInteraction } from './naturalConversation/humorThrottle';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -289,6 +295,18 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   manifest.addSection({ id: 'provenanceRules', priority: 'CRITICAL', content: `DATA PROVENANCE: Every piece of information you use must carry provenance metadata. When stating a fact, you must be able to trace its source. If the user asks "where did you get that?" or "why do you know this?", provide a source audit: the value, source, confidence, permission, and reason it was used. If you cannot identify the source of a claim, say: "I cannot determine where this information originated. I will not use it further until it is re-confirmed." Never use examples, documentation, developer prompts, or tutorial text as evidence about the user.`, reason: 'Data provenance protocol' });
   manifest.addSection({ id: 'runtimeAuthority', priority: 'CRITICAL', content: `RUNTIME AUTHORITY: All runtime metrics (token counts, cache hits, database queries, timing, compute mode, bandwidth, contexts loaded) are owned by the runtime. You may NEVER generate or invent these values. If asked about runtime metrics, present the Runtime Audit Report provided in context — never fabricate numbers.`, reason: 'Runtime authority enforcement — prevents hallucinated metrics' });
 
+  // ── CRITICAL: Natural Conversation Engine (Package 44.5) ──
+  manifest.addSection({ id: 'naturalRules', priority: 'CRITICAL', content: NATURAL_CONVERSATION_RULES, reason: 'Natural conversation rules — anti-AI-speak' });
+  if (phaseContext.conversationMode) {
+    manifest.addSection({ id: 'conversationMode', priority: 'CRITICAL', content: buildConversationModeContextString(phaseContext.conversationMode), reason: 'Conversation mode and style constraints' });
+  }
+  if (phaseContext.depthEstimate) {
+    manifest.addSection({ id: 'depthControl', priority: 'HIGH', content: `RESPONSE LENGTH: Aim for ~${phaseContext.depthEstimate.targetWords} words. ${phaseContext.depthEstimate.note || ''}`, reason: 'Response depth control' });
+  }
+  if (phaseContext.vocabularyLevel && phaseContext.vocabularyLevel !== 'conversational') {
+    manifest.addSection({ id: 'vocabularyLevel', priority: 'HIGH', content: `VOCABULARY: Use ${phaseContext.vocabularyLevel} vocabulary. Match the user's technical level.`, reason: 'Adaptive vocabulary' });
+  }
+
   if (isDeveloper) {
     manifest.addSection({ id: 'developer', priority: 'HIGH', content: `DEVELOPER CONTEXT:\nThe authenticated user is a developer. You may discuss system architecture, explain diagnostics, and summarize reports. You CANNOT grant privileges, execute administrative actions, or bypass safety. Administrative actions happen in the Developer Control Plane, not here.`, reason: 'Developer context' });
   }
@@ -398,6 +416,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 0a-RA. Runtime Authority — begin interaction, reset all metrics (Part I)
   beginInteraction();
   recordComputeMode(getComputeMode(options));
+  recordInteraction();
 
   // 0. Privacy isolation — classify and detect PII
   const privacyClass = classifyData(userInput, { isJournalEntry: true });
@@ -481,6 +500,11 @@ export async function processInteraction(userInput, recentHistory = [], options 
 
   // 2c. Affective context (Phase 16)
   const affectiveContext = interpretAffectiveContext(userInput, state, embodiedContext);
+
+  // 2c-nat. Conversation mode + depth + vocabulary (Package 44.5)
+  const conversationMode = selectConversationMode(userInput, state, { recentHistory, affectiveContext });
+  const depthEstimate = estimateDepth(userInput, conversationMode);
+  const vocabularyLevel = adaptVocabulary(userInput, state);
 
   // 2c-bis. Somatic sensor (Package: Somatic Anchor) — may trigger co-regulation
   const somaticLoad = calculateSomaticLoad(userInput, affectiveContext);
@@ -741,8 +765,18 @@ export async function processInteraction(userInput, recentHistory = [], options 
     if (promises.length > 0) await Promise.all(promises);
   } catch (e) {}
 
+  // 5z-nat. Humor throttle (Package 44.5)
+  let humorContext = null;
+  if (shouldAllowHumor()) {
+    humorContext = buildHumorContextString(userInput, mode, state, recurrence);
+    if (humorContext) recordHumorUsage();
+  }
+
   // 6. Bison personality + LLM generation
   const phaseContext = {
+    conversationMode,
+    depthEstimate,
+    vocabularyLevel,
     selfModelContext,
     affectiveContext,
     neuroKnowledge,
@@ -761,7 +795,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     autonomyContext: buildAutonomyContextString(),
     cognitiveContext: cognitiveContext ? buildCognitiveContextString(cognitiveContext) : null,
     consciousnessContext: buildConsciousnessContextString(consciousnessState),
-    humorContext: buildHumorContextString(userInput, mode, state, recurrence),
+    humorContext,
     oracleContext: oracleConsultation?.contextString || null,
     maskingContext: buildMaskingContextString(mask, avoidedTopicHit),
     bandwidthContext: buildBandwidthContextString({ cognitiveLoad, breakerResult }),
@@ -865,6 +899,15 @@ export async function processInteraction(userInput, recentHistory = [], options 
   } catch (e) {
     bisonText = getFallbackResponse(mode, recurrence);
   }
+
+  // 6b-nat. Style sanitizer + naturalness score (Package 44.5)
+  if (!breakerTripped) {
+    bisonText = sanitizeStyle(bisonText, conversationMode, {
+      isEmotional: state.emotionIntensity > 0.5,
+      vocabularyLevel,
+    });
+  }
+  const naturalnessResult = scoreNaturalness(bisonText);
 
   // 6c. Record LUMEN transformation (Package 32)
   if (metaInsightResult?.synthesis?.lumenToken) {
@@ -977,6 +1020,11 @@ export async function processInteraction(userInput, recentHistory = [], options 
       isDeveloper: !!options.isDeveloper,
     },
     privacy: privacyClass,
+    conversationMode: conversationMode?.mode || null,
+    naturalnessScore: naturalnessResult?.score ?? null,
+    naturalnessMetrics: naturalnessResult?.metrics ?? null,
+    depthEstimate: depthEstimate || null,
+    vocabularyLevel: vocabularyLevel || null,
   };
 }
 
