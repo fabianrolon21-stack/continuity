@@ -60,8 +60,8 @@ const EXPLICIT_REQUEST_CHECKS = {
 // ── Intent bundles — optional contexts per intent ──
 
 const INTENT_OPTIONALS = {
-  GENERAL_CHAT: ['humanState', 'humor', 'consciousness', 'wellbeingForecast', 'correlationPatterns', 'wellbeingInterventions'],
-  EMOTIONAL_SUPPORT: ['consciousness', 'stressPropagation', 'communicationAdaptation', 'humor', 'wellbeingForecast', 'correlationPatterns', 'wellbeingInterventions'],
+  GENERAL_CHAT: ['humanState', 'humor', 'consciousness', 'wellbeingForecast', 'correlationPatterns', 'wellbeingInterventions', 'wellbeingNarrative'],
+  EMOTIONAL_SUPPORT: ['consciousness', 'stressPropagation', 'communicationAdaptation', 'humor', 'wellbeingForecast', 'correlationPatterns', 'wellbeingInterventions', 'wellbeingNarrative'],
   SOCIAL: ['socialNav', 'communicationAdaptation'],
   SELF_REFLECTION: ['reflection', 'valueModel', 'continuity'],
   META_ANALYSIS: ['evolution', 'consciousness', 'continuity'],

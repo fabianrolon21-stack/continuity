@@ -68,6 +68,7 @@ import { captureDiagnostics } from './runtime/runtimeDiagnostics';
 import { loadWellbeingForecast, buildWellbeingForecastContextString } from './wellbeing/forecastEngine';
 import { loadCorrelations, buildCorrelationContextString } from './wellbeing/correlationEngine';
 import { loadInterventionContext, buildInterventionContextString } from './wellbeing/interventionEngine';
+import { loadNarrativeContext, buildNarrativeContextString } from './wellbeing/narrativeEngine';
 import { detectLifecycleDiagnosticsRequest, formatLifecycleReport, preempt, isPreempted } from './runtime/moduleLifecycleManager';
 
 // ═══════════════════════════════════════════════
@@ -360,6 +361,7 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   addCtx('wellbeingForecast', 'LOW', phaseContext.wellbeingForecastContext, 'Wellbeing trend forecast — deterministic, data-driven', null);
   addCtx('correlationPatterns', 'LOW', phaseContext.correlationPatternsContext, 'Wellbeing pattern correlations — deterministic, statistical', null);
   addCtx('wellbeingInterventions', 'LOW', phaseContext.wellbeingInterventionsContext, 'Wellbeing interventions — matched to user data patterns', null);
+  addCtx('wellbeingNarrative', 'LOW', phaseContext.wellbeingNarrativeContext, 'Wellbeing narrative — weekly synthesis with resilience score', null);
   addCtx('empathyLoop', 'HIGH', phaseContext.empathyLoopContext, 'Empathy loop', null);
   addCtx('metaInsight', 'OPTIONAL', phaseContext.metaInsightContext, 'Meta-systemic insight', 'identity');
   addCtx('buildingStory', 'OPTIONAL', phaseContext.buildingStoryContext, 'Building Story simulation', 'reflection');
@@ -744,6 +746,20 @@ export async function processInteraction(userInput, recentHistory = [], options 
     endTimer('wellbeingInterventions');
   }
 
+  // 5f-nar. Wellbeing narrative (Package 52) — lazy loaded, deterministic synthesis
+  let wellbeingNarrative = null;
+  if (contextPlan.shouldLoad('wellbeingNarrative')) {
+    startTimer('wellbeingNarrative');
+    const cached = getCached('wellbeingNarrative');
+    if (cached) {
+      wellbeingNarrative = cached;
+    } else {
+      wellbeingNarrative = await runModule('wellbeingNarrative', async () => loadNarrativeContext());
+      if (wellbeingNarrative) setCached('wellbeingNarrative', wellbeingNarrative);
+    }
+    endTimer('wellbeingNarrative');
+  }
+
   // 5f. World awareness + temporal context (Package 28)
   const temporalContext = getTemporalContext();
 
@@ -895,6 +911,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     wellbeingForecastContext: wellbeingForecast ? buildWellbeingForecastContextString(wellbeingForecast) : null,
     correlationPatternsContext: correlationPatterns ? buildCorrelationContextString(correlationPatterns) : null,
     wellbeingInterventionsContext: wellbeingInterventions ? buildInterventionContextString(wellbeingInterventions) : null,
+    wellbeingNarrativeContext: wellbeingNarrative ? buildNarrativeContextString(wellbeingNarrative) : null,
   };
   startTimer('promptAssembly');
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
