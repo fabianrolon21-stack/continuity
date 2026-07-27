@@ -4,11 +4,14 @@ import { base44 } from '@/api/base44Client';
 import { computeWorldState } from '@/lib/world/worldStateEngine';
 import { getHabitat } from '@/lib/sanctuary/habitats';
 import { chooseBehavior, BEHAVIOR_NOTES, BEHAVIORS } from '@/lib/sanctuary/bisonBehavior';
+import { pickCareScene } from '@/lib/sanctuary/careScenes';
+import { eventBus } from '@/lib/events/eventBus';
+import EmoteSticker from '@/components/sanctuary/EmoteSticker';
 import { checkAchievements } from '@/lib/bison/achievementEngine';
 import SceneBison from '@/components/sanctuary/SceneBison';
 import SceneWindow from '@/components/sanctuary/SceneWindow';
 import SceneParticles from '@/components/sanctuary/SceneParticles';
-import { Sprout, TreePine, Flame, Waves, Snowflake, Gem, BookOpen, Telescope, Lamp, Gamepad2, Zap } from 'lucide-react';
+import { Sprout, TreePine, Flame, Waves, Snowflake, Gem, BookOpen, Telescope, Lamp, Gamepad2, Zap, Apple, Droplets } from 'lucide-react';
 
 const OBJECT_ICONS = { Sprout, TreePine, Flame, Waves, Snowflake, Gem, BookOpen, Telescope, Lamp };
 
@@ -16,6 +19,10 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
   const habitat = getHabitat(config?.habitat);
   const [worldState, setWorldState] = useState(() => computeWorldState());
   const [behavior, setBehavior] = useState(BEHAVIORS.IDLE);
+  const [emote, setEmote] = useState(null);
+  const [careProp, setCareProp] = useState(null);
+  const sceneActiveRef = useRef(false);
+  const sceneTimersRef = useRef([]);
   const trackedWeather = useRef(false);
   const trackedSleep = useRef(false);
 
@@ -37,13 +44,45 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
         weather: worldState.weather.current,
         prev,
       });
-      prev = b;
-      setBehavior(b);
+      if (!sceneActiveRef.current) {
+        prev = b;
+        setBehavior(b);
+      }
       timer = setTimeout(tick, durationMs);
     };
     tick();
     return () => clearTimeout(timer);
   }, [energy, worldState.weather.current, worldState.sky.isNight, worldState.isLateNight]);
+
+  // Care scenes — quick actions trigger scripted, unpredictable reactions
+  useEffect(() => {
+    const unsub = eventBus.subscribe('BISON_CARE_ACTION', (event) => {
+      sceneTimersRef.current.forEach(clearTimeout);
+      const { prop, steps } = pickCareScene(event.payload?.action);
+      sceneActiveRef.current = true;
+      setCareProp(prop);
+      const timers = [];
+      let delay = 400;
+      for (const step of steps) {
+        timers.push(setTimeout(() => {
+          setBehavior(step.motion);
+          setEmote(step.emote || null);
+        }, delay));
+        delay += step.ms;
+      }
+      timers.push(setTimeout(() => {
+        sceneActiveRef.current = false;
+        setCareProp(null);
+        setEmote(null);
+        setBehavior(BEHAVIORS.IDLE);
+      }, delay));
+      sceneTimersRef.current = timers;
+    });
+    return () => {
+      unsub();
+      sceneTimersRef.current.forEach(clearTimeout);
+    };
+  }, []);
 
   // Track weather seen (Window Watcher achievement) — once per visit
   useEffect(() => {
@@ -123,8 +162,44 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
 
           {/* Space C — the Bison, always centered */}
           <div className="absolute bottom-[70px] left-1/2 -translate-x-1/2">
-            <SceneBison behavior={behavior} accent={habitat.accent} />
+            <div className="relative">
+              <EmoteSticker emote={emote} />
+              <SceneBison behavior={behavior} accent={habitat.accent} />
+            </div>
           </div>
+
+          {/* Care prop — drops in near the Bison during scenes */}
+          <AnimatePresence>
+            {careProp && (
+              <motion.div
+                key={careProp}
+                className="absolute bottom-[74px] left-[calc(50%+95px)]"
+                initial={{ y: -120, opacity: 0, scale: 0.5 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+              >
+                {careProp === 'apple' && (
+                  <div className="w-9 h-9 rounded-full bg-red-500/20 border border-red-400/30 flex items-center justify-center">
+                    <Apple className="w-5 h-5 text-red-400" />
+                  </div>
+                )}
+                {careProp === 'bucket' && (
+                  <div className="w-9 h-9 rounded-b-xl rounded-t-sm bg-sky-500/20 border border-sky-400/30 flex items-center justify-center">
+                    <Droplets className="w-5 h-5 text-sky-400" />
+                  </div>
+                )}
+                {careProp === 'ball' && (
+                  <motion.div
+                    className="w-8 h-8 rounded-full"
+                    style={{ background: 'radial-gradient(circle at 35% 30%, hsl(21 73% 69%), hsl(21 60% 45%))' }}
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
+                  />
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Space D — meaningful object (left) */}
           <div className="absolute bottom-8 left-8 flex flex-col items-center gap-1.5">

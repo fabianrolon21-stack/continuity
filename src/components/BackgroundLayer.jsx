@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import LivingWorld from '@/components/world/LivingWorld';
+import SymbolDriftLayer from '@/components/environment/SymbolDriftLayer';
 import DecorativePatternLayer from '@/components/environment/DecorativePatternLayer';
 import AmbientLightingLayer from '@/components/environment/AmbientLightingLayer';
 import WeatherOverlay from '@/components/environment/WeatherOverlay';
@@ -82,6 +83,7 @@ export default function BackgroundLayer() {
   return (
     <>
       <LivingWorld performanceMode={performanceMode} userBirthday={userBirthday} />
+      <SymbolDriftLayer disabled={disableDecorative} reduceMotion={reduceMotion} />
       <BisonEnvironment themeId={activeTheme} reduceMotion={reduceMotion} />
       <DecorativePatternLayer
         themeId={activeTheme}

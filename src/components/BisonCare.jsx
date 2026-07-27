@@ -7,6 +7,8 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { wakeAndTick, performCareAction } from '@/lib/bison/companionEngine';
+import { emit } from '@/lib/events/eventBus';
+import StickerBurst from '@/components/sanctuary/StickerBurst';
 import { Apple, Droplets, Moon, Heart, Sparkles } from 'lucide-react';
 
 const CARE_ACTIONS = [
@@ -19,6 +21,7 @@ const CARE_ACTIONS = [
 export default function BisonCare() {
   const [needs, setNeeds] = useState(null);
   const [lastAction, setLastAction] = useState(null);
+  const [burst, setBurst] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,6 +32,9 @@ export default function BisonCare() {
   }, []);
 
   const handleCare = async (actionId) => {
+    // Immediate visual feedback + notify the living scene
+    setBurst(actionId);
+    emit('BISON_CARE_ACTION', { action: actionId }, 'BisonCare');
     try {
       const updated = await performCareAction(actionId);
       setNeeds(updated);
@@ -40,7 +46,8 @@ export default function BisonCare() {
   if (loading) return null;
 
   return (
-    <div className="glass rounded-xl p-5">
+    <div className="glass framed rounded-xl p-5">
+      <StickerBurst action={burst} onDone={() => setBurst(null)} />
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="w-4 h-4 text-gold" />
         <h3 className="font-heading font-semibold text-sm text-gold">Care for Bison</h3>

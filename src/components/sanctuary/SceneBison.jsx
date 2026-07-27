@@ -16,6 +16,9 @@ const BEHAVIOR_MOTION = {
   [BEHAVIORS.SLEEP]: { rotate: 0, y: 14 },
   [BEHAVIORS.SIT]: { y: 8 },
   [BEHAVIORS.LOOK_AT_USER]: { rotate: 0, scale: [1, 1.02, 1], transition: { duration: 3, repeat: Infinity } },
+  // Care-scene motions
+  sniff: { rotate: [0, 12, 10, 12, 0], y: [0, 4, 4, 4, 0], transition: { duration: 2.4, repeat: Infinity } },
+  celebrate: { y: [0, -16, 0, -10, 0], rotate: [0, -5, 5, 0], transition: { duration: 1.1, repeat: Infinity } },
 };
 
 export default function SceneBison({ behavior = BEHAVIORS.IDLE, accent = 'hsl(42 63% 55%)' }) {

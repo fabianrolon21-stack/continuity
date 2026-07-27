@@ -108,7 +108,7 @@ export default function Garden() {
         )}
 
         {/* Garden canvas */}
-        <GardenCanvas plants={plants} onPlantClick={(p) => handleCare(p.id)} onEmptySpotClick={() => setShowPlantPicker(true)} />
+        <GardenCanvas plants={plants} caringPlantId={caring} onPlantClick={(p) => handleCare(p.id)} onEmptySpotClick={() => setShowPlantPicker(true)} />
 
         {/* Plant button */}
         <button
