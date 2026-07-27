@@ -43,3 +43,18 @@ export {
   getModuleHealth,
 } from './moduleRegistry';
 export { getHealthSummary } from './healthMonitor';
+export {
+  resumeSession,
+  checkpoint,
+  startCheckpointing,
+  stopCheckpointing,
+  generateSessionSummary,
+  finalizeSession,
+  buildContinuityContextString,
+} from './sessionResumeService';
+export {
+  serializeSessionState,
+  computeSessionGap,
+  isResumable,
+  SESSION_STATE_VERSION,
+} from './sessionStateSerializer';

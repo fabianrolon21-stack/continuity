@@ -8,6 +8,7 @@ import DailyIntention from '@/components/DailyIntention';
 import LivingRoom from '@/components/world/LivingRoom';
 import PerformanceModeSelector from '@/components/world/PerformanceModeSelector';
 import { buildCognitiveContext } from '@/lib/bison/cognitiveContext';
+import SessionContinuityBanner from '@/components/SessionContinuityBanner';
 import { ClipboardCheck, BookOpen, MessageCircle, Users, ArrowRight } from 'lucide-react';
 
 export default function Sanctuary() {
@@ -54,6 +55,7 @@ export default function Sanctuary() {
 
   return (
     <div>
+      <SessionContinuityBanner />
       <div className="flex items-center justify-between">
         <PageHeader title="Sanctuary" subtitle="Your living space" accent="hsl(120 40% 58%)" />
         <div className="pr-6 lg:pr-10">

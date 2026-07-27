@@ -352,6 +352,7 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   addCtx('temporal', 'CRITICAL', phaseContext.temporalContext, 'Temporal context — critical infrastructure', null);
   addCtx('resource', 'CRITICAL', phaseContext.resourceContext, 'Resource context', null);
   addCtx('failsafe', 'CRITICAL', phaseContext.failsafeContext, 'Failsafe context', null);
+  addCtx('continuity', 'HIGH', phaseContext.continuityContext, 'Session continuity — cross-session awareness', null);
   addCtx('empathyLoop', 'HIGH', phaseContext.empathyLoopContext, 'Empathy loop', null);
   addCtx('metaInsight', 'OPTIONAL', phaseContext.metaInsightContext, 'Meta-systemic insight', 'identity');
   addCtx('buildingStory', 'OPTIONAL', phaseContext.buildingStoryContext, 'Building Story simulation', 'reflection');
@@ -821,6 +822,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     temporalContext: orchestrator.getTemporalContext(),
     resourceContext: orchestrator.getResourceContext(),
     failsafeContext: orchestrator.getFailsafeContext(),
+    continuityContext: orchestrator.getContinuityContext(),
   };
   startTimer('promptAssembly');
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);

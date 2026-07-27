@@ -61,6 +61,7 @@ import {
 import { registerBuiltinModules } from './builtinModules';
 import { RUNTIME_PRIORITIES } from './priorities';
 import { base44 } from '@/api/base44Client';
+import { resumeSession, startCheckpointing, stopCheckpointing, finalizeSession, buildContinuityContextString } from './sessionResumeService';
 
 const CYCLE_INTERVAL_MS = 3000;
 
@@ -88,6 +89,11 @@ class Orchestrator {
       outcome: 'SUCCESS',
       priority: RUNTIME_PRIORITIES.CRITICAL,
     });
+
+    // 0. Resume previous session state (Package 47.2)
+    try {
+      await resumeSession();
+    } catch (e) {}
 
     // 1. Initialize unified clock
     initClock(user);
@@ -144,6 +150,9 @@ class Orchestrator {
       CYCLE_INTERVAL_MS
     );
 
+    // 11. Start periodic session checkpointing (Package 47.2)
+    startCheckpointing(() => this.getState());
+
     audit({
       module: 'orchestrator',
       action: 'startup_complete',
@@ -181,15 +190,9 @@ class Orchestrator {
     // 3. Flush pending events
     processExpiredEvents();
 
-    // 4. Save runtime state
+    // 4. Finalize session — generate summary and checkpoint (Package 47.2)
     try {
-      await base44.auth.updateMe({
-        runtime_state: {
-          lastShutdown: new Date().toISOString(),
-          cycleCount: this.cycleCount,
-          uptime: Date.now() - this.startedAt,
-        },
-      });
+      await finalizeSession(this.getState());
     } catch (e) {}
 
     audit({
@@ -199,6 +202,12 @@ class Orchestrator {
       priority: RUNTIME_PRIORITIES.CRITICAL,
     });
     this.state = 'stopped';
+  }
+
+  // ─── SESSION CONTINUITY ───
+
+  getContinuityContext() {
+    return buildContinuityContextString();
   }
 
   // ─── MASTER RUNTIME LOOP ───
