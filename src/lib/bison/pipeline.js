@@ -67,6 +67,7 @@ import { resetScheduler, runModule } from './runtime/executionScheduler';
 import { captureDiagnostics } from './runtime/runtimeDiagnostics';
 import { loadWellbeingForecast, buildWellbeingForecastContextString } from './wellbeing/forecastEngine';
 import { loadCorrelations, buildCorrelationContextString } from './wellbeing/correlationEngine';
+import { detectLifecycleDiagnosticsRequest, formatLifecycleReport, preempt, isPreempted } from './runtime/moduleLifecycleManager';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -443,6 +444,8 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 1. Safety layer
   const isSafety = checkSafety(userInput);
   if (isSafety) {
+    // Preemption: safety overrides all non-critical modules (Package 44.6)
+    if (!isPreempted()) preempt('safety_event');
     return {
       text: "I hear you, and I want to make sure you're safe. If you're in crisis right now, please reach out — to someone you trust, or to a crisis line. You don't have to carry this alone. I'm here with you.",
       mode: RESPONSE_MODES.GROUND,
@@ -467,6 +470,24 @@ export async function processInteraction(userInput, recentHistory = [], options 
       runtimeMetrics: null,
       provenance: {
         source: 'runtime_authority',
+        generatedAt: new Date().toISOString(),
+        computeMode: getComputeMode(options),
+        isDeveloper: !!options.isDeveloper,
+      },
+    };
+  }
+
+  // 1a-life. Module lifecycle diagnostics (Package 44.6)
+  if (detectLifecycleDiagnosticsRequest(userInput)) {
+    return {
+      text: formatLifecycleReport(),
+      mode: RESPONSE_MODES.EXPLORE,
+      isGardenCandidate: false,
+      state: { intent: 'asking_question', domain: 'philosophy', emotionalTone: 'neutral', emotionIntensity: 0.3 },
+      recurrence: null,
+      lifecycleReport: true,
+      provenance: {
+        source: 'module_lifecycle_manager',
         generatedAt: new Date().toISOString(),
         computeMode: getComputeMode(options),
         isDeveloper: !!options.isDeveloper,

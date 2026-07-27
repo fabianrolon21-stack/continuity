@@ -44,6 +44,21 @@ export {
 } from './moduleRegistry';
 export { getHealthSummary } from './healthMonitor';
 export {
+  CIRCUIT_STATES,
+  recordExecution,
+  heartbeat,
+  getTelemetry,
+  getAllTelemetry,
+  getTrippedModules,
+  preempt,
+  clearPreemption,
+  isPreempted,
+  getPreemptionReason,
+  detectDeadlocks,
+  formatLifecycleReport,
+  detectLifecycleDiagnosticsRequest,
+} from './moduleLifecycleManager';
+export {
   resumeSession,
   checkpoint,
   startCheckpointing,

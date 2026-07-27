@@ -109,6 +109,38 @@ export function resolveTransitiveDeps(modules) {
   return [...resolved];
 }
 
+// Deadlock detection: find circular dependencies in the registry
+export function detectCycles() {
+  const visited = new Set();
+  const stack = new Set();
+  const cycles = [];
+
+  function dfs(node, path) {
+    visited.add(node);
+    stack.add(node);
+
+    const deps = REGISTRY_DEPS[node] || [];
+    for (const dep of deps) {
+      if (!visited.has(dep)) {
+        dfs(dep, [...path, dep]);
+      } else if (stack.has(dep)) {
+        const cycleStart = path.indexOf(dep);
+        if (cycleStart >= 0) {
+          cycles.push([...path.slice(cycleStart), dep]);
+        }
+      }
+    }
+
+    stack.delete(node);
+  }
+
+  for (const node of Object.keys(REGISTRY_DEPS)) {
+    if (!visited.has(node)) dfs(node, [node]);
+  }
+
+  return cycles;
+}
+
 // Minimal dependency map (supplements the registry)
 const REGISTRY_DEPS = {
   metaInsight: ['reflection', 'identity', 'cognitive'],

@@ -7,11 +7,14 @@
 // All timings are measured here — never LLM-generated.
 // ═══════════════════════════════════════════════
 
+import { canExecute, recordExecution } from './moduleLifecycleManager';
+
 export const MODULE_STATES = {
   ACTIVE: 'ACTIVE',
   IDLE: 'IDLE',
   SUSPENDED: 'SUSPENDED',
   FAILED: 'FAILED',
+  UNAVAILABLE: 'UNAVAILABLE',
 };
 
 let _modules = {};
@@ -37,6 +40,13 @@ export function resetScheduler() {
 // Lazy execution: the loader only runs when this is called.
 // Errors are contained — a failed module never breaks the pipeline.
 export async function runModule(name, loader) {
+  // Circuit breaker check (Package 44.6) — skip if tripped
+  if (!canExecute(name)) {
+    const mod = ensureModule(name);
+    mod.state = MODULE_STATES.UNAVAILABLE;
+    return null;
+  }
+
   const mod = ensureModule(name);
   mod.state = MODULE_STATES.ACTIVE;
   mod.runs++;
@@ -47,11 +57,13 @@ export async function runModule(name, loader) {
     mod.lastDurationMs = Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - start);
     mod.state = MODULE_STATES.IDLE;
     mod.lastError = null;
+    recordExecution(name, mod.lastDurationMs, true);
     return result;
   } catch (e) {
     mod.lastDurationMs = Math.round((typeof performance !== 'undefined' ? performance.now() : Date.now()) - start);
     mod.state = MODULE_STATES.FAILED;
     mod.lastError = e?.message || String(e);
+    recordExecution(name, mod.lastDurationMs, false, mod.lastError);
     return null;
   }
 }

@@ -9,6 +9,7 @@ import {
 import { listCapabilities } from '@/lib/security/deviceAccess';
 import { getComputeMode } from '@/lib/bison/pipeline';
 import RuntimeDiagnosticsPanel from '@/components/developer/RuntimeDiagnosticsPanel';
+import ModuleOrchestratorDashboard from '@/components/developer/ModuleOrchestratorDashboard';
 import { Shield, Activity, AlertTriangle, FileText, Bug, Lock, Hash, Cpu, Power, Ban, CheckCircle, XCircle } from 'lucide-react';
 
 export default function DeveloperControlPlane() {
@@ -116,6 +117,9 @@ export default function DeveloperControlPlane() {
             <div><p className="text-xs text-muted-foreground">Role</p><p className="font-medium capitalize">{user.role}</p></div>
           </div>
         </div>
+
+        {/* Module Orchestrator (Package 44.6) */}
+        <ModuleOrchestratorDashboard accent={accent} />
 
         {/* Runtime Diagnostics (Package 45.5) */}
         <RuntimeDiagnosticsPanel accent={accent} />
