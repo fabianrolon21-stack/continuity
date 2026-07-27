@@ -12,6 +12,7 @@
 import { base44 } from '@/api/base44Client';
 import { generateForecast } from './forecastEngine';
 import { computeCorrelations } from './correlationEngine';
+import { computeEffectivenessScores, buildCalibrationContextString } from './outcomeCalibrationEngine';
 
 // ── Intervention templates ──
 
@@ -100,7 +101,7 @@ function getTemplate(id) {
 
 // ── Main: generate interventions from data ──
 
-export function generateInterventions(forecast, correlations, checkIns, rejectedIds = []) {
+export function generateInterventions(forecast, correlations, checkIns, rejectedIds = [], effectivenessScores = {}) {
   const suggestions = [];
 
   // 1. Trajectory-based interventions
@@ -190,10 +191,18 @@ export function generateInterventions(forecast, correlations, checkIns, rejected
     deduped.push(s);
   }
 
+  // Sort by effectiveness score — interventions that worked for this user come first
+  deduped.sort((a, b) => {
+    const sa = effectivenessScores[a.intervention_id]?.effectivenessScore ?? 50;
+    const sb = effectivenessScores[b.intervention_id]?.effectivenessScore ?? 50;
+    return sb - sa;
+  });
+
   return {
     sufficient: deduped.length > 0,
     interventions: deduped.slice(0, 4),
     dataPoints: checkIns?.length || 0,
+    effectivenessScores,
   };
 }
 
@@ -211,6 +220,12 @@ export function buildInterventionContextString(result) {
   parts.push('');
   parts.push('These are evidence-based suggestions, not prescriptions. Offer them naturally when relevant. The user decides. Never insist.');
   parts.push('[/WELLBEING INTERVENTIONS]\n');
+
+  // Append calibration data if available
+  if (result.effectivenessScores && Object.keys(result.effectivenessScores).length > 0) {
+    parts.push(buildCalibrationContextString(result.effectivenessScores));
+  }
+
   return parts.join('\n');
 }
 
@@ -219,17 +234,18 @@ export function buildInterventionContextString(result) {
 export async function loadInterventionContext() {
   try {
     const [checkIns, existing] = await Promise.all([
-      base44.entities.CheckIn.list('-date', 30),
-      base44.entities.WellbeingIntervention.list('-created_date', 20),
+      base44.entities.CheckIn.list('-date', 60),
+      base44.entities.WellbeingIntervention.list('-created_date', 50),
     ]);
 
     const rejectedIds = (existing || [])
       .filter(i => i.status === 'rejected')
       .map(i => i.intervention_id);
 
+    const effectivenessScores = computeEffectivenessScores(existing || [], checkIns || []);
     const forecast = generateForecast(checkIns);
     const correlations = computeCorrelations(checkIns);
-    return generateInterventions(forecast, correlations, checkIns, rejectedIds);
+    return generateInterventions(forecast, correlations, checkIns, rejectedIds, effectivenessScores);
   } catch (e) {
     return null;
   }
