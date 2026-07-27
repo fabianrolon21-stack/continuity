@@ -66,6 +66,7 @@ import { shouldAllowHumor, recordHumorUsage, recordInteraction } from './natural
 import { resetScheduler, runModule } from './runtime/executionScheduler';
 import { captureDiagnostics } from './runtime/runtimeDiagnostics';
 import { loadWellbeingForecast, buildWellbeingForecastContextString } from './wellbeing/forecastEngine';
+import { loadCorrelations, buildCorrelationContextString } from './wellbeing/correlationEngine';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -355,6 +356,7 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   addCtx('failsafe', 'CRITICAL', phaseContext.failsafeContext, 'Failsafe context', null);
   addCtx('continuity', 'HIGH', phaseContext.continuityContext, 'Session continuity — cross-session awareness', null);
   addCtx('wellbeingForecast', 'LOW', phaseContext.wellbeingForecastContext, 'Wellbeing trend forecast — deterministic, data-driven', null);
+  addCtx('correlationPatterns', 'LOW', phaseContext.correlationPatternsContext, 'Wellbeing pattern correlations — deterministic, statistical', null);
   addCtx('empathyLoop', 'HIGH', phaseContext.empathyLoopContext, 'Empathy loop', null);
   addCtx('metaInsight', 'OPTIONAL', phaseContext.metaInsightContext, 'Meta-systemic insight', 'identity');
   addCtx('buildingStory', 'OPTIONAL', phaseContext.buildingStoryContext, 'Building Story simulation', 'reflection');
@@ -691,6 +693,20 @@ export async function processInteraction(userInput, recentHistory = [], options 
     endTimer('wellbeingForecast');
   }
 
+  // 5f-corr. Pattern correlations (Package 49) — lazy loaded, deterministic
+  let correlationPatterns = null;
+  if (contextPlan.shouldLoad('correlationPatterns')) {
+    startTimer('correlationPatterns');
+    const cached = getCached('correlationPatterns');
+    if (cached) {
+      correlationPatterns = cached;
+    } else {
+      correlationPatterns = await runModule('correlationPatterns', async () => loadCorrelations());
+      if (correlationPatterns) setCached('correlationPatterns', correlationPatterns);
+    }
+    endTimer('correlationPatterns');
+  }
+
   // 5f. World awareness + temporal context (Package 28)
   const temporalContext = getTemporalContext();
 
@@ -840,6 +856,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     failsafeContext: orchestrator.getFailsafeContext(),
     continuityContext: orchestrator.getContinuityContext(),
     wellbeingForecastContext: wellbeingForecast ? buildWellbeingForecastContextString(wellbeingForecast) : null,
+    correlationPatternsContext: correlationPatterns ? buildCorrelationContextString(correlationPatterns) : null,
   };
   startTimer('promptAssembly');
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
