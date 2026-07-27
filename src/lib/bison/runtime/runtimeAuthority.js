@@ -12,7 +12,7 @@
 // ═══════════════════════════════════════════════
 
 const PLANNER_VERSION = '2.0';
-const PROMPT_TOKEN_BUDGET = 5000;
+const PROMPT_TOKEN_BUDGET = 12000;
 const SYSTEM_PROMPT_TOKENS = 800;
 const RESPONSE_RESERVE = 500;
 

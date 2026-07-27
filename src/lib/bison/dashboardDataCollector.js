@@ -96,7 +96,7 @@ export async function collectDashboardState(lastInteractionResult = null) {
         skippedContexts: lastInteractionResult?.contextPlan?.skippedContexts || [],
         estimatedTokens: lastInteractionResult?.contextPlan?.estimatedTokens || 0,
         estimatedQueries: lastInteractionResult?.contextPlan?.estimatedQueries || 0,
-        tokenBudget: lastInteractionResult?.contextPlan?.tokenBudget || 5000,
+        tokenBudget: lastInteractionResult?.contextPlan?.tokenBudget || 12000,
         queryBudget: lastInteractionResult?.contextPlan?.queryBudget || 8,
         remainingBudget: lastInteractionResult?.contextPlan?.remainingBudget || 0,
         profile: lastInteractionResult?.runtimeMetrics?.profile || null,

@@ -574,6 +574,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 2e-b. Psychological self-regulation (Package 44)
   const attachmentAnxiety = deriveAttachmentAnxiety({ needsState, affectiveContext, recentRejection: state.hostilityDetected });
   const cognitiveLoad = computeCognitiveLoad({ threats, wellbeingState, affectiveContext, attachmentAnxiety });
+  recordBandwidth(cognitiveLoad?.currentBandwidth ?? 100);
   const breakerResult = evaluateBreaker(cognitiveLoad);
   let avoidedTopics = [];
   let avoidedTopicHit = null;
