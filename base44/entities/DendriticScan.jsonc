@@ -1,0 +1,55 @@
+{
+  "name": "DendriticScan",
+  "type": "object",
+  "properties": {
+    "situation": {
+      "type": "string"
+    },
+    "primary_system": {
+      "type": "string"
+    },
+    "systems": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "depth": {
+      "type": "string",
+      "enum": [
+        "quick",
+        "standard",
+        "investigation"
+      ],
+      "default": "standard"
+    },
+    "hypotheses": {
+      "type": "string"
+    },
+    "dashboard": {
+      "type": "string"
+    },
+    "negotiability": {
+      "type": "string"
+    },
+    "clarifying_questions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fit_feedback": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "yes",
+        "partially",
+        "no"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "situation"
+  ]
+}

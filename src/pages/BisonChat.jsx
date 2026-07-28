@@ -4,6 +4,7 @@ import { processInteraction, RESPONSE_MODES, createMemoryFromMessage } from '@/l
 import { calculateTrustScore, createTrustEvent, TRUST_EVENTS } from '@/lib/bison/trustScoreCalculator';
 import { awardTokens } from '@/lib/tokens';
 import { PageHeader, EmptyState } from '@/components/MicroAnimations';
+import DendriticScanCard from '@/components/chat/DendriticScanCard';
 import { Send, Brain, Repeat, Bookmark, Sparkles, Loader2, Zap, Droplet, Heart, ShieldAlert, Lightbulb, ExternalLink, PauseCircle } from 'lucide-react';
 
 const MODE_COLORS = {
@@ -103,6 +104,7 @@ export default function BisonChat() {
           ? (() => { try { return JSON.parse(result.oracleConsultation.consultationLog.message).model; } catch (e) { return null; } })()
           : null,
         breaker_tripped: !!result.emotionalStateSnapshot?.breakerTripped,
+        dendritic_scan: result.dendriticScan || null,
       };
       setMessages(prev => [...prev, bisonMsg]);
 
@@ -207,6 +209,9 @@ export default function BisonChat() {
                   </div>
                 )}
               </div>
+              {msg.role === 'bison' && msg.dendritic_scan && (
+                <DendriticScanCard scan={msg.dendritic_scan} />
+              )}
               {msg.role === 'user' && (
                 <button
                   onClick={() => handleRemember(msg, i)}

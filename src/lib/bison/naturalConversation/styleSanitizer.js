@@ -4,6 +4,8 @@
 // writing style on LLM output. Runs after empathy loop.
 // ═══════════════════════════════════════════════
 
+import { applyEthicalFilter } from '../dendritic/ethicalLanguageFilter';
+
 const EMPATHY_OPENERS = [
   /^I hear you[,.]?\s*/i,
   /^I hear (your|that|what)[^.]*[.!?]?\s*/i,
@@ -130,6 +132,9 @@ export function sanitizeStyle(text, conversationMode, options = {}) {
   if (style.allowQuestions === false) {
     result = throttleTrailingQuestions(result);
   }
+
+  // Ethical language filter (Package 40) — behavior, not identity
+  result = applyEthicalFilter(result);
 
   return result.trim();
 }

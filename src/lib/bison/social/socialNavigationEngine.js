@@ -12,6 +12,7 @@ import { assessSocialThreat, buildTacticalMaskingContextString } from './tactica
 import { detectConflictContext, generateShieldScripts, buildEmpathyShieldContextString } from './empathyShield';
 import { analyzeAllianceLandscape, suggestMicroGestures, buildAllianceBuilderContextString } from './allianceBuilder';
 import { assessEmotionalBandwidth, buildBandwidthFirewallContextString } from '../survival/bandwidthFirewall';
+import { buildDendriticContextString } from '../dendritic';
 
 const SOCIAL_ADVICE_PATTERNS = [
   /how (do|should) i (handle|deal with|talk to|approach)/i,
@@ -30,7 +31,7 @@ export function detectSocialAdviceRequest(input) {
   return SOCIAL_ADVICE_PATTERNS.some(p => p.test(input));
 }
 
-export async function runSocialNavigation({ userInput, state, affectiveContext, cognitiveLoad, relationships = [] }) {
+export async function runSocialNavigation({ userInput, state, affectiveContext, cognitiveLoad, relationships = [], dendriticScan = null }) {
   const threatAssessment = assessSocialThreat({ userInput, affectiveContext, state });
 
   const conflictContext = detectConflictContext(userInput, state);
@@ -43,6 +44,7 @@ export async function runSocialNavigation({ userInput, state, affectiveContext, 
   const microGestures = suggestMicroGestures({ userInput, landscape: allianceLandscape, relationships });
 
   const contextString = [
+    dendriticScan ? buildDendriticContextString(dendriticScan) : null,
     buildTacticalMaskingContextString(threatAssessment),
     buildEmpathyShieldContextString(conflictContext, shieldScripts),
     buildBandwidthFirewallContextString(bandwidth),
