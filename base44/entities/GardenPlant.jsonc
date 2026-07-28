@@ -16,7 +16,18 @@
         "bonsai",
         "orchid",
         "wildflower",
-        "rare_bloom"
+        "rare_bloom",
+        "sunflower",
+        "daisy",
+        "lavender",
+        "rose",
+        "tulip",
+        "bluebell",
+        "lily",
+        "cherry_blossom",
+        "dandelion",
+        "glowing_bloom",
+        "moonflower"
       ]
     },
     "growth_stage": {

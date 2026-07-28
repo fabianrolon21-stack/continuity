@@ -1,8 +1,9 @@
 // ═══════════════════════════════════════════════
 // CARE SCENES (Living World Update)
 // Scripted, randomized reaction sequences for
-// feed / water / rest / play. The Bison never
-// reacts the same way twice.
+// feed / water / rest / play. Different foods and
+// toys appear each time — the Bison never reacts
+// the same way twice, and sometimes ignores things.
 // ═══════════════════════════════════════════════
 
 const SCENES = {
@@ -24,6 +25,13 @@ const SCENES = {
       { motion: 'idle', emote: '💢', ms: 1800 },
       { motion: 'sniff', emote: '💧', ms: 1800 },
       { motion: 'eat', emote: '😅', ms: 3200 },
+    ],
+    [
+      // Ignores it at first, wanders off, comes back
+      { motion: 'sniff', emote: '❓', ms: 1600 },
+      { motion: 'walk', emote: '💧', ms: 2400 },
+      { motion: 'look_around', emote: '🤔', ms: 1800 },
+      { motion: 'eat', emote: '😅', ms: 3000 },
     ],
     [
       { motion: 'walk', emote: '✨', ms: 2000 },
@@ -75,6 +83,13 @@ const SCENES = {
       { motion: 'celebrate', emote: '✨', ms: 2200 },
     ],
     [
+      // Confused, kicks it, walks away, comes back
+      { motion: 'sniff', emote: '❓', ms: 1800 },
+      { motion: 'play', emote: '💢', ms: 2000 },
+      { motion: 'walk', emote: '😅', ms: 2200 },
+      { motion: 'play', emote: '😊', ms: 3000 },
+    ],
+    [
       { motion: 'play', emote: '💢', ms: 2200 },
       { motion: 'walk', emote: '😅', ms: 2000 },
       { motion: 'play', emote: '😊', ms: 3000 },
@@ -82,7 +97,22 @@ const SCENES = {
   ],
 };
 
-export const CARE_PROPS = { feed: 'apple', water: 'bucket', rest: null, play: 'ball' };
+// Prop variety — a random one appears each time
+const FOODS = ['apple', 'watermelon', 'carrot', 'berries'];
+const TOYS = ['ball', 'stick', 'frisbee', 'butterfly', 'log'];
+
+export const PROP_EMOJI = {
+  apple: '🍎',
+  watermelon: '🍉',
+  carrot: '🥕',
+  berries: '🫐',
+  bucket: '🪣',
+  ball: '⚽',
+  stick: '🪵',
+  frisbee: '🥏',
+  butterfly: '🦋',
+  log: '🪵',
+};
 
 // Full-screen burst particles per action
 export const BURST_EMOJIS = {
@@ -92,10 +122,15 @@ export const BURST_EMOJIS = {
   play: ['❤️', '✨', '🎉', '🌸'],
 };
 
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 export function pickCareScene(action) {
   const variants = SCENES[action] || SCENES.feed;
-  return {
-    prop: CARE_PROPS[action] || null,
-    steps: variants[Math.floor(Math.random() * variants.length)],
-  };
+  let prop = null;
+  if (action === 'feed') prop = pick(FOODS);
+  else if (action === 'water') prop = 'bucket';
+  else if (action === 'play') prop = pick(TOYS);
+  return { prop, steps: pick(variants) };
 }

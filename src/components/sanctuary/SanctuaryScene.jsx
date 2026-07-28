@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { computeWorldState } from '@/lib/world/worldStateEngine';
 import { getHabitat } from '@/lib/sanctuary/habitats';
 import { chooseBehavior, BEHAVIOR_NOTES, BEHAVIORS } from '@/lib/sanctuary/bisonBehavior';
-import { pickCareScene } from '@/lib/sanctuary/careScenes';
+import { pickCareScene, PROP_EMOJI } from '@/lib/sanctuary/careScenes';
 import { eventBus } from '@/lib/events/eventBus';
 import EmoteSticker from '@/components/sanctuary/EmoteSticker';
 import { checkAchievements } from '@/lib/bison/achievementEngine';
@@ -179,24 +179,13 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
                 exit={{ opacity: 0, scale: 0.5 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 18 }}
               >
-                {careProp === 'apple' && (
-                  <div className="w-9 h-9 rounded-full bg-red-500/20 border border-red-400/30 flex items-center justify-center">
-                    <Apple className="w-5 h-5 text-red-400" />
-                  </div>
-                )}
-                {careProp === 'bucket' && (
-                  <div className="w-9 h-9 rounded-b-xl rounded-t-sm bg-sky-500/20 border border-sky-400/30 flex items-center justify-center">
-                    <Droplets className="w-5 h-5 text-sky-400" />
-                  </div>
-                )}
-                {careProp === 'ball' && (
-                  <motion.div
-                    className="w-8 h-8 rounded-full"
-                    style={{ background: 'radial-gradient(circle at 35% 30%, hsl(21 73% 69%), hsl(21 60% 45%))' }}
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 0.8, repeat: Infinity, ease: 'easeInOut' }}
-                  />
-                )}
+                <motion.div
+                  className="w-10 h-10 rounded-full glass flex items-center justify-center text-2xl border border-white/10"
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  {PROP_EMOJI[careProp] || '🎁'}
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>

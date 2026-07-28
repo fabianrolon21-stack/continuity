@@ -7,11 +7,11 @@
 import { base44 } from '@/api/base44Client';
 
 export const GARDEN_TIERS = [
-  { threshold: 0,  name: 'Starter Garden',     unlocks: ['fern', 'wildflower'],                      color: 'hsl(120 40% 58%)' },
-  { threshold: 5,  name: 'Growing Garden',     unlocks: ['flower', 'herb', 'succulent'],             color: 'hsl(42 63% 55%)' },
-  { threshold: 10, name: 'Flourishing Garden', unlocks: ['tree', 'vine', 'bonsai'],                  color: 'hsl(21 73% 69%)' },
-  { threshold: 20, name: 'Abundant Garden',    unlocks: ['mushroom', 'orchid', 'crystal'],           color: 'hsl(265 41% 64%)' },
-  { threshold: 30, name: 'Master Garden',      unlocks: ['rare_bloom'],                              color: 'hsl(48 67% 74%)' },
+  { threshold: 0,  name: 'Starter Garden',     unlocks: ['fern', 'wildflower', 'daisy', 'tulip'],                  color: 'hsl(120 40% 58%)' },
+  { threshold: 5,  name: 'Growing Garden',     unlocks: ['flower', 'herb', 'succulent', 'sunflower', 'dandelion'], color: 'hsl(42 63% 55%)' },
+  { threshold: 10, name: 'Flourishing Garden', unlocks: ['tree', 'vine', 'bonsai', 'lavender', 'rose'],            color: 'hsl(21 73% 69%)' },
+  { threshold: 20, name: 'Abundant Garden',    unlocks: ['mushroom', 'orchid', 'crystal', 'bluebell', 'lily', 'cherry_blossom'], color: 'hsl(265 41% 64%)' },
+  { threshold: 30, name: 'Master Garden',      unlocks: ['rare_bloom', 'glowing_bloom', 'moonflower'],             color: 'hsl(48 67% 74%)' },
 ];
 
 export const PLANT_TYPES = {
@@ -27,6 +27,17 @@ export const PLANT_TYPES = {
   orchid:      { name: 'Orchid',       rarity: 'rare',      emoji: '🌺', growthTime: 6, color: 'hsl(300 50% 60%)' },
   crystal:     { name: 'Crystal',      rarity: 'rare',      emoji: '💎', growthTime: 10, color: 'hsl(199 56% 64%)' },
   rare_bloom:  { name: 'Rare Bloom',   rarity: 'legendary', emoji: '✨', growthTime: 14, color: 'hsl(48 67% 74%)' },
+  daisy:          { name: 'Daisy',          rarity: 'common',    emoji: '🌼', growthTime: 2,  color: 'hsl(48 67% 74%)' },
+  tulip:          { name: 'Tulip',          rarity: 'common',    emoji: '🌷', growthTime: 3,  color: 'hsl(340 60% 65%)' },
+  sunflower:      { name: 'Sunflower',      rarity: 'common',    emoji: '🌻', growthTime: 4,  color: 'hsl(42 70% 55%)' },
+  dandelion:      { name: 'Dandelion',      rarity: 'common',    emoji: '🍀', growthTime: 2,  color: 'hsl(80 45% 55%)' },
+  lavender:       { name: 'Lavender',       rarity: 'uncommon',  emoji: '🪻', growthTime: 5,  color: 'hsl(265 41% 64%)' },
+  rose:           { name: 'Rose',           rarity: 'uncommon',  emoji: '🌹', growthTime: 6,  color: 'hsl(0 60% 55%)' },
+  bluebell:       { name: 'Bluebell',       rarity: 'uncommon',  emoji: '🔔', growthTime: 5,  color: 'hsl(220 55% 65%)' },
+  lily:           { name: 'Lily',           rarity: 'rare',      emoji: '🪷', growthTime: 7,  color: 'hsl(300 40% 70%)' },
+  cherry_blossom: { name: 'Cherry Blossom', rarity: 'rare',      emoji: '🌸', growthTime: 8,  color: 'hsl(340 70% 75%)' },
+  glowing_bloom:  { name: 'Glowing Bloom',  rarity: 'legendary', emoji: '💫', growthTime: 12, color: 'hsl(48 80% 70%)' },
+  moonflower:     { name: 'Moonflower',     rarity: 'legendary', emoji: '🌕', growthTime: 14, color: 'hsl(48 40% 80%)' },
 };
 
 export const GROWTH_STAGES = [
@@ -111,7 +122,15 @@ export async function plantSeed(plantType, positionX = null, positionY = null) {
     season,
   });
 
+  await awardGardenXp(5);
   return plant;
+}
+
+async function awardGardenXp(amount) {
+  try {
+    const user = await base44.auth.me();
+    await base44.auth.updateMe({ garden_xp: (user?.garden_xp || 0) + amount });
+  } catch (e) {}
 }
 
 export async function careForPlant(plantId) {
@@ -120,6 +139,7 @@ export async function careForPlant(plantId) {
 
   const newCareCount = (plant.care_actions || 0) + 1;
   const newStage = calculateGrowthStage(newCareCount);
+  const stageChanged = newStage.stage !== plant.growth_stage;
   const wildlife = newCareCount >= 3 ? checkWildlifeAppearance(plant) : null;
 
   const updates = {
@@ -133,7 +153,12 @@ export async function careForPlant(plantId) {
   }
 
   const updated = await base44.entities.GardenPlant.update(plantId, updates);
-  return { plant: updated, wildlife };
+
+  // Garden XP rewards: +2 per care, +10 stage-up bonus, +5 wildlife discovery
+  const xpGained = 2 + (stageChanged ? 10 : 0) + (wildlife ? 5 : 0);
+  await awardGardenXp(xpGained);
+
+  return { plant: updated, wildlife, xpGained, stageChanged, newStage: newStage.label };
 }
 
 export async function checkForRareDiscovery(plantCount) {

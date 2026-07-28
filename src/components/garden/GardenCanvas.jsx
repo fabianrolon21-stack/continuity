@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import GardenWildlife from '@/components/garden/GardenWildlife';
+import { getSpecies, getStageEmoji, getIdleAnimation, isGoldenBloom } from '@/lib/garden/plantSpecies';
 import { Sun, Cloud, CloudRain, Snowflake, Leaf } from 'lucide-react';
 
 const SEASON_CONFIG = {
@@ -94,6 +95,9 @@ export default function GardenCanvas({ plants, onPlantClick, onEmptySpotClick, c
       {/* Plants — swaying, reacting to care */}
       {plants.map((plant, idx) => {
         const isCaring = caringPlantId === plant.id;
+        const species = getSpecies(plant.plant_type);
+        const golden = isGoldenBloom(plant);
+        const idle = getIdleAnimation(species.animation, idx);
         return (
           <motion.button
             key={plant.id}
@@ -102,17 +106,28 @@ export default function GardenCanvas({ plants, onPlantClick, onEmptySpotClick, c
             style={{
               left: `${plant.position_x}%`,
               bottom: `${plant.position_y / 4}%`,
-              fontSize: `${1 + (plant.care_actions || 0) * 0.15}rem`,
+              fontSize: `${Math.min(2.4, 1 + (plant.care_actions || 0) * 0.15)}rem`,
               transformOrigin: 'bottom center',
             }}
             animate={isCaring
               ? { rotate: [0, -10, 10, -8, 8, 0], scale: [1, 1.15, 1] }
-              : { rotate: [idx % 2 ? -3 : 2, idx % 2 ? 3 : -3] }}
-            transition={isCaring
-              ? { duration: 0.7 }
-              : { duration: 2.5 + (idx % 3), repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+              : idle.animate}
+            transition={isCaring ? { duration: 0.7 } : idle.transition}
           >
-            <span className="block">{getStageEmoji(plant.growth_stage)}</span>
+            {/* Growth animation — the emoji "blooms" in when the stage changes */}
+            <motion.span
+              key={plant.growth_stage}
+              className="block"
+              initial={{ scale: 0.2, opacity: 0, rotate: -20 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 240, damping: 12 }}
+              style={golden ? { filter: 'drop-shadow(0 0 10px hsl(48 80% 65% / 0.9))' } : undefined}
+            >
+              {getStageEmoji(plant.plant_type, plant.growth_stage)}
+            </motion.span>
+            {golden && (
+              <span className="absolute -top-2 -left-2 text-xs animate-twinkle">✨</span>
+            )}
             {/* Care reaction — sparkles + heart rising */}
             {isCaring && [...Array(4)].map((_, i) => (
               <motion.span
@@ -155,11 +170,6 @@ export default function GardenCanvas({ plants, onPlantClick, onEmptySpotClick, c
       )}
     </div>
   );
-}
-
-function getStageEmoji(stage) {
-  const stages = { seed: '🌰', sprout: '🌱', young: '🌿', mature: '🌳', blooming: '🌸' };
-  return stages[stage] || '🌱';
 }
 
 function getWildlifeEmoji(name) {

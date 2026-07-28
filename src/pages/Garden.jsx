@@ -13,6 +13,7 @@ export default function Garden() {
   const [caring, setCaring] = useState(null);
   const [showPlantPicker, setShowPlantPicker] = useState(false);
   const [wildlifeMessage, setWildlifeMessage] = useState(null);
+  const [gardenXp, setGardenXp] = useState(0);
 
   const refresh = useCallback(async () => {
     const data = await base44.entities.GardenPlant.list('-created_date', 100);
@@ -22,6 +23,10 @@ export default function Garden() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  useEffect(() => {
+    base44.auth.me().then(u => setGardenXp(u?.garden_xp || 0)).catch(() => {});
+  }, []);
+
   const tier = getGardenTier(plants.length);
   const availablePlants = getAvailablePlants(plants.length);
 
@@ -30,6 +35,7 @@ export default function Garden() {
     try {
       await plantSeed(plantType);
       await refresh();
+      setGardenXp(x => x + 5);
       setShowPlantPicker(false);
 
       // Check for rare discovery
@@ -47,8 +53,12 @@ export default function Garden() {
     try {
       const result = await careForPlant(plantId);
       await refresh();
-      if (result?.wildlife) {
-        setWildlifeMessage({ type: 'wildlife', text: `${result.wildlife.emoji} A ${result.wildlife.name} visited your plant!` });
+      if (result?.xpGained) setGardenXp(x => x + result.xpGained);
+      if (result?.stageChanged) {
+        setWildlifeMessage({ type: 'growth', text: `🌸 Your plant grew to ${result.newStage}! +${result.xpGained} Garden XP` });
+        setTimeout(() => setWildlifeMessage(null), 4000);
+      } else if (result?.wildlife) {
+        setWildlifeMessage({ type: 'wildlife', text: `${result.wildlife.emoji} A ${result.wildlife.name} visited your plant! +${result.xpGained} Garden XP` });
         setTimeout(() => setWildlifeMessage(null), 4000);
       }
     } catch (e) {}
@@ -72,7 +82,7 @@ export default function Garden() {
               </div>
               <div>
                 <h3 className="font-heading font-bold text-sm" style={{ color: tier.color }}>{tier.name}</h3>
-                <p className="text-xs text-muted-foreground">{plants.length} plants</p>
+                <p className="text-xs text-muted-foreground">{plants.length} plants · {gardenXp} Garden XP</p>
               </div>
             </div>
             {nextTier && (
