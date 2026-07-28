@@ -16,6 +16,16 @@ const BEHAVIOR_MOTION = {
   [BEHAVIORS.SLEEP]: { rotate: 0, y: 14 },
   [BEHAVIORS.SIT]: { y: 8 },
   [BEHAVIORS.LOOK_AT_USER]: { rotate: 0, scale: [1, 1.02, 1], transition: { duration: 3, repeat: Infinity } },
+  // Pet-like idle motions
+  [BEHAVIORS.YAWN]: { scaleY: [1, 1.1, 0.96, 1], rotate: [0, -4, 2, 0], transition: { duration: 3.5, repeat: Infinity, repeatDelay: 1.5 } },
+  [BEHAVIORS.SCRATCH]: { rotate: [0, -6, 4, -5, 0], x: [0, -3, 3, 0], transition: { duration: 1.6, repeat: Infinity, repeatDelay: 1 } },
+  [BEHAVIORS.WATCH_BIRDS]: { rotate: [-6, -10, -6], y: -8, transition: { duration: 5, repeat: Infinity, ease: 'easeInOut' } },
+  [BEHAVIORS.FOLLOW_INSECT]: { x: [0, 22, -18, 14, 0], rotate: [0, 6, -6, 4, 0], transition: { duration: 9, repeat: Infinity, ease: 'easeInOut' } },
+  [BEHAVIORS.INSPECT_TOY]: { x: [0, 55, 55, 0], rotate: [0, 10, 10, 0], transition: { duration: 8, repeat: Infinity } },
+  [BEHAVIORS.THINK]: { rotate: [0, 3, 0], y: [0, -2, 0], transition: { duration: 6, repeat: Infinity, ease: 'easeInOut' } },
+  [BEHAVIORS.DANCE]: { y: [0, -8, 0], rotate: [-4, 4, -4], transition: { duration: 1.4, repeat: Infinity, ease: 'easeInOut' } },
+  [BEHAVIORS.DOZE]: { y: [8, 11, 8], rotate: [0, 2, 0], transition: { duration: 5, repeat: Infinity, ease: 'easeInOut' } },
+  [BEHAVIORS.PLAY_ALONE]: { x: [0, -30, 25, -15, 0], y: [0, -12, 0, -8, 0], transition: { duration: 6, repeat: Infinity } },
   // Care-scene motions
   sniff: { rotate: [0, 12, 10, 12, 0], y: [0, 4, 4, 4, 0], transition: { duration: 2.4, repeat: Infinity } },
   celebrate: { y: [0, -16, 0, -10, 0], rotate: [0, -5, 5, 0], transition: { duration: 1.1, repeat: Infinity } },
@@ -23,6 +33,7 @@ const BEHAVIOR_MOTION = {
 
 export default function SceneBison({ behavior = BEHAVIORS.IDLE, accent = 'hsl(42 63% 55%)' }) {
   const isAsleep = behavior === BEHAVIORS.SLEEP;
+  const isDrowsy = behavior === BEHAVIORS.DOZE || behavior === BEHAVIORS.YAWN;
   const motionProps = BEHAVIOR_MOTION[behavior] || BEHAVIOR_MOTION[BEHAVIORS.IDLE];
 
   return (
@@ -61,6 +72,18 @@ export default function SceneBison({ behavior = BEHAVIORS.IDLE, accent = 'hsl(42
           <>
             <path d="M 26 76 Q 29 79 32 76" stroke="hsl(40 20% 85%)" strokeWidth="2" fill="none" strokeLinecap="round" />
             <path d="M 38 76 Q 41 79 44 76" stroke="hsl(40 20% 85%)" strokeWidth="2" fill="none" strokeLinecap="round" />
+          </>
+        ) : isDrowsy ? (
+          <>
+            {/* Heavy, half-closed lids */}
+            <motion.path
+              d="M 25 64 Q 28 67 31 64" stroke="hsl(40 20% 88%)" strokeWidth="2" fill="none" strokeLinecap="round"
+              animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 3, repeat: Infinity }}
+            />
+            <motion.path
+              d="M 38 64 Q 41 67 44 64" stroke="hsl(40 20% 88%)" strokeWidth="2" fill="none" strokeLinecap="round"
+              animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 3, repeat: Infinity }}
+            />
           </>
         ) : (
           <>

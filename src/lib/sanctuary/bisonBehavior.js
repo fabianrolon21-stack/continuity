@@ -17,6 +17,16 @@ export const BEHAVIORS = {
   SLEEP: 'sleep',
   SIT: 'sit',
   LOOK_AT_USER: 'look_at_user',
+  // Pet-like idles — the Bison is alive even when ignored
+  YAWN: 'yawn',
+  SCRATCH: 'scratch',
+  WATCH_BIRDS: 'watch_birds',
+  FOLLOW_INSECT: 'follow_insect',
+  INSPECT_TOY: 'inspect_toy',
+  THINK: 'think',
+  DANCE: 'dance',
+  DOZE: 'doze',
+  PLAY_ALONE: 'play_alone',
 };
 
 export const BEHAVIOR_NOTES = {
@@ -31,7 +41,40 @@ export const BEHAVIOR_NOTES = {
   sleep: 'fast asleep',
   sit: 'sitting peacefully',
   look_at_user: 'looking at you',
+  yawn: 'yawning',
+  scratch: 'having a good scratch',
+  watch_birds: 'watching the birds',
+  follow_insect: 'following a little bug',
+  inspect_toy: 'inspecting the toy',
+  think: 'lost in thought',
+  dance: 'swaying to the music',
+  doze: 'dozing off',
+  play_alone: 'playing by itself',
 };
+
+// Occasional spontaneous emotes during quiet idles — small signs of an inner life
+export const IDLE_EMOTES = {
+  look_around: ['❓', '🤔'],
+  stretch: ['😴', '😊'],
+  yawn: ['😴', '💤'],
+  scratch: ['😅', '😊'],
+  watch_window: ['🤔', '❤️'],
+  watch_birds: ['😲', '✨'],
+  follow_insect: ['❓', '😲'],
+  inspect_toy: ['🤔', '❓'],
+  think: ['🤔', '💢'],
+  dance: ['✨', '😊'],
+  doze: ['😴'],
+  play_alone: ['✨', '😊'],
+  look_at_user: ['❤️', '😊'],
+  sit: ['😊'],
+};
+
+export function maybeIdleEmote(behavior) {
+  const options = IDLE_EMOTES[behavior];
+  if (!options || Math.random() > 0.45) return null;
+  return options[Math.floor(Math.random() * options.length)];
+}
 
 function pickWeighted(weights, exclude) {
   const entries = Object.entries(weights).filter(([k, w]) => w > 0 && k !== exclude);
@@ -44,7 +87,7 @@ function pickWeighted(weights, exclude) {
   return entries[0]?.[0] || BEHAVIORS.IDLE;
 }
 
-export function chooseBehavior({ energy = 80, isNight = false, isLateNight = false, weather = 'clear', prev = null } = {}) {
+export function chooseBehavior({ energy = 80, isNight = false, isLateNight = false, weather = 'clear', prev = null, musicPlaying = false } = {}) {
   // Critical energy or deep night → natural sleep
   if (energy < 15 || isLateNight) {
     return { behavior: BEHAVIORS.SLEEP, durationMs: 20000 };
@@ -62,6 +105,15 @@ export function chooseBehavior({ energy = 80, isNight = false, isLateNight = fal
     [BEHAVIORS.SLEEP]: 0,
     [BEHAVIORS.SIT]: 2,
     [BEHAVIORS.LOOK_AT_USER]: 2,
+    [BEHAVIORS.YAWN]: 2,
+    [BEHAVIORS.SCRATCH]: 2,
+    [BEHAVIORS.WATCH_BIRDS]: 2,
+    [BEHAVIORS.FOLLOW_INSECT]: 2,
+    [BEHAVIORS.INSPECT_TOY]: 2,
+    [BEHAVIORS.THINK]: 2,
+    [BEHAVIORS.DANCE]: 0,
+    [BEHAVIORS.DOZE]: 1,
+    [BEHAVIORS.PLAY_ALONE]: 2,
   };
 
   // Energy shaping
@@ -69,24 +121,46 @@ export function chooseBehavior({ energy = 80, isNight = false, isLateNight = fal
     weights[BEHAVIORS.WALK] += 3;
     weights[BEHAVIORS.PLAY] += 3;
     weights[BEHAVIORS.STRETCH] += 1;
+    weights[BEHAVIORS.PLAY_ALONE] += 3;
+    weights[BEHAVIORS.FOLLOW_INSECT] += 2;
+    weights[BEHAVIORS.INSPECT_TOY] += 1;
+    weights[BEHAVIORS.DOZE] = 0;
   } else if (energy < 40) {
     weights[BEHAVIORS.WALK] = 1;
     weights[BEHAVIORS.PLAY] = 0;
     weights[BEHAVIORS.SIT] += 3;
     weights[BEHAVIORS.SLEEP] = 2;
     weights[BEHAVIORS.IDLE] += 2;
+    weights[BEHAVIORS.YAWN] += 3;
+    weights[BEHAVIORS.DOZE] += 4;
+    weights[BEHAVIORS.PLAY_ALONE] = 0;
+    weights[BEHAVIORS.FOLLOW_INSECT] = 0;
   }
 
   // Weather shaping — Bison watches rain, snow, and storms
   if (['rain', 'storm', 'snow'].includes(weather)) {
     weights[BEHAVIORS.WATCH_WINDOW] += 4;
+    weights[BEHAVIORS.THINK] += 2;
+    weights[BEHAVIORS.FOLLOW_INSECT] = 0;
+  } else {
+    // Clear skies bring birds and bugs
+    weights[BEHAVIORS.WATCH_BIRDS] += 2;
+  }
+
+  // Music shaping — the Bison sways when a soundtrack is playing
+  if (musicPlaying) {
+    weights[BEHAVIORS.DANCE] = 5;
   }
 
   // Night shaping
   if (isNight) {
     weights[BEHAVIORS.SLEEP] += 4;
     weights[BEHAVIORS.PLAY] = 0;
+    weights[BEHAVIORS.PLAY_ALONE] = 0;
     weights[BEHAVIORS.WATCH_WINDOW] += 1;
+    weights[BEHAVIORS.WATCH_BIRDS] = 0;
+    weights[BEHAVIORS.DOZE] += 2;
+    weights[BEHAVIORS.YAWN] += 2;
   }
 
   const behavior = pickWeighted(weights, prev);

@@ -3,7 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { computeWorldState } from '@/lib/world/worldStateEngine';
 import { getHabitat } from '@/lib/sanctuary/habitats';
-import { chooseBehavior, BEHAVIOR_NOTES, BEHAVIORS } from '@/lib/sanctuary/bisonBehavior';
+import { chooseBehavior, BEHAVIOR_NOTES, BEHAVIORS, maybeIdleEmote } from '@/lib/sanctuary/bisonBehavior';
+import { audioEngine } from '@/lib/ambiance/audioEngine';
+import SceneInsect from '@/components/sanctuary/SceneInsect';
 import { pickCareScene, PROP_EMOJI } from '@/lib/sanctuary/careScenes';
 import { eventBus } from '@/lib/events/eventBus';
 import EmoteSticker from '@/components/sanctuary/EmoteSticker';
@@ -43,10 +45,21 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
         isLateNight: worldState.isLateNight,
         weather: worldState.weather.current,
         prev,
+        musicPlaying: audioEngine.isPlaying,
       });
       if (!sceneActiveRef.current) {
         prev = b;
         setBehavior(b);
+        // Small spontaneous expression partway through the behavior
+        const idleEmote = maybeIdleEmote(b);
+        if (idleEmote) {
+          setTimeout(() => {
+            if (!sceneActiveRef.current) {
+              setEmote(idleEmote);
+              setTimeout(() => { if (!sceneActiveRef.current) setEmote(null); }, 2600);
+            }
+          }, 1500);
+        }
       }
       timer = setTimeout(tick, durationMs);
     };
@@ -160,6 +173,11 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
             ))}
           </div>
 
+          {/* Wandering bug — the Bison follows it */}
+          {!['rain', 'storm', 'snow'].includes(worldState.weather.current) && (
+            <SceneInsect active={behavior === BEHAVIORS.FOLLOW_INSECT} isNight={worldState.sky.isNight} />
+          )}
+
           {/* Space C — the Bison, always centered */}
           <div className="absolute bottom-[70px] left-1/2 -translate-x-1/2">
             <div className="relative">
@@ -207,8 +225,10 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
           <div className="absolute bottom-8 right-8 flex flex-col items-center gap-1.5">
             <motion.div
               className="w-10 h-10 rounded-xl flex items-center justify-center framed bg-white/5"
-              animate={behavior === BEHAVIORS.PLAY ? { rotate: [0, -10, 10, 0], y: [0, -6, 0] } : {}}
-              transition={{ duration: 1.2, repeat: behavior === BEHAVIORS.PLAY ? Infinity : 0 }}
+              animate={[BEHAVIORS.PLAY, BEHAVIORS.PLAY_ALONE, BEHAVIORS.INSPECT_TOY].includes(behavior)
+                ? { rotate: [0, -10, 10, 0], y: [0, -6, 0] }
+                : {}}
+              transition={{ duration: 1.2, repeat: [BEHAVIORS.PLAY, BEHAVIORS.PLAY_ALONE, BEHAVIORS.INSPECT_TOY].includes(behavior) ? Infinity : 0 }}
             >
               <Gamepad2 className="w-5 h-5 text-white/50" />
             </motion.div>
