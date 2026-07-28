@@ -1,0 +1,76 @@
+{
+  "name": "AutonomousAction",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "THRESHOLD_ADJUSTMENT",
+        "CACHE_CLEARING",
+        "LOG_COMPRESSION",
+        "DORMANT_MEMORY_ARCHIVING",
+        "PARAMETER_TWEAK"
+      ]
+    },
+    "parameter_key": {
+      "type": "string"
+    },
+    "old_value": {
+      "type": "string"
+    },
+    "new_value": {
+      "type": "string"
+    },
+    "justification": {
+      "type": "string"
+    },
+    "reversible": {
+      "type": "boolean",
+      "default": true
+    },
+    "reverted": {
+      "type": "boolean",
+      "default": false
+    },
+    "applied": {
+      "type": "boolean",
+      "default": false
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "applied",
+        "notify_only"
+      ],
+      "default": "notify_only"
+    }
+  },
+  "required": [
+    "type",
+    "justification"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

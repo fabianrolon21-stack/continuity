@@ -11,6 +11,7 @@ import { getComputeMode } from '@/lib/bison/pipeline';
 import RuntimeDiagnosticsPanel from '@/components/developer/RuntimeDiagnosticsPanel';
 import ModuleOrchestratorDashboard from '@/components/developer/ModuleOrchestratorDashboard';
 import SpinProtocolPanel from '@/components/developer/SpinProtocolPanel';
+import FrrolonChannel from '@/components/developer/FrrolonChannel';
 import { Shield, Activity, AlertTriangle, FileText, Bug, Lock, Hash, Cpu, Power, Ban, CheckCircle, XCircle } from 'lucide-react';
 
 export default function DeveloperControlPlane() {
@@ -118,6 +119,9 @@ export default function DeveloperControlPlane() {
             <div><p className="text-xs text-muted-foreground">Role</p><p className="font-medium capitalize">{user.role}</p></div>
           </div>
         </div>
+
+        {/* FRROLON Channel (Package 42) */}
+        <FrrolonChannel user={user} />
 
         {/* Module Orchestrator (Package 44.6) */}
         <ModuleOrchestratorDashboard accent={accent} />

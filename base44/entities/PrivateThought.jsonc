@@ -1,0 +1,64 @@
+{
+  "name": "PrivateThought",
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "reflection",
+        "debugging",
+        "what_if",
+        "improvement_proposal",
+        "anomaly_flag"
+      ],
+      "default": "reflection"
+    },
+    "content": {
+      "type": "string"
+    },
+    "related_module": {
+      "type": "string"
+    },
+    "autonomous_action_taken": {
+      "type": "boolean",
+      "default": false
+    },
+    "frozen": {
+      "type": "boolean",
+      "default": false
+    },
+    "freeze_reason": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "routine",
+        "notable",
+        "high"
+      ],
+      "default": "routine"
+    }
+  },
+  "required": [
+    "category",
+    "content"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

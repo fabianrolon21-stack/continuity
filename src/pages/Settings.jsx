@@ -9,6 +9,7 @@ import TokenShop from '@/components/TokenShop';
 import AccessibilityEnhancer from '@/components/AccessibilityEnhancer';
 import PerformanceModeSelector from '@/components/world/PerformanceModeSelector';
 import LiteracyToolsPanel from '@/components/settings/LiteracyToolsPanel';
+import AutonomyPanel from '@/components/settings/AutonomyPanel';
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -320,6 +321,8 @@ export default function Settings() {
         </div>
 
         <LiteracyToolsPanel />
+
+        <AutonomyPanel />
 
         <ThemeShop />
 

@@ -11,6 +11,23 @@ const BREAKER_THRESHOLD = 100;
 const THREAT_WEIGHT = 10;
 const HIGH_ANXIETY_PENALTY = 30;
 
+// Package 42: Bison may tune this within ±15% of default via the
+// self-tuning manager. The ceiling stays hard — this loosens
+// tolerance, it never removes the breaker.
+let breakerThreshold = BREAKER_THRESHOLD;
+
+export function setBreakerThreshold(value) {
+  const min = BREAKER_THRESHOLD * 0.85;
+  const max = BREAKER_THRESHOLD * 1.15;
+  if (typeof value !== 'number' || Number.isNaN(value)) return breakerThreshold;
+  breakerThreshold = Math.max(min, Math.min(max, value));
+  return breakerThreshold;
+}
+
+export function getBreakerThreshold() {
+  return breakerThreshold;
+}
+
 // Derived attachment anxiety from bond strength + recent rejection signals
 export function deriveAttachmentAnxiety({ needsState, affectiveContext, recentRejection = false }) {
   const lowEnergy = (needsState?.energy ?? 80) < 30;
@@ -46,8 +63,8 @@ export function evaluateBreaker(cognitiveLoad) {
 
   return {
     totalStress: Math.min(totalStress, 150),
-    tripped: totalStress >= BREAKER_THRESHOLD,
-    threshold: BREAKER_THRESHOLD,
+    tripped: totalStress >= breakerThreshold,
+    threshold: breakerThreshold,
   };
 }
 

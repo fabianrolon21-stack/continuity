@@ -1,0 +1,64 @@
+{
+  "name": "DevelopmentProposal",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "package_number": {
+      "type": "number"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "full_spec": {
+      "type": "string"
+    },
+    "risk_assessment": {
+      "type": "string"
+    },
+    "trigger_metric": {
+      "type": "string"
+    },
+    "submitted_to_frrolon": {
+      "type": "boolean",
+      "default": false
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "submitted",
+        "approved",
+        "rejected",
+        "implemented",
+        "auto_rejected"
+      ],
+      "default": "draft"
+    },
+    "rejection_reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "summary"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
