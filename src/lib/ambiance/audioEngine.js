@@ -108,6 +108,7 @@ class AudioEngine {
     this._autoToneInterval = null;
     this._chordIndex = 0;
     this._schedulerInterval = null;
+    this._cycle = 0; // increments each full progression — drives evolving variation
   }
 
   _ensureContext() {
@@ -147,8 +148,22 @@ class AudioEngine {
     const ctx = this._ensureContext();
     const now = ctx.currentTime;
 
-    const chord = track.chords[this._chordIndex % track.chords.length];
+    const baseChord = track.chords[this._chordIndex % track.chords.length];
     this._chordIndex++;
+    if (this._chordIndex % track.chords.length === 0) this._cycle++;
+
+    // ── Evolving variation: same melody, never the same texture twice ──
+    // Rotate the voicing (inversions) as cycles progress
+    const inversion = this._cycle % baseChord.length;
+    const chord = [
+      ...baseChord.slice(inversion).map(f => f),
+      ...baseChord.slice(0, inversion).map(f => f * 2),
+    ];
+    // Occasionally add a countermelody note an octave up
+    const addCountermelody = Math.random() < 0.35;
+    if (addCountermelody) chord.push(baseChord[Math.floor(Math.random() * baseChord.length)] * 2);
+    // Occasionally add a low sub-octave for weight
+    if (this._cycle > 0 && Math.random() < 0.3) chord.push(baseChord[0] / 2);
 
     const voice = {
       oscillators: [],
@@ -157,21 +172,40 @@ class AudioEngine {
     };
 
     voice.filter.type = 'lowpass';
-    voice.filter.frequency.value = track.filterFreq;
+    // Breathe the filter slightly between chords so the loop never sounds identical
+    voice.filter.frequency.value = track.filterFreq * (0.85 + Math.random() * 0.3);
     voice.filter.connect(voice.gainNode);
     voice.gainNode.connect(this._masterGain);
 
-    const targetGain = fadeIn ? 0 : 0.15;
+    // Subtle dynamic swell per chord instead of a fixed level
+    const targetGain = 0.15 * (0.85 + Math.random() * 0.3);
     voice.gainNode.gain.setValueAtTime(0, now);
     voice.gainNode.gain.linearRampToValueAtTime(targetGain, now + (fadeIn ? 2 : 0.3));
 
     for (const freq of chord) {
       const osc = ctx.createOscillator();
       osc.type = track.oscillatorType;
-      osc.frequency.value = freq;
+      // Micro-detune gives an organic, ensemble feel
+      osc.frequency.value = freq * (1 + (Math.random() - 0.5) * 0.004);
       osc.connect(voice.filter);
       osc.start(now);
       voice.oscillators.push(osc);
+    }
+
+    // Soft percussion / grace-note fill on some chords
+    if (this._cycle > 0 && Math.random() < 0.3) {
+      const fill = ctx.createOscillator();
+      const fillGain = ctx.createGain();
+      fill.type = 'triangle';
+      fill.frequency.value = chord[0] * 4;
+      const fillStart = now + track.chordDuration * 0.6;
+      fillGain.gain.setValueAtTime(0, fillStart);
+      fillGain.gain.linearRampToValueAtTime(0.05, fillStart + 0.02);
+      fillGain.gain.exponentialRampToValueAtTime(0.001, fillStart + 0.4);
+      fill.connect(fillGain).connect(this._masterGain);
+      fill.start(fillStart);
+      fill.stop(fillStart + 0.45);
+      voice.oscillators.push(fill);
     }
 
     this._currentVoices.push(voice);
@@ -191,6 +225,10 @@ class AudioEngine {
   play(trackId) {
     const ctx = this._ensureContext();
     this._isPlaying = true;
+
+    // Restore master gain — a previous stop() may have faded it to 0
+    this._masterGain.gain.cancelScheduledValues(ctx.currentTime);
+    this._masterGain.gain.setValueAtTime(this._volume, ctx.currentTime);
 
     // Crossfade: clear current, start new
     this._clearVoices();
@@ -226,7 +264,7 @@ class AudioEngine {
 
   setVolume(vol) {
     this._volume = vol;
-    if (this._masterGain && this._ctx && this._isPlaying) {
+    if (this._masterGain && this._ctx) {
       const now = this._ctx.currentTime;
       this._masterGain.gain.cancelScheduledValues(now);
       this._masterGain.gain.linearRampToValueAtTime(vol, now + 0.2);
