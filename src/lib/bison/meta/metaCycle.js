@@ -11,6 +11,9 @@ import { considerTuning, applyTuning } from '../autonomy/selfTuningManager';
 import { runMaintenance } from '../autonomy/preventiveMaintenance';
 import { generateProposal } from '../improvement/proposalGenerator';
 import { isAutonomyEnabled } from '../autonomy/autonomyCapabilities';
+import { crawlForUpdates } from '../updates/liveUpdateCrawler';
+import { processPending } from '../updates/updateManager';
+import { runAwarenessSweep } from '../autonomy/autonomousAwarenessEngine';
 
 let bootstrapped = false;
 
@@ -24,6 +27,12 @@ export async function runPostInteraction(userInput, result) {
       bootstrapped = true;
       applyTuning(user);
       runMaintenance(user).catch(() => {});
+      // Package 43 sweeps — rate-limited internally (6h / 12h), so this
+      // is a no-op on most sessions and never blocks the conversation.
+      crawlForUpdates(user).then(found => {
+        if (found?.length) processPending(user).catch(() => {});
+      }).catch(() => {});
+      runAwarenessSweep(user).catch(() => {});
     }
 
     await think(THOUGHT_CATEGORIES.REFLECTION, summariseInteraction(userInput, result), {

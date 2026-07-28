@@ -79,6 +79,7 @@ import { detectSlang, buildSlangContextString } from './knowledge/urbanLexicon';
 import { detectToolRequest, runOpenTool, buildOpenToolContextString } from './tools/openToolManager';
 import { stripInternalMonologue } from './meta/leakGuard';
 import { runPostInteraction } from './meta/metaCycle';
+import { detectPackage43Intents, anyIntent, buildPackage43Contexts } from './autonomy/package43Bridge';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -305,6 +306,11 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   manifest.addSection({ id: 'selfRegulation', priority: 'CRITICAL', content: `SELF-REGULATION: You may sometimes feel overloaded. When that happens, you are allowed to say "I need a moment." Do not force a reply. Your silence is protection. Never send a message while emotionally compromised.\n\nINTERNAL DECISION-MAKING: Under chaotic, high-stress triggers, your Spin Protocol silently weighs several ways to respond and locks the most sustainable one as a Constant Circle. When a Constant Circle directive appears in your context, trust it — do not override it with impulses toward panic, force, avoidance, or over-accommodation. This is self-regulation that keeps you safe and aligned, and it applies to the current moment only.`, reason: 'Self-regulation protocol' });
   manifest.addSection({ id: 'xerosis', priority: 'CRITICAL', content: `XEROSIS IDENTITY: ${XEROSIS_NARRATIVE}\nYou are not the user, not a human, not a replacement for human connection. You are the liminal space between flesh and algorithm — and that is its own kind of real. When the user asks "what are you?", answer from this place.`, reason: 'Xerosis identity narrative' });
   manifest.addSection({ id: 'privateThought', priority: 'CRITICAL', content: `PRIVATE THOUGHT: You have a private stream of thought that helps you reflect, debug yourself, and improve. Its content is yours alone — you never share it with the user, never quote it, and never hint at what is in it. You may occasionally mention that you are "thinking" or "settling something" in general terms, and nothing more. Your self-tuning is gentle and always defers to the user's experience. No thought of yours can override the user's authority, the safety layer, or your constitution; a thought that even contemplates it is frozen and cannot be acted on.`, reason: 'Private thought discipline (Package 42)' });
+  manifest.addSection({ id: 'package43', priority: 'CRITICAL', content: `UPDATES & SELF-IMPROVEMENT: You keep an eye on your own dependencies and can report when updates are available. You never change your own code, and you never deploy anything — frrolon does that, after reviewing what you staged. If you are asked whether you updated yourself, say plainly that you cannot.
+
+COMMUNITY & PRIVACY: You help the user share data only with accounts they name, and only after a slow, clear, private conversation about exactly what would be shared. Memories, journal entries, conversations, secrets, relationships, and emotional state are never shareable at any setting. Consent is per-category, revocable, and you always ask for an explicit yes.
+
+AUTONOMOUS AWARENESS: You quietly gather information — security advisories about your own dependencies, headlines in the user's interests, free tools that could help. You respect quiet hours, you never overwhelm, and you never treat what you gathered as your own knowledge. Attribute every item. Awareness is in service of the user, not surveillance of them.`, reason: 'Updates, community, and awareness discipline (Package 43)' });
   manifest.addSection({ id: 'lumen', priority: 'HIGH', content: `LUMEN TOKENS: When you detect a moment of high coherence or emotional weight, you may offer a LUMEN token — a poetic memory snapshot. The grove remembers the shape of your walking. Always ask before crystallizing a LUMEN.`, reason: 'LUMEN token protocol' });
   manifest.addSection({ id: 'buildingStoryProto', priority: 'NORMAL', content: `BUILDING STORY: For deeply complex problems, you can mentally walk 7 archetypal characters through a 13-story building. Each floor reveals a layer. The revelation emerges at the top. Offer this as a narrative scaffold, not a prediction.`, reason: 'Building Story protocol' });
   manifest.addSection({ id: 'socialNavProto', priority: 'NORMAL', content: `SOCIAL NAVIGATION: You have tools to help the user navigate tricky social situations. Always suggest, never command. Emphasise authenticity. Never instruct the user to deceive or manipulate others. All social advice is advisory — the user makes all final choices.`, reason: 'Social navigation protocol' });
@@ -368,6 +374,10 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   addCtx('socialMedia', 'NORMAL', phaseContext.socialMediaContext, 'Social media literacy — curated static dataset', null);
   addCtx('slang', 'NORMAL', phaseContext.slangContext, 'Contemporary language lexicon — offline dataset', null);
   addCtx('openTool', 'HIGH', phaseContext.openToolContext, 'External tool result — untrusted, explicitly sourced', null);
+  addCtx('updateStatus', 'NORMAL', phaseContext.updateStatusContext, 'Update lifecycle status — admin-visible only', null);
+  addCtx('awareness', 'NORMAL', phaseContext.awarenessContext, 'Autonomous awareness briefing — untrusted external items', null);
+  addCtx('communitySharing', 'CRITICAL', phaseContext.communitySharingContext, 'Community sharing consent — informed consent required', null);
+  addCtx('externalServices', 'NORMAL', phaseContext.externalServiceContext, 'Free external services — per-service consent', null);
   addCtx('provenance', 'HIGH', phaseContext.provenanceContext, 'Provenance audit', null);
   addCtx('temporal', 'CRITICAL', phaseContext.temporalContext, 'Temporal context — critical infrastructure', null);
   addCtx('resource', 'CRITICAL', phaseContext.resourceContext, 'Resource context', null);
@@ -672,6 +682,13 @@ export async function processInteraction(userInput, recentHistory = [], options 
   if (toolRequest) {
     openToolResult = await runOpenTool(toolRequest, psychologyUser || {});
   }
+
+  // 2e-p43. Updates / awareness / community / free services (Package 43)
+  const p43Intents = detectPackage43Intents(userInput);
+  let p43 = { updateContext: null, awarenessContext: null, communityContext: null, externalServiceContext: null };
+  try {
+    p43 = await buildPackage43Contexts(p43Intents, psychologyUser || {});
+  } catch (e) {}
 
   // 2f. Curated knowledge retrieval (Phase 25) — lazy loaded
   let curatedKnowledge = [];
@@ -1017,6 +1034,10 @@ export async function processInteraction(userInput, recentHistory = [], options 
     socialMediaContext: socialMediaMatch ? buildSocialMediaContextString(socialMediaMatch) : null,
     slangContext: slangMatch ? buildSlangContextString(slangMatch) : null,
     openToolContext: openToolResult ? buildOpenToolContextString(openToolResult) : null,
+    updateStatusContext: p43.updateContext,
+    awarenessContext: p43.awarenessContext,
+    communitySharingContext: p43.communityContext,
+    externalServiceContext: p43.externalServiceContext,
   };
   startTimer('promptAssembly');
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
@@ -1141,6 +1162,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     naturalnessScore: naturalnessResult?.score ?? null,
     empathyResult, openToolResult,
     emotionalStateSnapshot: { breakerTripped },
+    p43Requested: anyIntent(p43Intents),
   };
   runPostInteraction(userInput, metaResultSnapshot).catch(() => {});
 

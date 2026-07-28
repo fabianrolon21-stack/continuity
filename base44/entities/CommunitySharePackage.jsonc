@@ -1,0 +1,43 @@
+{
+  "name": "CommunitySharePackage",
+  "type": "object",
+  "properties": {
+    "trusted_account": {
+      "type": "string"
+    },
+    "anonymous_key": {
+      "type": "string"
+    },
+    "data_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "payload": {
+      "type": "string"
+    },
+    "anonymisation_notes": {
+      "type": "string"
+    },
+    "delivered": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "trusted_account",
+    "payload"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Send, Users, Shield, ArrowLeft, Plus } from 'lucide-react';
 import CommunityMatch from '@/components/CommunityMatch';
+import CommunitySharingPanel from '@/components/community/CommunitySharingPanel';
 
 const VIBE_OPTIONS = ['calm', 'reflective', 'deep', 'playful', 'energetic'];
 const DEFAULT_CHANNELS = [
@@ -114,6 +115,7 @@ export default function Community() {
 
           {profile && (
             <>
+            <CommunitySharingPanel />
             <CommunityMatch />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
               {channels.map(ch => (

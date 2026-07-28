@@ -1,0 +1,83 @@
+{
+  "name": "UpdateStage",
+  "type": "object",
+  "properties": {
+    "package_name": {
+      "type": "string"
+    },
+    "current_version": {
+      "type": "string"
+    },
+    "discovered_version": {
+      "type": "string"
+    },
+    "integrity_hash": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": false
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "DISCOVERED",
+        "VERIFIED",
+        "SANDBOX_TESTED",
+        "SANDBOX_FAILED",
+        "STAGED",
+        "APPROVED",
+        "DEPLOYED",
+        "ROLLED_BACK",
+        "DISMISSED"
+      ],
+      "default": "DISCOVERED"
+    },
+    "test_notes": {
+      "type": "string"
+    },
+    "risk_notes": {
+      "type": "string"
+    },
+    "approved_by": {
+      "type": "string"
+    },
+    "deployed": {
+      "type": "boolean",
+      "default": false
+    },
+    "checkpoint": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "package_name",
+    "current_version",
+    "discovered_version"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

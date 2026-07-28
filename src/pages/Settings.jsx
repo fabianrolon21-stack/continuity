@@ -10,6 +10,7 @@ import AccessibilityEnhancer from '@/components/AccessibilityEnhancer';
 import PerformanceModeSelector from '@/components/world/PerformanceModeSelector';
 import LiteracyToolsPanel from '@/components/settings/LiteracyToolsPanel';
 import AutonomyPanel from '@/components/settings/AutonomyPanel';
+import AwarenessPanel from '@/components/settings/AwarenessPanel';
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -323,6 +324,8 @@ export default function Settings() {
         <LiteracyToolsPanel />
 
         <AutonomyPanel />
+
+        <AwarenessPanel />
 
         <ThemeShop />
 

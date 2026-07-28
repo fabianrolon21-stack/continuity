@@ -104,11 +104,38 @@ export async function collectDashboardState(lastInteractionResult = null) {
         authority: lastInteractionResult?.runtimeAuthorityReport || null,
         hallucinationsPrevented: lastInteractionResult?.runtimeAuthorityReport?.hallucinationsPrevented || 0,
       },
+      autonomousOperations: await collectAutonomousOperations(),
       lumenCount: await getLumenCount(),
       spinProtocol: {
         lastSpin: lastInteractionResult?.spinProtocolResult || null,
         recentSpins: getSpinLog().slice(0, 5),
       },
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+// Package 43 — autonomous operations at a glance. The user sees counts;
+// frrolon opens the panels for the full record.
+async function collectAutonomousOperations() {
+  try {
+    const [stages, awareness, consents, packages] = await Promise.all([
+      base44.entities.UpdateStage.list('-created_date', 25).catch(() => []),
+      base44.entities.AwarenessItem.list('-created_date', 25).catch(() => []),
+      base44.entities.CommunityShareConsent.list('-created_date', 20).catch(() => []),
+      base44.entities.CommunitySharePackage.list('-created_date', 20).catch(() => []),
+    ]);
+    return {
+      updateStages: (stages || []).map(s => ({
+        package: s.package_name, from: s.current_version, to: s.discovered_version, stage: s.stage,
+      })),
+      stagedCount: (stages || []).filter(s => s.stage === 'STAGED').length,
+      awarenessCount: (awareness || []).length,
+      criticalAdvisories: (awareness || []).filter(a => a.critical && !a.dismissed).length,
+      activeConsents: (consents || []).filter(c => c.confirmed && !c.revoked).length,
+      revokedConsents: (consents || []).filter(c => c.revoked).length,
+      sharePackages: (packages || []).length,
     };
   } catch (e) {
     return null;

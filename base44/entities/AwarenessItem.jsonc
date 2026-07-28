@@ -1,0 +1,59 @@
+{
+  "name": "AwarenessItem",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "breaking_news",
+        "security_advisory",
+        "compute_optimisation",
+        "free_service_discovery",
+        "code_update_available"
+      ]
+    },
+    "source": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "relevance_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.5
+    },
+    "actionable": {
+      "type": "boolean",
+      "default": false
+    },
+    "critical": {
+      "type": "boolean",
+      "default": false
+    },
+    "presented": {
+      "type": "boolean",
+      "default": false
+    },
+    "dismissed": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "type",
+    "summary"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

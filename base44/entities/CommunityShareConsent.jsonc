@@ -1,0 +1,54 @@
+{
+  "name": "CommunityShareConsent",
+  "type": "object",
+  "properties": {
+    "trusted_account": {
+      "type": "string"
+    },
+    "anonymous_key": {
+      "type": "string"
+    },
+    "data_categories": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "performance_metrics",
+          "feature_usage",
+          "improvement_suggestions",
+          "error_patterns"
+        ]
+      }
+    },
+    "consent_explanation": {
+      "type": "string"
+    },
+    "confirmed": {
+      "type": "boolean",
+      "default": false
+    },
+    "revoked": {
+      "type": "boolean",
+      "default": false
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "trusted_account",
+    "data_categories"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
