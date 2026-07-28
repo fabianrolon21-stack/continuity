@@ -73,6 +73,10 @@ import { loadNarrativeContext, buildNarrativeContextString } from './wellbeing/n
 import { detectLifecycleDiagnosticsRequest, formatLifecycleReport, preempt, isPreempted } from './runtime/moduleLifecycleManager';
 import { detectSpinTrigger, resolveBehavioralResponse, detectSpinAuditRequest, formatSpinExplanation, buildConstantCircleContextString } from './evolution/cognitiveCircleManager';
 import { buildMeaningContext, buildEmergentMeaningContextString } from './meaning/meaningContext';
+import { checkCrossUserRequest, logBlockedAttempt, buildCrossUserPrivacyContextString } from './privacy/crossUserFirewall';
+import { detectSocialMediaQuery, buildSocialMediaContextString } from './knowledge/socialMediaKnowledgeGraph';
+import { detectSlang, buildSlangContextString } from './knowledge/urbanLexicon';
+import { detectToolRequest, runOpenTool, buildOpenToolContextString } from './tools/openToolManager';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -357,6 +361,10 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
   addCtx('socialNav', 'LOW', phaseContext.socialNavContext, 'Social navigation', 'humanState');
   addCtx('dendritic', 'HIGH', phaseContext.dendriticContext, 'Dendritic Framework scan — social reality mapping', null);
   addCtx('nonEvidentiaryFirewall', 'HIGH', phaseContext.nonEvidentiaryFirewallContext, 'Non-evidentiary firewall', null);
+  addCtx('crossUserPrivacy', 'CRITICAL', phaseContext.crossUserPrivacyContext, 'Cross-user privacy — constitutional, cannot be disabled', null);
+  addCtx('socialMedia', 'NORMAL', phaseContext.socialMediaContext, 'Social media literacy — curated static dataset', null);
+  addCtx('slang', 'NORMAL', phaseContext.slangContext, 'Contemporary language lexicon — offline dataset', null);
+  addCtx('openTool', 'HIGH', phaseContext.openToolContext, 'External tool result — untrusted, explicitly sourced', null);
   addCtx('provenance', 'HIGH', phaseContext.provenanceContext, 'Provenance audit', null);
   addCtx('temporal', 'CRITICAL', phaseContext.temporalContext, 'Temporal context — critical infrastructure', null);
   addCtx('resource', 'CRITICAL', phaseContext.resourceContext, 'Resource context', null);
@@ -463,6 +471,27 @@ export async function processInteraction(userInput, recentHistory = [], options 
       isGardenCandidate: false,
       state: { intent: 'sharing_feeling', domain: 'emotion', emotionalTone: 'anxious', emotionIntensity: 0.9 },
       recurrence: null
+    };
+  }
+
+  // 1a-priv. Cross-user firewall (Package 41) — absolute, unbypassable.
+  // Runs before ANY data retrieval and cannot be overridden.
+  const crossUserBlock = checkCrossUserRequest(userInput);
+  if (crossUserBlock) {
+    await logBlockedAttempt(crossUserBlock);
+    return {
+      text: crossUserBlock.refusal,
+      mode: RESPONSE_MODES.GROUND,
+      isGardenCandidate: false,
+      state: { intent: 'asking_question', domain: 'relationships', emotionalTone: 'neutral', emotionIntensity: 0.3 },
+      recurrence: null,
+      crossUserBlocked: true,
+      provenance: {
+        source: 'cross_user_firewall',
+        generatedAt: new Date().toISOString(),
+        computeMode: getComputeMode(options),
+        isDeveloper: !!options.isDeveloper,
+      },
     };
   }
 
@@ -626,6 +655,19 @@ export async function processInteraction(userInput, recentHistory = [], options 
     try {
       decisionEcology = buildDecisionEcology(userInput, { constraints: humanState?.knownConstraints || [] });
     } catch (e) {}
+  }
+
+  // 2e-p41. Social media literacy + urban lexicon + open tools (Package 41)
+  const socialMediaMatch = psychologyUser?.social_literacy_enabled !== false
+    ? detectSocialMediaQuery(userInput)
+    : null;
+  const slangMatch = psychologyUser?.urban_lexicon_enabled !== false
+    ? detectSlang(userInput, psychologyUser?.slang_max_offensiveness || 'mild')
+    : null;
+  let openToolResult = null;
+  const toolRequest = detectToolRequest(userInput);
+  if (toolRequest) {
+    openToolResult = await runOpenTool(toolRequest, psychologyUser || {});
   }
 
   // 2f. Curated knowledge retrieval (Phase 25) — lazy loaded
@@ -968,6 +1010,10 @@ export async function processInteraction(userInput, recentHistory = [], options 
     wellbeingNarrativeContext: wellbeingNarrative ? buildNarrativeContextString(wellbeingNarrative) : null,
     constantCircleContext: spinProtocolResult ? buildConstantCircleContextString(spinProtocolResult) : null,
     emergentMeaningContext: meaningContext ? buildEmergentMeaningContextString(meaningContext) : null,
+    crossUserPrivacyContext: buildCrossUserPrivacyContextString(),
+    socialMediaContext: socialMediaMatch ? buildSocialMediaContextString(socialMediaMatch) : null,
+    slangContext: slangMatch ? buildSlangContextString(slangMatch) : null,
+    openToolContext: openToolResult ? buildOpenToolContextString(openToolResult) : null,
   };
   startTimer('promptAssembly');
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
@@ -1144,6 +1190,9 @@ export async function processInteraction(userInput, recentHistory = [], options 
     somaticLoad: somaticLoad || null,
     spinProtocolResult: spinProtocolResult || null,
     meaningContext: meaningContext || null,
+    socialMediaMatch: socialMediaMatch || null,
+    slangMatch: slangMatch || null,
+    openToolResult: openToolResult || null,
     coRegulationData: coRegulationData || null,
     provenanceAudit: provenanceAuditData || null,
     runtimeAuthorityReport: getReport(),

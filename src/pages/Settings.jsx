@@ -8,6 +8,7 @@ import ThemeShop from '@/components/ThemeShop';
 import TokenShop from '@/components/TokenShop';
 import AccessibilityEnhancer from '@/components/AccessibilityEnhancer';
 import PerformanceModeSelector from '@/components/world/PerformanceModeSelector';
+import LiteracyToolsPanel from '@/components/settings/LiteracyToolsPanel';
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -317,6 +318,8 @@ export default function Settings() {
             <p className="text-xs text-muted-foreground/60">No avoided topics set.</p>
           )}
         </div>
+
+        <LiteracyToolsPanel />
 
         <ThemeShop />
 

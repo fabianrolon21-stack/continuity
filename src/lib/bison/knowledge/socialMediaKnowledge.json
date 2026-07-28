@@ -1,0 +1,106 @@
+{
+  "sourceNote": "Compiled from public company disclosures, published platform documentation, academic research on recommender systems, and investigative reporting. Static dataset — never live-accessed, never connected to the user's own accounts.",
+  "lastUpdated": "2026-07",
+  "platforms": [
+    {
+      "name": "TikTok",
+      "parentCompany": "ByteDance",
+      "keywords": ["tiktok", "for you page", "fyp", "byte dance", "bytedance"],
+      "revenueModel": "Advertising (in-feed ads, branded effects), live-stream gifting commissions, and TikTok Shop commerce fees.",
+      "algorithmicFeed": "The For You feed is interest-based rather than social-graph-based. Each video is shown to a small test audience, then promoted or dropped based on completion rate, rewatches, shares, comments and likes — in roughly that order of weight. Completion rate matters most, which is why videos are short and front-load a hook. Because it does not need your friends list to work, it can profile a new account's tastes within dozens of videos.",
+      "shortFormSystem": "Short video (15s–10min), Stories, LIVE",
+      "knownDarkPatterns": ["infinite scroll with no stopping cue", "autoplay before you choose", "variable-reward feed pacing", "streak and gifting mechanics on LIVE"],
+      "privacyImplications": "Collects watch duration per video, keystroke cadence, device and network identifiers, and contact lists if granted. Watch-time signals are unusually granular because they drive the core ranking model."
+    },
+    {
+      "name": "Instagram",
+      "parentCompany": "Meta",
+      "keywords": ["instagram", "insta", "reels", "ig"],
+      "revenueModel": "Advertising, primarily behaviourally targeted; plus creator commerce and subscriptions.",
+      "algorithmicFeed": "Separate ranking models per surface. Feed weighs how likely you are to linger, like, comment or save, mixing followed accounts with recommended ones. Reels leans almost entirely on predicted watch-through and shares, so it behaves much like TikTok. Explore is pure recommendation. Ranking optimises predicted engagement, not chronology — so 'what you see first' reflects predicted reaction, not recency.",
+      "shortFormSystem": "Reels, Stories",
+      "knownDarkPatterns": ["engagement-optimised ordering presented as a feed of friends", "streaks and 'seen' receipts", "appearance-comparison surfaces (Explore, Reels) shown by default", "notification bundling to drive re-opens"],
+      "privacyImplications": "Shares an advertising graph with Facebook and WhatsApp. Off-platform activity can be linked via the Meta pixel on third-party sites unless limited in settings."
+    },
+    {
+      "name": "Facebook",
+      "parentCompany": "Meta",
+      "keywords": ["facebook", "fb", "meta"],
+      "revenueModel": "Advertising — the majority of Meta's revenue — sold on detailed interest, behaviour and lookalike targeting.",
+      "algorithmicFeed": "News Feed scores thousands of candidate posts per visit on predicted meaningful interaction: comments and reshares weigh more heavily than passive views. Groups and Reels are injected as growth surfaces. Content that provokes reply-chains tends to spread, which is a known amplifier of conflict-shaped posts.",
+      "shortFormSystem": "Reels, Stories",
+      "knownDarkPatterns": ["confirmshaming on privacy prompts", "friction-heavy deactivation flows", "notification re-engagement loops", "default-on data sharing across Meta properties"],
+      "privacyImplications": "Extensive off-platform tracking through pixels and SDKs; ad targeting can be derived from behaviour you never entered on the platform."
+    },
+    {
+      "name": "YouTube",
+      "parentCompany": "Google (Alphabet)",
+      "keywords": ["youtube", "shorts", "yt"],
+      "revenueModel": "Advertising split with creators, Premium subscriptions, channel memberships.",
+      "algorithmicFeed": "Recommendations optimise for predicted satisfied watch time across a session, not a single video. The 'up next' and homepage models draw on your history, similar viewers' histories, and video metadata. Longer sessions are the objective, which structurally favours series, cliffhangers and sequels.",
+      "shortFormSystem": "Shorts",
+      "knownDarkPatterns": ["autoplay next by default", "mid-roll ad density on long content", "Shorts feed as an infinite scroll inside a long-form app"],
+      "privacyImplications": "Watch history is tied to your Google account by default and informs advertising across Google properties unless history controls are turned off."
+    },
+    {
+      "name": "X (formerly Twitter)",
+      "parentCompany": "X Corp.",
+      "keywords": ["twitter", " x ", "tweet", "retweet"],
+      "revenueModel": "Advertising plus paid verification and subscription tiers.",
+      "algorithmicFeed": "The default 'For You' timeline mixes followed accounts with out-of-network posts ranked by a predicted-engagement model; replies and reposts weigh heavily, and paid accounts receive reach weighting. A reverse-chronological 'Following' tab remains available and is a meaningfully calmer surface.",
+      "shortFormSystem": "Video tab, Spaces (audio)",
+      "knownDarkPatterns": ["quote-post dynamics that reward dunking", "trending module as a manufactured-urgency surface", "algorithmic tab set as default over chronological"],
+      "privacyImplications": "Public-by-default posting; engagement and follow graphs are visible to third parties and widely scraped."
+    },
+    {
+      "name": "Snapchat",
+      "parentCompany": "Snap Inc.",
+      "keywords": ["snapchat", "snap", "streaks"],
+      "revenueModel": "Advertising, Snapchat+ subscriptions, AR lens partnerships.",
+      "algorithmicFeed": "Friend content is largely relationship-ordered; Discover and Spotlight are algorithmic and watch-time driven. Snap Map surfaces location among mutual friends when enabled.",
+      "shortFormSystem": "Spotlight, Stories",
+      "knownDarkPatterns": ["Snapstreaks — explicit loss-aversion mechanic", "best-friend rankings that gamify friendship", "ephemerality that encourages compulsive checking"],
+      "privacyImplications": "Location sharing and streak mechanics generate a continuous behavioural record; 'disappearing' refers to the recipient's view, not to deletion from all systems."
+    },
+    {
+      "name": "Reddit",
+      "parentCompany": "Reddit, Inc.",
+      "keywords": ["reddit", "subreddit", "upvote", "karma"],
+      "revenueModel": "Advertising, Premium subscriptions, and data licensing to AI companies.",
+      "algorithmicFeed": "Ranking is community-scoped and largely vote-based, with time decay — early votes have outsized influence on what reaches a front page. The Home feed blends subscribed subreddits with recommendations. Moderation and culture vary sharply per community.",
+      "shortFormSystem": "Reddit video feed",
+      "knownDarkPatterns": ["karma as a status treadmill", "vote-brigading dynamics", "early-vote lottery that rewards posting at peak hours"],
+      "privacyImplications": "Pseudonymous rather than anonymous — a long comment history is often enough to identify someone. Public content is licensed for AI training."
+    },
+    {
+      "name": "LinkedIn",
+      "parentCompany": "Microsoft",
+      "keywords": ["linkedin"],
+      "revenueModel": "Recruiter and sales subscriptions, advertising, and Premium memberships — the majority of revenue comes from paid tools rather than ads.",
+      "algorithmicFeed": "Ranks on predicted professional engagement, favouring dwell time and comment threads. Rewards a recognisable register (personal-story-into-business-lesson), which is why the feed's writing style feels uniform.",
+      "shortFormSystem": "LinkedIn video feed",
+      "knownDarkPatterns": ["profile-completeness and 'who viewed you' nudges gated behind Premium", "aggressive connection-invite prompts", "performance-of-professionalism pressure"],
+      "privacyImplications": "Your profile is a career-visible record; activity can be seen by employers and recruiters, and viewing others is often disclosed to them."
+    },
+    {
+      "name": "Threads",
+      "parentCompany": "Meta",
+      "keywords": ["threads"],
+      "revenueModel": "Currently minimal direct monetisation; strategically an engagement and advertising surface for Meta.",
+      "algorithmicFeed": "The default feed is heavily recommendation-driven, surfacing accounts you do not follow. A following-only feed is available. Bootstrapped from the Instagram graph.",
+      "shortFormSystem": "Text-first with media",
+      "knownDarkPatterns": ["recommendation feed as default over following", "account creation coupled to Instagram, making standalone deletion awkward"],
+      "privacyImplications": "Shares identity and interest signals with the Instagram/Meta graph."
+    },
+    {
+      "name": "Discord",
+      "parentCompany": "Discord, Inc.",
+      "keywords": ["discord", "server", "nitro"],
+      "revenueModel": "Nitro subscriptions, server boosts, and cosmetic sales — not an advertising-first business.",
+      "algorithmicFeed": "Largely non-algorithmic: content is chronological within channels you join. Attention pressure comes from real-time presence and notifications rather than ranking.",
+      "shortFormSystem": "None",
+      "knownDarkPatterns": ["always-online presence indicators", "@everyone notification pressure", "unbounded unread backlogs"],
+      "privacyImplications": "Message history persists in servers indefinitely and is visible to server staff; DMs are not end-to-end encrypted."
+    }
+  ]
+}
