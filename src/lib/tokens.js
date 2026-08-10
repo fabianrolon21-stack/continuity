@@ -12,6 +12,19 @@ export async function awardTokens(amount, reason) {
   }
 }
 
+export async function spendTokens(amount, reason) {
+  try {
+    const user = await base44.auth.me();
+    const balance = user.token_balance || 0;
+    if (balance < amount) return { ok: false, balance };
+    await base44.entities.TokenTransaction.create({ amount, type: 'spend', reason });
+    await base44.auth.updateMe({ token_balance: balance - amount });
+    return { ok: true, balance: balance - amount };
+  } catch (e) {
+    return { ok: false, balance: null };
+  }
+}
+
 export async function getTokenBalance() {
   try {
     const user = await base44.auth.me();

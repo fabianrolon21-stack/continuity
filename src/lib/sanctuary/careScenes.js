@@ -115,6 +115,14 @@ export const PROP_EMOJI = {
   ball: '⚽',
   stick: '🪵',
   frisbee: '🥏',
+  honeycomb: '🍯',
+  pumpkin: '🎃',
+  herb_bundle: '🌿',
+  warm_bread: '🍞',
+  kite: '🪁',
+  bubbles: '🫧',
+  drum: '🥁',
+  lantern: '🏮',
 };
 
 function pick(arr) {

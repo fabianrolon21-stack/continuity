@@ -4,29 +4,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { wakeAndTick, performCareAction } from '@/lib/bison/companionEngine';
 import { emit } from '@/lib/events/eventBus';
 import { loadPreferences, recordUse, reactionFor, favouriteOf } from '@/lib/sanctuary/toyPreferences';
-import { Hand, Apple, Droplets, Moon, Heart, Compass, Sprout, Palette, MessageCircle, ChevronLeft, Gamepad2 } from 'lucide-react';
-
-const FOODS = [
-  { id: 'apple', label: 'Apple', emoji: '🍎' },
-  { id: 'watermelon', label: 'Watermelon', emoji: '🍉' },
-  { id: 'carrot', label: 'Carrot', emoji: '🥕' },
-  { id: 'berries', label: 'Berries', emoji: '🫐' },
-];
-const TOYS = [
-  { id: 'ball', label: 'Ball', emoji: '⚽' },
-  { id: 'stick', label: 'Stick', emoji: '🪵' },
-  { id: 'frisbee', label: 'Frisbee', emoji: '🥏' },
-];
+import { base44 } from '@/api/base44Client';
+import { CARE_ITEMS, PLAY_ITEMS, availableItems } from '@/lib/sanctuary/storeCatalog';
+import { Hand, Apple, Droplets, Moon, Heart, Compass, Sprout, Palette, MessageCircle, ChevronLeft, Gamepad2, ShoppingBag } from 'lucide-react';
 
 export default function InteractMenu({ onSceneStart }) {
   const [folder, setFolder] = useState(null); // null | root | care | food | play | explore
   const [needs, setNeeds] = useState(null);
   const [prefs, setPrefs] = useState({});
+  const [owned, setOwned] = useState([]);
 
   useEffect(() => {
     wakeAndTick().then(c => setNeeds(c.needsState)).catch(() => {});
     loadPreferences().then(setPrefs);
+    base44.auth.me().then(u => setOwned(u?.owned_items || [])).catch(() => {});
   }, []);
+
+  const FOODS = availableItems(CARE_ITEMS, owned);
+  const TOYS = availableItems(PLAY_ITEMS, owned);
 
   const act = (action, prop) => {
     setFolder(null);
@@ -100,6 +95,7 @@ export default function InteractMenu({ onSceneStart }) {
                   </div>
                 )}
                 <Item icon={Apple} label="Food" color="hsl(120 40% 58%)" onClick={() => setFolder('food')} />
+                <Item icon={ShoppingBag} label="Care Store" color="hsl(42 63% 55%)" to="/store" />
                 <Item icon={Droplets} label="Water" color="hsl(199 56% 64%)" onClick={() => act('water', 'bucket')} />
                 <Item icon={Moon} label="Rest" color="hsl(265 41% 64%)" onClick={() => act('rest', null)} />
               </>
@@ -115,13 +111,15 @@ export default function InteractMenu({ onSceneStart }) {
                   <Item key={t.id} emoji={t.emoji} label={t.label} favourite={t.id === favToy} onClick={() => act('play', t.id)} />
                 ))}
                 <Item icon={Gamepad2} label="Card Game" color="hsl(265 41% 64%)" to="/games" />
+                <Item icon={ShoppingBag} label="Play Store" color="hsl(21 73% 69%)" to="/store" />
               </>
             )}
 
             {folder === 'explore' && (
               <>
                 <Item icon={Sprout} label="Garden" color="hsl(120 40% 58%)" to="/garden" />
-                <Item icon={Palette} label="Store" color="hsl(42 63% 55%)" to="/settings" />
+                <Item icon={ShoppingBag} label="Stores" color="hsl(42 63% 55%)" to="/store" />
+                <Item icon={Palette} label="Themes" color="hsl(265 41% 64%)" to="/settings" />
                 <Item icon={MessageCircle} label="Talk to Bison" color="hsl(42 63% 55%)" to="/bison" />
               </>
             )}

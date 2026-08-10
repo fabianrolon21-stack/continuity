@@ -16,6 +16,7 @@ import SceneBison from '@/components/sanctuary/SceneBison';
 import SceneWindow from '@/components/sanctuary/SceneWindow';
 import SceneParticles from '@/components/sanctuary/SceneParticles';
 import SceneLife from '@/components/sanctuary/SceneLife';
+import SeasonalBanner from '@/components/sanctuary/SeasonalBanner';
 import { Sprout, TreePine, Flame, Waves, Snowflake, Gem, BookOpen, Telescope, Lamp, Gamepad2, Zap } from 'lucide-react';
 
 const OBJECT_ICONS = { Sprout, TreePine, Flame, Waves, Snowflake, Gem, BookOpen, Telescope, Lamp };
@@ -149,6 +150,11 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
               transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 7 }}
             />
           )}
+
+          {/* Season + long-term events — the year moving on */}
+          <div className="absolute top-4 left-4 z-10">
+            <SeasonalBanner />
+          </div>
 
           {/* Space B — Window, centered above the Bison */}
           <div className="absolute top-6 left-1/2 -translate-x-1/2">
