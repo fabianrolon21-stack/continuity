@@ -1,19 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { computeWorldState } from '@/lib/world/worldStateEngine';
 import { getHabitat } from '@/lib/sanctuary/habitats';
-import { chooseBehavior, BEHAVIOR_NOTES, BEHAVIORS, maybeIdleEmote } from '@/lib/sanctuary/bisonBehavior';
+import { chooseBehavior, BEHAVIOR_NOTES, BEHAVIORS } from '@/lib/sanctuary/bisonBehavior';
 import { audioEngine } from '@/lib/ambiance/audioEngine';
 import SceneInsect from '@/components/sanctuary/SceneInsect';
 import { pickCareScene, PROP_EMOJI } from '@/lib/sanctuary/careScenes';
 import { eventBus } from '@/lib/events/eventBus';
-import EmoteSticker from '@/components/sanctuary/EmoteSticker';
+import InteractMenu from '@/components/sanctuary/InteractMenu';
 import { checkAchievements } from '@/lib/bison/achievementEngine';
 import SceneBison from '@/components/sanctuary/SceneBison';
 import SceneWindow from '@/components/sanctuary/SceneWindow';
 import SceneParticles from '@/components/sanctuary/SceneParticles';
-import { Sprout, TreePine, Flame, Waves, Snowflake, Gem, BookOpen, Telescope, Lamp, Gamepad2, Zap, Apple, Droplets } from 'lucide-react';
+import SceneLife from '@/components/sanctuary/SceneLife';
+import { Sprout, TreePine, Flame, Waves, Snowflake, Gem, BookOpen, Telescope, Lamp, Gamepad2, Zap } from 'lucide-react';
 
 const OBJECT_ICONS = { Sprout, TreePine, Flame, Waves, Snowflake, Gem, BookOpen, Telescope, Lamp };
 
@@ -21,7 +23,6 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
   const habitat = getHabitat(config?.habitat);
   const [worldState, setWorldState] = useState(() => computeWorldState());
   const [behavior, setBehavior] = useState(BEHAVIORS.IDLE);
-  const [emote, setEmote] = useState(null);
   const [careProp, setCareProp] = useState(null);
   const sceneActiveRef = useRef(false);
   const sceneTimersRef = useRef([]);
@@ -34,32 +35,22 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
     return () => clearInterval(t);
   }, []);
 
-  // Behavior loop — weighted random, never repeats, energy + weather aware
+  // Behavior loop — weighted random, never repeats last two, energy + weather aware
   useEffect(() => {
     let timer;
-    let prev = null;
+    let recent = [];
     const tick = () => {
       const { behavior: b, durationMs } = chooseBehavior({
         energy,
         isNight: worldState.sky.isNight,
         isLateNight: worldState.isLateNight,
         weather: worldState.weather.current,
-        prev,
+        recent,
         musicPlaying: audioEngine.isPlaying,
       });
       if (!sceneActiveRef.current) {
-        prev = b;
+        recent = [...recent.slice(-1), b];
         setBehavior(b);
-        // Small spontaneous expression partway through the behavior
-        const idleEmote = maybeIdleEmote(b);
-        if (idleEmote) {
-          setTimeout(() => {
-            if (!sceneActiveRef.current) {
-              setEmote(idleEmote);
-              setTimeout(() => { if (!sceneActiveRef.current) setEmote(null); }, 2600);
-            }
-          }, 1500);
-        }
       }
       timer = setTimeout(tick, durationMs);
     };
@@ -71,22 +62,18 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
   useEffect(() => {
     const unsub = eventBus.subscribe('BISON_CARE_ACTION', (event) => {
       sceneTimersRef.current.forEach(clearTimeout);
-      const { prop, steps } = pickCareScene(event.payload?.action);
+      const { prop, steps } = pickCareScene(event.payload?.action, event.payload?.prop);
       sceneActiveRef.current = true;
       setCareProp(prop);
       const timers = [];
       let delay = 400;
       for (const step of steps) {
-        timers.push(setTimeout(() => {
-          setBehavior(step.motion);
-          setEmote(step.emote || null);
-        }, delay));
+        timers.push(setTimeout(() => setBehavior(step.motion), delay));
         delay += step.ms;
       }
       timers.push(setTimeout(() => {
         sceneActiveRef.current = false;
         setCareProp(null);
-        setEmote(null);
         setBehavior(BEHAVIORS.IDLE);
       }, delay));
       sceneTimersRef.current = timers;
@@ -180,10 +167,7 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
 
           {/* Space C — the Bison, always centered */}
           <div className="absolute bottom-[70px] left-1/2 -translate-x-1/2">
-            <div className="relative">
-              <EmoteSticker emote={emote} />
-              <SceneBison behavior={behavior} accent={habitat.accent} />
-            </div>
+            <SceneBison behavior={behavior} accent={habitat.accent} />
           </div>
 
           {/* Care prop — drops in near the Bison during scenes */}
@@ -208,17 +192,23 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
             )}
           </AnimatePresence>
 
-          {/* Space D — meaningful object (left) */}
-          <div className="absolute bottom-8 left-8 flex flex-col items-center gap-1.5">
+          {/* Space D — the plant opens the Garden */}
+          <Link to="/garden" className="absolute bottom-8 left-8 flex flex-col items-center gap-1.5 no-tap-highlight">
             <motion.div
               className="w-12 h-12 rounded-xl flex items-center justify-center framed"
               style={{ background: `${habitat.accent.replace(')', ' / 0.12)')}` }}
               animate={{ y: [0, -3, 0] }}
+              whileTap={{ scale: 0.9 }}
               transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
             >
               <ObjectIcon className="w-6 h-6" style={{ color: habitat.accent }} />
             </motion.div>
-            <span className="text-[9px] text-white/40">{habitat.objectLabel}</span>
+            <span className="text-[9px] text-white/40">Garden</span>
+          </Link>
+
+          {/* Interact — everything happens inside the world */}
+          <div className="absolute bottom-4 inset-x-0 flex justify-center z-10">
+            <InteractMenu />
           </div>
 
           {/* Simple toy (right) */}
@@ -237,6 +227,9 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
 
           {/* Weather particles */}
           <SceneParticles weather={worldState.weather.current} isNight={worldState.sky.isNight} />
+
+          {/* Ambient life — butterflies, bees, birds, fireflies, drifting leaves */}
+          <SceneLife weather={worldState.weather.current} isNight={worldState.sky.isNight} />
         </motion.div>
       </AnimatePresence>
 

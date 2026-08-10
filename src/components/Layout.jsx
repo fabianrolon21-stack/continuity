@@ -107,6 +107,15 @@ export default function Layout() {
         )}
       </aside>
 
+      {/* Persistent settings gear — never hidden (mobile) */}
+      <Link
+        to="/settings"
+        className="lg:hidden fixed top-3 right-3 z-50 w-10 h-10 rounded-full flex items-center justify-center border border-border/60 no-tap-highlight"
+        style={{ background: 'hsl(268 14% 12% / 0.75)', backdropFilter: 'blur(8px)', marginTop: 'env(safe-area-inset-top)' }}
+      >
+        <Settings className="w-4 h-4" style={{ color: location.pathname === '/settings' ? 'hsl(42 63% 55%)' : 'hsl(268 8% 60%)' }} />
+      </Link>
+
       <main className="lg:ml-64 min-h-screen pb-28 lg:pb-8 pt-safe">
         <AnimatePresence mode="wait">
           <motion.div

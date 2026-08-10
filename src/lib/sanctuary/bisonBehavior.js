@@ -52,32 +52,11 @@ export const BEHAVIOR_NOTES = {
   play_alone: 'playing by itself',
 };
 
-// Occasional spontaneous emotes during quiet idles — small signs of an inner life
-export const IDLE_EMOTES = {
-  look_around: ['❓', '🤔'],
-  stretch: ['😴', '😊'],
-  yawn: ['😴', '💤'],
-  scratch: ['😅', '😊'],
-  watch_window: ['🤔', '❤️'],
-  watch_birds: ['😲', '✨'],
-  follow_insect: ['❓', '😲'],
-  inspect_toy: ['🤔', '❓'],
-  think: ['🤔', '💢'],
-  dance: ['✨', '😊'],
-  doze: ['😴'],
-  play_alone: ['✨', '😊'],
-  look_at_user: ['❤️', '😊'],
-  sit: ['😊'],
-};
+// No emoji reactions — emotion is expressed through the body
+// (tail wag, ear flicks, blinking, stretching, sniffing).
 
-export function maybeIdleEmote(behavior) {
-  const options = IDLE_EMOTES[behavior];
-  if (!options || Math.random() > 0.45) return null;
-  return options[Math.floor(Math.random() * options.length)];
-}
-
-function pickWeighted(weights, exclude) {
-  const entries = Object.entries(weights).filter(([k, w]) => w > 0 && k !== exclude);
+function pickWeighted(weights, exclude = []) {
+  const entries = Object.entries(weights).filter(([k, w]) => w > 0 && !exclude.includes(k));
   const total = entries.reduce((s, [, w]) => s + w, 0);
   let r = Math.random() * total;
   for (const [k, w] of entries) {
@@ -87,7 +66,7 @@ function pickWeighted(weights, exclude) {
   return entries[0]?.[0] || BEHAVIORS.IDLE;
 }
 
-export function chooseBehavior({ energy = 80, isNight = false, isLateNight = false, weather = 'clear', prev = null, musicPlaying = false } = {}) {
+export function chooseBehavior({ energy = 80, isNight = false, isLateNight = false, weather = 'clear', prev = null, recent = null, musicPlaying = false } = {}) {
   // Critical energy or deep night → natural sleep
   if (energy < 15 || isLateNight) {
     return { behavior: BEHAVIORS.SLEEP, durationMs: 20000 };
@@ -163,7 +142,9 @@ export function chooseBehavior({ energy = 80, isNight = false, isLateNight = fal
     weights[BEHAVIORS.YAWN] += 2;
   }
 
-  const behavior = pickWeighted(weights, prev);
-  const durationMs = 8000 + Math.random() * 8000;
+  // Never repeat the last two behaviors — idle life stays unpredictable
+  const exclude = recent && recent.length > 0 ? recent.slice(-2) : (prev ? [prev] : []);
+  const behavior = pickWeighted(weights, exclude);
+  const durationMs = 7000 + Math.random() * 10000;
   return { behavior, durationMs };
 }

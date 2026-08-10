@@ -26,18 +26,28 @@ const BEHAVIOR_MOTION = {
   [BEHAVIORS.DANCE]: { y: [0, -8, 0], rotate: [-4, 4, -4], transition: { duration: 1.4, repeat: Infinity, ease: 'easeInOut' } },
   [BEHAVIORS.DOZE]: { y: [8, 11, 8], rotate: [0, 2, 0], transition: { duration: 5, repeat: Infinity, ease: 'easeInOut' } },
   [BEHAVIORS.PLAY_ALONE]: { x: [0, -30, 25, -15, 0], y: [0, -12, 0, -8, 0], transition: { duration: 6, repeat: Infinity } },
-  // Care-scene motions
+  // Care-scene motions — anticipation, action, reaction, recovery
   sniff: { rotate: [0, 12, 10, 12, 0], y: [0, 4, 4, 4, 0], transition: { duration: 2.4, repeat: Infinity } },
   celebrate: { y: [0, -16, 0, -10, 0], rotate: [0, -5, 5, 0], transition: { duration: 1.1, repeat: Infinity } },
+  wag: { y: [0, -4, 0], rotate: [0, -2, 2, 0], transition: { duration: 0.9, repeat: Infinity, ease: 'easeInOut' } },
+  refuse: { rotate: [0, -9, 8, -6, 5, 0], x: [0, -4, 4, -2, 0], transition: { duration: 1.5, repeat: Infinity, repeatDelay: 0.5 } },
 };
+
+// Behaviors where the tail wags fast — joy shown through the body
+const HAPPY_BEHAVIORS = ['eat', 'play', 'play_alone', 'wag', 'celebrate', 'dance', 'look_at_user'];
 
 export default function SceneBison({ behavior = BEHAVIORS.IDLE, accent = 'hsl(42 63% 55%)' }) {
   const isAsleep = behavior === BEHAVIORS.SLEEP;
   const isDrowsy = behavior === BEHAVIORS.DOZE || behavior === BEHAVIORS.YAWN;
+  const isHappy = HAPPY_BEHAVIORS.includes(behavior);
   const motionProps = BEHAVIOR_MOTION[behavior] || BEHAVIOR_MOTION[BEHAVIORS.IDLE];
 
   return (
-    <motion.div className="relative flex flex-col items-center" animate={motionProps}>
+    <motion.div
+      className="relative flex flex-col items-center"
+      animate={motionProps}
+      transition={{ type: 'spring', stiffness: 70, damping: 15 }}
+    >
       {isAsleep && (
         <motion.div
           className="absolute -top-8 right-0 text-lg font-heading select-none"
@@ -67,6 +77,23 @@ export default function SceneBison({ behavior = BEHAVIORS.IDLE, accent = 'hsl(42
         {/* Horns */}
         <path d="M 18 58 Q 10 52 12 44" stroke="hsl(40 30% 70%)" strokeWidth="4" fill="none" strokeLinecap="round" />
         <path d="M 50 58 Q 58 52 56 44" stroke="hsl(40 30% 70%)" strokeWidth="4" fill="none" strokeLinecap="round" />
+        {/* Ears — occasional flicks, a small sign of listening */}
+        {!isAsleep && (
+          <>
+            <motion.ellipse
+              cx="20" cy={isDrowsy ? 62 : 54} rx="5" ry="3.5" fill="hsl(25 30% 26%)"
+              animate={{ rotate: [0, 0, -18, 0, 0] }}
+              transition={{ duration: 5.5, repeat: Infinity, times: [0, 0.55, 0.62, 0.7, 1] }}
+              style={{ transformOrigin: '22px 56px' }}
+            />
+            <motion.ellipse
+              cx="48" cy={isDrowsy ? 62 : 54} rx="5" ry="3.5" fill="hsl(25 30% 26%)"
+              animate={{ rotate: [0, 0, 16, 0, 0] }}
+              transition={{ duration: 7, repeat: Infinity, times: [0, 0.3, 0.38, 0.46, 1] }}
+              style={{ transformOrigin: '46px 56px' }}
+            />
+          </>
+        )}
         {/* Eyes */}
         {isAsleep ? (
           <>
@@ -87,8 +114,19 @@ export default function SceneBison({ behavior = BEHAVIORS.IDLE, accent = 'hsl(42
           </>
         ) : (
           <>
-            <circle cx="28" cy="64" r="2.5" fill="hsl(40 20% 90%)" />
-            <circle cx="41" cy="64" r="2.5" fill="hsl(40 20% 90%)" />
+            {/* Blinking eyes — irregular rhythm so it never feels mechanical */}
+            <motion.circle
+              cx="28" cy="64" r="2.5" fill="hsl(40 20% 90%)"
+              animate={{ scaleY: [1, 1, 0.08, 1, 1, 0.08, 1] }}
+              transition={{ duration: 6.5, repeat: Infinity, times: [0, 0.42, 0.45, 0.48, 0.9, 0.93, 1] }}
+              style={{ transformOrigin: '28px 64px' }}
+            />
+            <motion.circle
+              cx="41" cy="64" r="2.5" fill="hsl(40 20% 90%)"
+              animate={{ scaleY: [1, 1, 0.08, 1, 1, 0.08, 1] }}
+              transition={{ duration: 6.5, repeat: Infinity, times: [0, 0.42, 0.45, 0.48, 0.9, 0.93, 1] }}
+              style={{ transformOrigin: '41px 64px' }}
+            />
           </>
         )}
         {/* Snout */}
@@ -102,12 +140,12 @@ export default function SceneBison({ behavior = BEHAVIORS.IDLE, accent = 'hsl(42
             <rect x="112" y="92" width="8" height="14" rx="4" fill="hsl(25 25% 20%)" />
           </>
         )}
-        {/* Tail */}
+        {/* Tail — wag speed carries the emotion */}
         <motion.path
           d="M 126 60 Q 138 54 136 44"
           stroke="hsl(25 28% 24%)" strokeWidth="5" fill="none" strokeLinecap="round"
-          animate={{ rotate: isAsleep ? 0 : [0, 6, 0] }}
-          transition={{ duration: 2.5, repeat: Infinity }}
+          animate={{ rotate: isAsleep ? 0 : isHappy ? [0, 18, -8, 18, 0] : [0, 6, 0] }}
+          transition={{ duration: isHappy ? 0.7 : 2.5, repeat: Infinity, ease: 'easeInOut' }}
           style={{ transformOrigin: '126px 60px' }}
         />
       </motion.svg>

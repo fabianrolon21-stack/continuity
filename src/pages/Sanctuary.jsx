@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { PageHeader } from '@/components/MicroAnimations';
 import CognitiveInsights from '@/components/CognitiveInsights';
-import BisonCare from '@/components/BisonCare';
 import DailyIntention from '@/components/DailyIntention';
 import SanctuaryScene from '@/components/sanctuary/SanctuaryScene';
 import HabitatSelector from '@/components/sanctuary/HabitatSelector';
@@ -135,8 +134,6 @@ export default function Sanctuary() {
             );
           })}
         </div>
-
-        <BisonCare />
 
         <DailyIntention />
 

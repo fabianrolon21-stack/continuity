@@ -1,106 +1,111 @@
 // ═══════════════════════════════════════════════
-// CARE SCENES (Living World Update)
-// Scripted, randomized reaction sequences for
-// feed / water / rest / play. Different foods and
-// toys appear each time — the Bison never reacts
-// the same way twice, and sometimes ignores things.
+// CARE SCENES (Living World Polish — Package 17)
+// Scripted reaction sequences built on the animation
+// arc: anticipation → action → reaction → recovery.
+// No emoji reactions — emotion lives in the body.
+// The Bison never reacts the same way twice, and
+// sometimes hesitates or refuses at first.
 // ═══════════════════════════════════════════════
 
 const SCENES = {
   feed: [
     [
-      { motion: 'look_around', emote: '❓', ms: 1600 },
+      { motion: 'look_around', ms: 1400 },   // anticipation — notices something
+      { motion: 'walk', ms: 2200 },          // approach
+      { motion: 'sniff', ms: 2000 },         // inspect
+      { motion: 'eat', ms: 3200 },           // action
+      { motion: 'wag', ms: 1800 },           // reaction — tail wag
+      { motion: 'look_at_user', ms: 1600 },  // recovery — acknowledges you
+    ],
+    [
+      { motion: 'sniff', ms: 1600 },
+      { motion: 'eat', ms: 3400 },
+      { motion: 'stretch', ms: 1800 },
+      { motion: 'sit', ms: 2000 },
+    ],
+    [
+      // Hesitates, walks away, curiosity wins
+      { motion: 'sniff', ms: 1600 },
+      { motion: 'refuse', ms: 1600 },
       { motion: 'walk', ms: 2200 },
-      { motion: 'sniff', emote: '🤔', ms: 2200 },
-      { motion: 'eat', emote: '😊', ms: 3200 },
-      { motion: 'celebrate', emote: '✨', ms: 2000 },
+      { motion: 'look_around', ms: 1400 },
+      { motion: 'sniff', ms: 1400 },
+      { motion: 'eat', ms: 3000 },
+      { motion: 'wag', ms: 1600 },
     ],
     [
-      { motion: 'sniff', emote: '😲', ms: 1800 },
-      { motion: 'eat', emote: '❤️', ms: 3400 },
-      { motion: 'sit', emote: '😊', ms: 2200 },
-    ],
-    [
-      { motion: 'sniff', emote: '🤔', ms: 2000 },
-      { motion: 'idle', emote: '💢', ms: 1800 },
-      { motion: 'sniff', emote: '💧', ms: 1800 },
-      { motion: 'eat', emote: '😅', ms: 3200 },
-    ],
-    [
-      // Ignores it at first, wanders off, comes back
-      { motion: 'sniff', emote: '❓', ms: 1600 },
-      { motion: 'walk', emote: '💧', ms: 2400 },
-      { motion: 'look_around', emote: '🤔', ms: 1800 },
-      { motion: 'eat', emote: '😅', ms: 3000 },
-    ],
-    [
-      { motion: 'walk', emote: '✨', ms: 2000 },
-      { motion: 'play', emote: '😊', ms: 2400 },
-      { motion: 'eat', emote: '❤️', ms: 3200 },
+      { motion: 'walk', ms: 1800 },
+      { motion: 'sniff', ms: 1800 },
+      { motion: 'eat', ms: 3200 },
+      { motion: 'celebrate', ms: 1600 },
+      { motion: 'look_at_user', ms: 1600 },
     ],
   ],
   water: [
     [
-      { motion: 'look_around', emote: '❓', ms: 1500 },
+      { motion: 'look_around', ms: 1400 },
       { motion: 'walk', ms: 2000 },
-      { motion: 'drink', emote: '💧', ms: 3200 },
-      { motion: 'celebrate', emote: '✨', ms: 1800 },
+      { motion: 'drink', ms: 3200 },
+      { motion: 'wag', ms: 1600 },
+      { motion: 'look_at_user', ms: 1400 },
     ],
     [
-      { motion: 'sniff', emote: '🤔', ms: 1800 },
-      { motion: 'drink', emote: '😊', ms: 3400 },
-      { motion: 'sit', emote: '❤️', ms: 2200 },
+      { motion: 'sniff', ms: 1600 },
+      { motion: 'drink', ms: 3400 },
+      { motion: 'stretch', ms: 1800 },
+      { motion: 'sit', ms: 1800 },
     ],
     [
-      { motion: 'drink', emote: '💧', ms: 2800 },
-      { motion: 'stretch', emote: '😲', ms: 2000 },
-      { motion: 'drink', emote: '😅', ms: 2600 },
+      { motion: 'drink', ms: 2600 },
+      { motion: 'look_around', ms: 1600 },
+      { motion: 'drink', ms: 2400 },
+      { motion: 'wag', ms: 1600 },
     ],
   ],
   rest: [
     [
-      { motion: 'stretch', emote: '😴', ms: 2400 },
-      { motion: 'sit', emote: '💤', ms: 2600 },
-      { motion: 'sleep', emote: '💤', ms: 5000 },
+      { motion: 'yawn', ms: 2200 },
+      { motion: 'stretch', ms: 2200 },
+      { motion: 'sit', ms: 2400 },
+      { motion: 'sleep', ms: 5000 },
     ],
     [
-      { motion: 'look_at_user', emote: '❤️', ms: 1800 },
-      { motion: 'sit', emote: '😴', ms: 2400 },
-      { motion: 'sleep', emote: '💤', ms: 5000 },
+      { motion: 'look_at_user', ms: 1800 },
+      { motion: 'walk', ms: 1800 },
+      { motion: 'sit', ms: 2200 },
+      { motion: 'doze', ms: 2400 },
+      { motion: 'sleep', ms: 5000 },
     ],
   ],
   play: [
     [
-      { motion: 'look_around', emote: '😲', ms: 1400 },
-      { motion: 'play', emote: '✨', ms: 3200 },
-      { motion: 'celebrate', emote: '😊', ms: 2200 },
-      { motion: 'sit', emote: '😅', ms: 2000 },
+      { motion: 'look_around', ms: 1200 },
+      { motion: 'walk', ms: 1600 },
+      { motion: 'sniff', ms: 1400 },
+      { motion: 'play', ms: 3200 },
+      { motion: 'celebrate', ms: 1800 },
+      { motion: 'sit', ms: 1800 },
     ],
     [
-      { motion: 'sniff', emote: '❓', ms: 1800 },
-      { motion: 'idle', emote: '🤔', ms: 1600 },
-      { motion: 'play', emote: '❤️', ms: 3400 },
-      { motion: 'celebrate', emote: '✨', ms: 2200 },
+      { motion: 'sniff', ms: 1600 },
+      { motion: 'refuse', ms: 1400 },
+      { motion: 'sniff', ms: 1400 },
+      { motion: 'play', ms: 3400 },
+      { motion: 'wag', ms: 1800 },
     ],
     [
-      // Confused, kicks it, walks away, comes back
-      { motion: 'sniff', emote: '❓', ms: 1800 },
-      { motion: 'play', emote: '💢', ms: 2000 },
-      { motion: 'walk', emote: '😅', ms: 2200 },
-      { motion: 'play', emote: '😊', ms: 3000 },
-    ],
-    [
-      { motion: 'play', emote: '💢', ms: 2200 },
-      { motion: 'walk', emote: '😅', ms: 2000 },
-      { motion: 'play', emote: '😊', ms: 3000 },
+      // Kicks it, wanders off, comes back for more
+      { motion: 'play', ms: 2000 },
+      { motion: 'walk', ms: 2000 },
+      { motion: 'look_around', ms: 1400 },
+      { motion: 'play', ms: 2800 },
+      { motion: 'celebrate', ms: 1600 },
+      { motion: 'look_at_user', ms: 1400 },
     ],
   ],
 };
 
-// Prop variety — a random one appears each time
-const FOODS = ['apple', 'watermelon', 'carrot', 'berries'];
-const TOYS = ['ball', 'stick', 'frisbee', 'butterfly', 'log'];
-
+// World props — the chosen item appears as an object in the scene
 export const PROP_EMOJI = {
   apple: '🍎',
   watermelon: '🍉',
@@ -110,27 +115,19 @@ export const PROP_EMOJI = {
   ball: '⚽',
   stick: '🪵',
   frisbee: '🥏',
-  butterfly: '🦋',
-  log: '🪵',
-};
-
-// Full-screen burst particles per action
-export const BURST_EMOJIS = {
-  feed: ['🍃', '🍎', '✨', '🌿'],
-  water: ['💧', '✨', '💦', '🫧'],
-  rest: ['⭐', '🌙', '💤', '☁️'],
-  play: ['❤️', '✨', '🎉', '🌸'],
 };
 
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export function pickCareScene(action) {
+export function pickCareScene(action, prop = null) {
   const variants = SCENES[action] || SCENES.feed;
-  let prop = null;
-  if (action === 'feed') prop = pick(FOODS);
-  else if (action === 'water') prop = 'bucket';
-  else if (action === 'play') prop = pick(TOYS);
-  return { prop, steps: pick(variants) };
+  let sceneProp = prop;
+  if (!sceneProp) {
+    if (action === 'feed') sceneProp = pick(Object.keys(PROP_EMOJI).slice(0, 4));
+    else if (action === 'water') sceneProp = 'bucket';
+    else if (action === 'play') sceneProp = pick(['ball', 'stick', 'frisbee']);
+  }
+  return { prop: sceneProp, steps: pick(variants) };
 }
