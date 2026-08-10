@@ -62,6 +62,7 @@ export default function RequestLogList({ filter = 'all' }) {
             {log.response_summary && <p className="text-xs text-muted-foreground mt-1">Returned: {log.response_summary}</p>}
             <p className="text-[10px] text-muted-foreground/60 mt-1">
               {new Date(log.created_date).toLocaleString()}
+              {typeof log.payload_bytes === 'number' ? ` · ${log.payload_bytes} bytes` : ''}
               {log.consent_used ? ' · consent recorded' : ''}
             </p>
           </div>

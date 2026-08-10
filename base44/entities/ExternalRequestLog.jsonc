@@ -35,6 +35,9 @@
     "payload_summary": {
       "type": "string"
     },
+    "payload_bytes": {
+      "type": "number"
+    },
     "sanitization_applied": {
       "type": "array",
       "items": {

@@ -30,8 +30,30 @@
         "tools"
       ]
     },
+    "purpose": {
+      "type": "string"
+    },
     "explanation": {
       "type": "string"
+    },
+    "duration": {
+      "type": "string",
+      "enum": [
+        "once",
+        "one_hour",
+        "today",
+        "until_revoked",
+        "permanent"
+      ],
+      "default": "until_revoked"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "consumed": {
+      "type": "boolean",
+      "default": false
     },
     "granted": {
       "type": "boolean",

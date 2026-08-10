@@ -19,20 +19,47 @@ async function log(entry) {
   } catch (e) {}
 }
 
+// Consent is four-dimensional: purpose × category × target × duration.
+// Expired consent is as good as no consent, and "once" consents are
+// consumed by the request that uses them.
+function consentValid(record) {
+  if (!record.granted || record.revoked || record.consumed) return false;
+  if (record.expires_at && new Date(record.expires_at) <= new Date()) return false;
+  return true;
+}
+
 async function consentGranted(categories = [], channel) {
-  if (!categories.length) return { ok: true, ids: [] };
+  if (!categories.length) return { ok: true, ids: [], onceIds: [] };
   try {
     const records = await base44.entities.DataSharingConsent.filter({ granted: true, revoked: false });
     const ids = [];
+    const onceIds = [];
     for (const cat of categories) {
-      const match = records.find(r => r.category === cat && (!r.channel || r.channel === channel));
+      const match = records.find(r => r.category === cat && (!r.channel || r.channel === channel) && consentValid(r));
       if (!match) return { ok: false, missing: cat };
       ids.push(match.id);
+      if (match.duration === 'once') onceIds.push(match.id);
     }
-    return { ok: true, ids };
+    return { ok: true, ids, onceIds };
   } catch (e) {
     return { ok: false, missing: categories[0] };
   }
+}
+
+async function consumeOnceConsents(onceIds = []) {
+  for (const id of onceIds) {
+    try { await base44.entities.DataSharingConsent.update(id, { consumed: true }); } catch (e) {}
+  }
+}
+
+function expiryFor(duration) {
+  const now = Date.now();
+  if (duration === 'one_hour') return new Date(now + 3600000).toISOString();
+  if (duration === 'today') {
+    const end = new Date(); end.setHours(23, 59, 59, 999);
+    return end.toISOString();
+  }
+  return null; // once, until_revoked, permanent — no timed expiry
 }
 
 /**
@@ -84,11 +111,13 @@ export async function requestExternal(req) {
     consent_used: consent.ids.join(', '),
     consent_categories: consentCategories,
     payload_summary: summarize(clean),
+    payload_bytes: new Blob([clean]).size,
     sanitization_applied: applied,
   };
 
   try {
     const data = await execute(clean);
+    await consumeOnceConsents(consent.onceIds);
     await log({ ...base, status: 'COMPLETED', response_summary: summarize(typeof data === 'string' ? data : JSON.stringify(data ?? '')) });
     return { status: 'COMPLETED', blocked: false, data, sanitizationApplied: applied };
   } catch (e) {
@@ -97,8 +126,12 @@ export async function requestExternal(req) {
   }
 }
 
-export async function grantConsent(category, channel, explanation) {
-  return base44.entities.DataSharingConsent.create({ category, channel, explanation, granted: true });
+export async function grantConsent(category, channel, explanation, { purpose = '', duration = 'until_revoked' } = {}) {
+  return base44.entities.DataSharingConsent.create({
+    category, channel, explanation, purpose, duration,
+    expires_at: expiryFor(duration) || undefined,
+    granted: true,
+  });
 }
 
 export async function revokeConsent(id) {
