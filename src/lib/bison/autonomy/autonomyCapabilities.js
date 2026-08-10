@@ -28,6 +28,8 @@ export const AUTONOMY_CAPS = {
   COMMUNITY_INTELLIGENCE: 'COMMUNITY_INTELLIGENCE',
   EXTERNAL_SERVICE_INTEGRATION: 'EXTERNAL_SERVICE_INTEGRATION',
   AUTONOMOUS_COMPUTE_OPTIMISATION: 'AUTONOMOUS_COMPUTE_OPTIMISATION',
+  // Package 44 — enabled means the firewall is ACTIVE (blocking).
+  EXTERNAL_COMMUNICATION_FIREWALL: 'EXTERNAL_COMMUNICATION_FIREWALL',
 };
 
 export const CAP_DEFAULTS = {
@@ -44,6 +46,8 @@ export const CAP_DEFAULTS = {
   // Off until each service is individually approved.
   [AUTONOMY_CAPS.EXTERNAL_SERVICE_INTEGRATION]: false,
   [AUTONOMY_CAPS.AUTONOMOUS_COMPUTE_OPTIMISATION]: false,
+  // On by default: nothing leaves the runtime until the user opens a channel.
+  [AUTONOMY_CAPS.EXTERNAL_COMMUNICATION_FIREWALL]: true,
 };
 
 export const CAP_LABELS = {
@@ -58,6 +62,7 @@ export const CAP_LABELS = {
   [AUTONOMY_CAPS.COMMUNITY_INTELLIGENCE]: 'Share anonymised analytics with trusted accounts',
   [AUTONOMY_CAPS.EXTERNAL_SERVICE_INTEGRATION]: 'Use free external services',
   [AUTONOMY_CAPS.AUTONOMOUS_COMPUTE_OPTIMISATION]: 'Look for ways to run leaner',
+  [AUTONOMY_CAPS.EXTERNAL_COMMUNICATION_FIREWALL]: 'External communication firewall (on = nothing leaves)',
 };
 
 /**

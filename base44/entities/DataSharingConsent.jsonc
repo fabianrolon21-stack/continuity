@@ -1,0 +1,63 @@
+{
+  "name": "DataSharingConsent",
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "current_question",
+        "anonymous_context",
+        "location",
+        "conversation",
+        "journal",
+        "performance_metrics",
+        "images",
+        "voice"
+      ]
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "oracle",
+        "web",
+        "news",
+        "weather",
+        "updates",
+        "community",
+        "external_ai",
+        "custom_api",
+        "sync",
+        "tools"
+      ]
+    },
+    "explanation": {
+      "type": "string"
+    },
+    "granted": {
+      "type": "boolean",
+      "default": false
+    },
+    "revoked": {
+      "type": "boolean",
+      "default": false
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "category"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

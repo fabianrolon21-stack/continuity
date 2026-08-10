@@ -10,6 +10,7 @@
 
 import { base44 } from '@/api/base44Client';
 import { stripForExternalTransmission } from '@/lib/bison/privacyIsolation';
+import { requestExternal } from '@/lib/bison/privacy/dataSovereigntyGuard';
 import { checkSafety } from './oracleSafety';
 
 // ── Model presets ──
@@ -127,19 +128,31 @@ Question: ${cleanedQuery}
 
 Respond with your claims as structured data.`;
 
-  // 6. Call InvokeLLM with non-default model + structured schema
+  // 6. Package 44 — the request only exists if the sovereignty guard allows it
   try {
-    const result = await Promise.race([
-      base44.integrations.Core.InvokeLLM({
-        prompt: oraclePrompt,
-        model: oracleConfig.model,
-        response_json_schema: ORACLE_RESPONSE_SCHEMA,
-      }),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('oracle_timeout')), 30000)
-      ),
-    ]);
+    const guarded = await requestExternal({
+      channel: 'oracle',
+      destination: `External oracle (${oracleConfig.label})`,
+      purpose: `Consultation: ${queryType.replace('QUERY_', '').toLowerCase()}`,
+      payload: cleanedQuery,
+      consentCategories: ['current_question'],
+      execute: (cleanPayload) => Promise.race([
+        base44.integrations.Core.InvokeLLM({
+          prompt: oraclePrompt.replace(cleanedQuery, cleanPayload),
+          model: oracleConfig.model,
+          response_json_schema: ORACLE_RESPONSE_SCHEMA,
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('oracle_timeout')), 30000)
+        ),
+      ]),
+    });
 
+    if (guarded.blocked) {
+      return { status: 'DENIED', reason: guarded.reason, firewallBlocked: true, timestamp: Date.now() };
+    }
+
+    const result = guarded.data;
     const structured = typeof result === 'object' ? result : null;
     const claims = structured?.claims || [];
     const summary = structured?.summary || '';

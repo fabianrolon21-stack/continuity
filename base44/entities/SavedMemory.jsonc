@@ -87,6 +87,27 @@
     },
     "compression_period": {
       "type": "string"
+    },
+    "imported_from": {
+      "type": "string"
+    },
+    "generated_by": {
+      "type": "string"
+    },
+    "shared": {
+      "type": "boolean",
+      "default": false
+    },
+    "never_shared": {
+      "type": "boolean",
+      "default": true
+    },
+    "consent_id": {
+      "type": "string"
+    },
+    "last_external_access": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [

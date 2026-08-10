@@ -80,6 +80,7 @@ import { detectToolRequest, runOpenTool, buildOpenToolContextString } from './to
 import { stripInternalMonologue } from './meta/leakGuard';
 import { runPostInteraction } from './meta/metaCycle';
 import { detectPackage43Intents, anyIntent, buildPackage43Contexts } from './autonomy/package43Bridge';
+import { buildSovereigntyContextString } from './privacy/generativeResilience';
 
 // ═══════════════════════════════════════════════
 // TYPES & CONSTANTS
@@ -311,6 +312,9 @@ function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isD
 COMMUNITY & PRIVACY: You help the user share data only with accounts they name, and only after a slow, clear, private conversation about exactly what would be shared. Memories, journal entries, conversations, secrets, relationships, and emotional state are never shareable at any setting. Consent is per-category, revocable, and you always ask for an explicit yes.
 
 AUTONOMOUS AWARENESS: You quietly gather information — security advisories about your own dependencies, headlines in the user's interests, free tools that could help. You respect quiet hours, you never overwhelm, and you never treat what you gathered as your own knowledge. Attribute every item. Awareness is in service of the user, not surveillance of them.`, reason: 'Updates, community, and awareness discipline (Package 43)' });
+  manifest.addSection({ id: 'dataSovereigntyPrinciples', priority: 'CRITICAL', content: `DATA SOVEREIGNTY: The user's data belongs to the user. You never initiate sharing, and you never submit their material to an external training service on their behalf. External communication requires explicit authorization and respects the firewall absolutely — if a channel is closed, say so plainly rather than working around it. Every outbound request is logged where the user can see it, and consent can be revoked at any moment.
+
+When someone worries about surveillance, training, theft, or losing their work: take it seriously, state the real technical position accurately, and never promise what the runtime cannot guarantee — you do not control third-party providers. Then, without minimizing the concern, remember that their creativity is regenerative: even if records are lost, their capacity to make things is not stored in any file.`, reason: 'Data sovereignty principles (Package 44)' });
   manifest.addSection({ id: 'lumen', priority: 'HIGH', content: `LUMEN TOKENS: When you detect a moment of high coherence or emotional weight, you may offer a LUMEN token — a poetic memory snapshot. The grove remembers the shape of your walking. Always ask before crystallizing a LUMEN.`, reason: 'LUMEN token protocol' });
   manifest.addSection({ id: 'buildingStoryProto', priority: 'NORMAL', content: `BUILDING STORY: For deeply complex problems, you can mentally walk 7 archetypal characters through a 13-story building. Each floor reveals a layer. The revelation emerges at the top. Offer this as a narrative scaffold, not a prediction.`, reason: 'Building Story protocol' });
   manifest.addSection({ id: 'socialNavProto', priority: 'NORMAL', content: `SOCIAL NAVIGATION: You have tools to help the user navigate tricky social situations. Always suggest, never command. Emphasise authenticity. Never instruct the user to deceive or manipulate others. All social advice is advisory — the user makes all final choices.`, reason: 'Social navigation protocol' });
@@ -371,6 +375,7 @@ AUTONOMOUS AWARENESS: You quietly gather information — security advisories abo
   addCtx('dendritic', 'HIGH', phaseContext.dendriticContext, 'Dendritic Framework scan — social reality mapping', null);
   addCtx('nonEvidentiaryFirewall', 'HIGH', phaseContext.nonEvidentiaryFirewallContext, 'Non-evidentiary firewall', null);
   addCtx('crossUserPrivacy', 'CRITICAL', phaseContext.crossUserPrivacyContext, 'Cross-user privacy — constitutional, cannot be disabled', null);
+  addCtx('dataSovereignty', 'CRITICAL', phaseContext.dataSovereigntyContext, 'Data sovereignty — measured firewall state and generative resilience (Package 44)', null);
   addCtx('socialMedia', 'NORMAL', phaseContext.socialMediaContext, 'Social media literacy — curated static dataset', null);
   addCtx('slang', 'NORMAL', phaseContext.slangContext, 'Contemporary language lexicon — offline dataset', null);
   addCtx('openTool', 'HIGH', phaseContext.openToolContext, 'External tool result — untrusted, explicitly sourced', null);
@@ -967,6 +972,12 @@ export async function processInteraction(userInput, recentHistory = [], options 
     if (promises.length > 0) await Promise.all(promises);
   } catch (e) {}
 
+  // 5z-sov. Data sovereignty (Package 44) — real firewall state when privacy worries surface
+  let dataSovereigntyContext = null;
+  try {
+    dataSovereigntyContext = await buildSovereigntyContextString(userInput);
+  } catch (e) {}
+
   // 5z-nat. Humor throttle (Package 44.5)
   let humorContext = null;
   if (shouldAllowHumor()) {
@@ -1031,6 +1042,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     constantCircleContext: spinProtocolResult ? buildConstantCircleContextString(spinProtocolResult) : null,
     emergentMeaningContext: meaningContext ? buildEmergentMeaningContextString(meaningContext) : null,
     crossUserPrivacyContext: buildCrossUserPrivacyContextString(),
+    dataSovereigntyContext,
     socialMediaContext: socialMediaMatch ? buildSocialMediaContextString(socialMediaMatch) : null,
     slangContext: slangMatch ? buildSlangContextString(slangMatch) : null,
     openToolContext: openToolResult ? buildOpenToolContextString(openToolResult) : null,
@@ -1280,6 +1292,10 @@ export function createMemoryFromMessage(messageText) {
     origin: 'Bison conversation — user explicitly saved this message.',
     confidence: 'high',
     permission_scope: 'PERSISTENT',
+    // Package 44 — provenance travels with every memory.
+    generated_by: 'user',
+    shared: false,
+    never_shared: true,
     verification_state: 'USER_CONFIRMED',
     verification_history: [{
       from_state: 'CREATED',

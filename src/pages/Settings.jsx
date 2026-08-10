@@ -3,7 +3,8 @@ import { base44 } from '@/api/base44Client';
 import { getTokenBalance } from '@/lib/tokens';
 import { PageHeader } from '@/components/MicroAnimations';
 import { Switch } from '@/components/ui/switch';
-import { Coins, Globe, Zap, Music, Info, Shield, Gauge, ExternalLink, Brain, CloudRain } from 'lucide-react';
+import { Coins, Globe, Zap, Music, Info, Shield, Gauge, ExternalLink, Brain, CloudRain, Lock } from 'lucide-react';
+import LocalFirstBadge from '@/components/privacy/LocalFirstBadge';
 import ThemeShop from '@/components/ThemeShop';
 import TokenShop from '@/components/TokenShop';
 import AccessibilityEnhancer from '@/components/AccessibilityEnhancer';
@@ -319,6 +320,15 @@ export default function Settings() {
           ) : (
             <p className="text-xs text-muted-foreground/60">No avoided topics set.</p>
           )}
+        </div>
+
+        <div className="glass rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Lock className="w-4 h-4" style={{ color: accent }} />
+            <h3 className="font-heading font-semibold text-sm">Data Sovereignty</h3>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">The external communication firewall, consent categories, and a full record of every outbound request.</p>
+          <LocalFirstBadge />
         </div>
 
         <LiteracyToolsPanel />

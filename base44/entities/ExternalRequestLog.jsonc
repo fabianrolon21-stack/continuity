@@ -1,0 +1,80 @@
+{
+  "name": "ExternalRequestLog",
+  "type": "object",
+  "properties": {
+    "destination": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string",
+      "enum": [
+        "oracle",
+        "web",
+        "news",
+        "weather",
+        "updates",
+        "community",
+        "external_ai",
+        "custom_api",
+        "sync",
+        "tools"
+      ]
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "consent_used": {
+      "type": "string"
+    },
+    "consent_categories": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "payload_summary": {
+      "type": "string"
+    },
+    "sanitization_applied": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "response_summary": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ALLOWED",
+        "BLOCKED_FIREWALL",
+        "BLOCKED_CHANNEL",
+        "BLOCKED_CONSENT",
+        "BLOCKED_LOCKDOWN",
+        "FAILED",
+        "COMPLETED"
+      ],
+      "default": "ALLOWED"
+    },
+    "block_reason": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "destination",
+    "channel",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

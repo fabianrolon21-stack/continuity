@@ -23,6 +23,7 @@ import Garden from '@/pages/Garden';
 import DecisionLab from '@/pages/DecisionLab';
 import Games from '@/pages/Games';
 import Store from '@/pages/Store';
+import Privacy from '@/pages/Privacy';
 // Add page imports here
 
 const AuthenticatedApp = () => {
@@ -68,6 +69,7 @@ const AuthenticatedApp = () => {
         <Route path="/decisions" element={<DecisionLab />} />
         <Route path="/games" element={<Games />} />
         <Route path="/store" element={<Store />} />
+        <Route path="/privacy" element={<Privacy />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
