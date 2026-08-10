@@ -6,6 +6,7 @@ import { computeWorldState } from '@/lib/world/worldStateEngine';
 import { getHabitat } from '@/lib/sanctuary/habitats';
 import { chooseBehavior, BEHAVIOR_NOTES, BEHAVIORS } from '@/lib/sanctuary/bisonBehavior';
 import { audioEngine } from '@/lib/ambiance/audioEngine';
+import { computeAudioMood } from '@/lib/ambiance/adaptiveAudio';
 import SceneInsect from '@/components/sanctuary/SceneInsect';
 import { pickCareScene, PROP_EMOJI } from '@/lib/sanctuary/careScenes';
 import { eventBus } from '@/lib/events/eventBus';
@@ -35,6 +36,16 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
     return () => clearInterval(t);
   }, []);
 
+  // Phase 4 — music follows the world: weather, night, and energy reshape the score
+  useEffect(() => {
+    audioEngine.setMood(computeAudioMood({
+      weather: worldState.weather.current,
+      isNight: worldState.sky.isNight,
+      isLateNight: worldState.isLateNight,
+      energy,
+    }));
+  }, [worldState.weather.current, worldState.sky.isNight, worldState.isLateNight, energy]);
+
   // Behavior loop — weighted random, never repeats last two, energy + weather aware
   useEffect(() => {
     let timer;
@@ -62,7 +73,7 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
   useEffect(() => {
     const unsub = eventBus.subscribe('BISON_CARE_ACTION', (event) => {
       sceneTimersRef.current.forEach(clearTimeout);
-      const { prop, steps } = pickCareScene(event.payload?.action, event.payload?.prop);
+      const { prop, steps } = pickCareScene(event.payload?.action, event.payload?.prop, event.payload?.reaction);
       sceneActiveRef.current = true;
       setCareProp(prop);
       const timers = [];

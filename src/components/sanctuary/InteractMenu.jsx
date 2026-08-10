@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { wakeAndTick, performCareAction } from '@/lib/bison/companionEngine';
 import { emit } from '@/lib/events/eventBus';
-import { Hand, Apple, Droplets, Moon, Heart, Compass, Sprout, Palette, MessageCircle, ChevronLeft } from 'lucide-react';
+import { loadPreferences, recordUse, reactionFor, favouriteOf } from '@/lib/sanctuary/toyPreferences';
+import { Hand, Apple, Droplets, Moon, Heart, Compass, Sprout, Palette, MessageCircle, ChevronLeft, Gamepad2 } from 'lucide-react';
 
 const FOODS = [
   { id: 'apple', label: 'Apple', emoji: '🍎' },
@@ -20,23 +21,31 @@ const TOYS = [
 export default function InteractMenu({ onSceneStart }) {
   const [folder, setFolder] = useState(null); // null | root | care | food | play | explore
   const [needs, setNeeds] = useState(null);
+  const [prefs, setPrefs] = useState({});
 
   useEffect(() => {
     wakeAndTick().then(c => setNeeds(c.needsState)).catch(() => {});
+    loadPreferences().then(setPrefs);
   }, []);
 
   const act = (action, prop) => {
     setFolder(null);
     onSceneStart?.();
-    emit('BISON_CARE_ACTION', { action, prop }, 'InteractMenu');
+    const reaction = prop ? reactionFor(prefs, prop) : 'neutral';
+    emit('BISON_CARE_ACTION', { action, prop, reaction }, 'InteractMenu');
     performCareAction(action).then(setNeeds).catch(() => {});
+    if (prop) recordUse(prop).then(setPrefs);
   };
 
-  const Item = ({ icon: Icon, emoji, label, color, onClick, to }) => {
+  const favFood = favouriteOf(prefs, FOODS.map(f => f.id));
+  const favToy = favouriteOf(prefs, TOYS.map(t => t.id));
+
+  const Item = ({ icon: Icon, emoji, label, color, onClick, to, favourite }) => {
     const inner = (
       <>
         {Icon ? <Icon className="w-4 h-4" style={{ color }} /> : <span className="text-base leading-none">{emoji}</span>}
         <span className="text-xs font-medium text-white/85">{label}</span>
+        {favourite && <Heart className="w-3 h-3 ml-auto fill-current" style={{ color: 'hsl(21 73% 69%)' }} />}
       </>
     );
     const cls = "flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] transition-colors no-tap-highlight w-full";
@@ -97,12 +106,17 @@ export default function InteractMenu({ onSceneStart }) {
             )}
 
             {folder === 'food' && FOODS.map(f => (
-              <Item key={f.id} emoji={f.emoji} label={f.label} onClick={() => act('feed', f.id)} />
+              <Item key={f.id} emoji={f.emoji} label={f.label} favourite={f.id === favFood} onClick={() => act('feed', f.id)} />
             ))}
 
-            {folder === 'play' && TOYS.map(t => (
-              <Item key={t.id} emoji={t.emoji} label={t.label} onClick={() => act('play', t.id)} />
-            ))}
+            {folder === 'play' && (
+              <>
+                {TOYS.map(t => (
+                  <Item key={t.id} emoji={t.emoji} label={t.label} favourite={t.id === favToy} onClick={() => act('play', t.id)} />
+                ))}
+                <Item icon={Gamepad2} label="Card Game" color="hsl(265 41% 64%)" to="/games" />
+              </>
+            )}
 
             {folder === 'explore' && (
               <>

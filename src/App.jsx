@@ -21,6 +21,7 @@ import TrustDashboard from '@/pages/TrustDashboard';
 import VoiceStudio from '@/pages/VoiceStudio';
 import Garden from '@/pages/Garden';
 import DecisionLab from '@/pages/DecisionLab';
+import Games from '@/pages/Games';
 // Add page imports here
 
 const AuthenticatedApp = () => {
@@ -64,6 +65,7 @@ const AuthenticatedApp = () => {
         <Route path="/voice" element={<VoiceStudio />} />
         <Route path="/garden" element={<Garden />} />
         <Route path="/decisions" element={<DecisionLab />} />
+        <Route path="/games" element={<Games />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

@@ -121,8 +121,18 @@ function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export function pickCareScene(action, prop = null) {
-  const variants = SCENES[action] || SCENES.feed;
+// reaction: 'loved' | 'liked' | 'neutral' | 'bored' — drawn from what the
+// companion has actually grown to prefer over time (Phase 5 + 7).
+export function pickCareScene(action, prop = null, reaction = 'neutral') {
+  const all = SCENES[action] || SCENES.feed;
+  let variants = all;
+  if (reaction === 'loved') {
+    const eager = all.filter(v => v.some(s => s.motion === 'celebrate' || s.motion === 'wag') && !v.some(s => s.motion === 'refuse'));
+    if (eager.length) variants = eager;
+  } else if (reaction === 'bored') {
+    const reluctant = all.filter(v => v.some(s => s.motion === 'refuse'));
+    if (reluctant.length) variants = reluctant;
+  }
   let sceneProp = prop;
   if (!sceneProp) {
     if (action === 'feed') sceneProp = pick(Object.keys(PROP_EMOJI).slice(0, 4));

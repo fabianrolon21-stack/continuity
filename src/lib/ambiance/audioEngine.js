@@ -109,6 +109,20 @@ class AudioEngine {
     this._chordIndex = 0;
     this._schedulerInterval = null;
     this._cycle = 0; // increments each full progression — drives evolving variation
+    // Adaptive modulation from the world state (weather / time / energy)
+    this._mood = { tempo: 1, filter: 1, gain: 1, detune: 1 };
+  }
+
+  // Phase 4 — the world colours the music. Applied smoothly at the next chord,
+  // so changes ease in rather than snapping.
+  setMood(mood) {
+    if (!mood) return;
+    this._mood = {
+      tempo: mood.tempo ?? 1,
+      filter: mood.filter ?? 1,
+      gain: mood.gain ?? 1,
+      detune: mood.detune ?? 1,
+    };
   }
 
   _ensureContext() {
@@ -124,19 +138,20 @@ class AudioEngine {
     return this._ctx;
   }
 
-  _clearVoices() {
+  // fadeSeconds lets a departing track ring out under the incoming one (crossfade)
+  _clearVoices(fadeSeconds = 0.5) {
     for (const voice of this._currentVoices) {
       try {
         if (voice.gainNode) {
           voice.gainNode.gain.cancelScheduledValues(this._ctx.currentTime);
-          voice.gainNode.gain.linearRampToValueAtTime(0, this._ctx.currentTime + 0.5);
+          voice.gainNode.gain.linearRampToValueAtTime(0, this._ctx.currentTime + fadeSeconds);
         }
         const oscs = voice.oscillators || [];
         setTimeout(() => {
           oscs.forEach(o => { try { o.stop(); o.disconnect(); } catch (e) {} });
           try { voice.gainNode?.disconnect(); } catch (e) {}
           try { voice.filter?.disconnect(); } catch (e) {}
-        }, 600);
+        }, fadeSeconds * 1000 + 100);
       } catch (e) {}
     }
     this._currentVoices = [];
@@ -173,20 +188,20 @@ class AudioEngine {
 
     voice.filter.type = 'lowpass';
     // Breathe the filter slightly between chords so the loop never sounds identical
-    voice.filter.frequency.value = track.filterFreq * (0.85 + Math.random() * 0.3);
+    voice.filter.frequency.value = Math.max(180, track.filterFreq * this._mood.filter * (0.85 + Math.random() * 0.3));
     voice.filter.connect(voice.gainNode);
     voice.gainNode.connect(this._masterGain);
 
     // Subtle dynamic swell per chord instead of a fixed level
-    const targetGain = 0.15 * (0.85 + Math.random() * 0.3);
+    const targetGain = 0.15 * this._mood.gain * (0.85 + Math.random() * 0.3);
     voice.gainNode.gain.setValueAtTime(0, now);
-    voice.gainNode.gain.linearRampToValueAtTime(targetGain, now + (fadeIn ? 2 : 0.3));
+    voice.gainNode.gain.linearRampToValueAtTime(targetGain, now + (fadeIn ? 2.5 : 0.3));
 
     for (const freq of chord) {
       const osc = ctx.createOscillator();
       osc.type = track.oscillatorType;
       // Micro-detune gives an organic, ensemble feel
-      osc.frequency.value = freq * (1 + (Math.random() - 0.5) * 0.004);
+      osc.frequency.value = freq * (1 + (Math.random() - 0.5) * 0.004 * this._mood.detune);
       osc.connect(voice.filter);
       osc.start(now);
       voice.oscillators.push(osc);
@@ -210,15 +225,15 @@ class AudioEngine {
 
     this._currentVoices.push(voice);
 
-    // Schedule next chord
+    // Schedule next chord — overlap the tail so chords blend instead of cutting
     const scheduleNext = () => {
-      this._clearVoices();
+      this._clearVoices(1.2);
       if (this._isPlaying && this._currentTrack === trackId) {
         this._playChord(trackId);
       }
     };
 
-    const delay = (track.chordDuration + track.noteGap) * 1000;
+    const delay = (track.chordDuration + track.noteGap) * this._mood.tempo * 1000;
     this._schedulerTimeout = setTimeout(scheduleNext, delay);
   }
 
@@ -230,8 +245,9 @@ class AudioEngine {
     this._masterGain.gain.cancelScheduledValues(ctx.currentTime);
     this._masterGain.gain.setValueAtTime(this._volume, ctx.currentTime);
 
-    // Crossfade: clear current, start new
-    this._clearVoices();
+    // True crossfade: the outgoing track rings out over 3s while the new one swells in
+    const isSwitch = this._currentTrack && this._currentTrack !== trackId;
+    this._clearVoices(isSwitch ? 3 : 0.5);
     clearTimeout(this._schedulerTimeout);
 
     this._currentTrack = trackId;
