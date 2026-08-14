@@ -13,6 +13,7 @@ import ModuleOrchestratorDashboard from '@/components/developer/ModuleOrchestrat
 import SpinProtocolPanel from '@/components/developer/SpinProtocolPanel';
 import FrrolonChannel from '@/components/developer/FrrolonChannel';
 import UpdateStagePanel from '@/components/developer/UpdateStagePanel';
+import UstpProtocolPanel from '@/components/developer/ustp/UstpProtocolPanel';
 import { Shield, Activity, AlertTriangle, FileText, Bug, Lock, Hash, Cpu, Power, Ban, CheckCircle, XCircle } from 'lucide-react';
 
 export default function DeveloperControlPlane() {
@@ -123,6 +124,9 @@ export default function DeveloperControlPlane() {
 
         {/* Update lifecycle (Package 43) */}
         <UpdateStagePanel user={user} />
+
+        {/* USTP (Package 47) */}
+        <UstpProtocolPanel accent={accent} />
 
         {/* FRROLON Channel (Package 42) */}
         <FrrolonChannel user={user} />

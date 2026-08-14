@@ -1,0 +1,105 @@
+{
+  "name": "UstpTransmission",
+  "type": "object",
+  "properties": {
+    "transmission_id": {
+      "type": "string"
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "outbound",
+        "inbound",
+        "loopback"
+      ],
+      "default": "outbound"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "human",
+        "ai",
+        "machine",
+        "distributed_agent",
+        "emergency_recovery",
+        "knowledge_sync",
+        "software_update",
+        "developer_diagnostics"
+      ]
+    },
+    "peer": {
+      "type": "string"
+    },
+    "transport": {
+      "type": "string"
+    },
+    "protocol_version": {
+      "type": "string"
+    },
+    "concept_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "payload_summary": {
+      "type": "string"
+    },
+    "payload_bytes": {
+      "type": "number"
+    },
+    "integrity_hash": {
+      "type": "string"
+    },
+    "signature": {
+      "type": "string"
+    },
+    "negotiation_summary": {
+      "type": "string"
+    },
+    "ethical_approval_ref": {
+      "type": "string"
+    },
+    "consent_ref": {
+      "type": "string"
+    },
+    "provenance": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "COMPLETED",
+        "BLOCKED_ETHICS",
+        "BLOCKED_SOVEREIGNTY",
+        "NEGOTIATION_FAILED",
+        "INTEGRITY_FAILED",
+        "QUARANTINED",
+        "FAILED"
+      ]
+    },
+    "block_reason": {
+      "type": "string"
+    },
+    "semantic_fidelity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "required": [
+    "transmission_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
