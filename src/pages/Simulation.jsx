@@ -7,6 +7,7 @@ import WorldOverview from '@/components/simulation/WorldOverview';
 import EventFeed from '@/components/simulation/EventFeed';
 import AgentInspector from '@/components/simulation/AgentInspector';
 import ConflictAnalyzer from '@/components/simulation/ConflictAnalyzer';
+import PolicyLab from '@/components/policy/PolicyLab';
 
 export default function Simulation() {
   const simRef = useRef(newSimulation('continuity'));
@@ -28,10 +29,11 @@ export default function Simulation() {
 
       <div className="px-6 lg:px-10">
         <Tabs defaultValue="world">
-          <TabsList className="w-full grid grid-cols-3">
+          <TabsList className="w-full grid grid-cols-4">
             <TabsTrigger value="world">World</TabsTrigger>
             <TabsTrigger value="agent">Agent</TabsTrigger>
             <TabsTrigger value="conflict">Conflict</TabsTrigger>
+            <TabsTrigger value="policy">Policy</TabsTrigger>
           </TabsList>
 
           <TabsContent value="world" className="space-y-4 mt-4">
@@ -73,6 +75,12 @@ export default function Simulation() {
           <TabsContent value="conflict" className="mt-4">
             <div className="glass framed rounded-2xl p-4">
               <ConflictAnalyzer />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="policy" className="mt-4">
+            <div className="glass framed rounded-2xl p-4">
+              <PolicyLab />
             </div>
           </TabsContent>
         </Tabs>
