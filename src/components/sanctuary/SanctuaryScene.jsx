@@ -4,7 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { computeWorldState } from '@/lib/world/worldStateEngine';
 import { getHabitat } from '@/lib/sanctuary/habitats';
-import { chooseBehavior, BEHAVIOR_NOTES, BEHAVIORS } from '@/lib/sanctuary/bisonBehavior';
+import { BEHAVIOR_NOTES, BEHAVIORS } from '@/lib/sanctuary/bisonBehavior';
+import { useBisonLife } from '@/hooks/useBisonLife';
+import { bisonSimulation } from '@/lib/bison/life/bisonSimulation';
+import BisonDebugOverlay from '@/components/sanctuary/BisonDebugOverlay';
 import { audioEngine } from '@/lib/ambiance/audioEngine';
 import { computeAudioMood } from '@/lib/ambiance/adaptiveAudio';
 import SceneInsect from '@/components/sanctuary/SceneInsect';
@@ -24,7 +27,11 @@ const OBJECT_ICONS = { Sprout, TreePine, Flame, Waves, Snowflake, Gem, BookOpen,
 export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0 }) {
   const habitat = getHabitat(config?.habitat);
   const [worldState, setWorldState] = useState(() => computeWorldState());
-  const [behavior, setBehavior] = useState(BEHAVIORS.IDLE);
+  // The simulation owns Bison's behaviour; this screen only observes it.
+  const life = useBisonLife({ visible: true });
+  const [sceneBehavior, setSceneBehavior] = useState(null); // scripted care scene override
+  const behavior = sceneBehavior || life.behavior;
+  const debug = new URLSearchParams(window.location.search).get('bison_debug') === '1';
   const [careProp, setCareProp] = useState(null);
   const sceneActiveRef = useRef(false);
   const sceneTimersRef = useRef([]);
@@ -47,46 +54,26 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
     }));
   }, [worldState.weather.current, worldState.sky.isNight, worldState.isLateNight, energy]);
 
-  // Behavior loop — weighted random, never repeats last two, energy + weather aware
-  useEffect(() => {
-    let timer;
-    let recent = [];
-    const tick = () => {
-      const { behavior: b, durationMs } = chooseBehavior({
-        energy,
-        isNight: worldState.sky.isNight,
-        isLateNight: worldState.isLateNight,
-        weather: worldState.weather.current,
-        recent,
-        musicPlaying: audioEngine.isPlaying,
-      });
-      if (!sceneActiveRef.current) {
-        recent = [...recent.slice(-1), b];
-        setBehavior(b);
-      }
-      timer = setTimeout(tick, durationMs);
-    };
-    tick();
-    return () => clearTimeout(timer);
-  }, [energy, worldState.weather.current, worldState.sky.isNight, worldState.isLateNight]);
-
   // Care scenes — quick actions trigger scripted, unpredictable reactions
   useEffect(() => {
     const unsub = eventBus.subscribe('BISON_CARE_ACTION', (event) => {
       sceneTimersRef.current.forEach(clearTimeout);
       const { prop, steps } = pickCareScene(event.payload?.action, event.payload?.prop, event.payload?.reaction);
       sceneActiveRef.current = true;
+      bisonSimulation.beginScene();
       setCareProp(prop);
       const timers = [];
       let delay = 400;
       for (const step of steps) {
-        timers.push(setTimeout(() => setBehavior(step.motion), delay));
+        timers.push(setTimeout(() => setSceneBehavior(step.motion), delay));
         delay += step.ms;
       }
+      // Every scene has a defined exit back into autonomous life.
       timers.push(setTimeout(() => {
         sceneActiveRef.current = false;
         setCareProp(null);
-        setBehavior(BEHAVIORS.IDLE);
+        setSceneBehavior(null);
+        bisonSimulation.endScene();
       }, delay));
       sceneTimersRef.current = timers;
     });
@@ -184,7 +171,7 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
 
           {/* Space C — the Bison, always centered */}
           <div className="absolute bottom-[70px] left-1/2 -translate-x-1/2">
-            <SceneBison behavior={behavior} accent={habitat.accent} />
+            <SceneBison behavior={behavior} micro={sceneBehavior ? null : life.micro} accent={habitat.accent} />
           </div>
 
           {/* Care prop — drops in near the Bison during scenes */}
@@ -247,6 +234,8 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
 
           {/* Ambient life — butterflies, bees, birds, fireflies, drifting leaves */}
           <SceneLife weather={worldState.weather.current} isNight={worldState.sky.isNight} />
+
+          {debug && <BisonDebugOverlay life={life} />}
         </motion.div>
       </AnimatePresence>
 

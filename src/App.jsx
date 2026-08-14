@@ -7,6 +7,8 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import Layout from '@/components/Layout';
+// Bison lives independently of any screen — the simulation starts at app boot.
+import '@/lib/bison/life/bisonSimulation';
 import Sanctuary from '@/pages/Sanctuary';
 import BisonChat from '@/pages/BisonChat';
 import CheckIn from '@/pages/CheckIn';

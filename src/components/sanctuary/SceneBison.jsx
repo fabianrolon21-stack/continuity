@@ -36,7 +36,19 @@ const BEHAVIOR_MOTION = {
 // Behaviors where the tail wags fast — joy shown through the body
 const HAPPY_BEHAVIORS = ['eat', 'play', 'play_alone', 'wag', 'celebrate', 'dance', 'look_at_user'];
 
-export default function SceneBison({ behavior = BEHAVIORS.IDLE, accent = 'hsl(42 63% 55%)' }) {
+// §7/§8 — micro-behaviours live on their own layer, so tiny signs of life
+// continue underneath whatever the body is doing. They never replace the
+// core animation; they only nudge the head, weight, and gaze.
+const MICRO_MOTION = {
+  blink: {},
+  look_left: { rotate: -5, x: -3 },
+  look_right: { rotate: 5, x: 3 },
+  ear_flick: { rotate: 1 },
+  weight_shift: { y: 2, rotate: -1.5 },
+  glance_at_user: { rotate: 2, scale: 1.01 },
+};
+
+export default function SceneBison({ behavior = BEHAVIORS.IDLE, micro = null, accent = 'hsl(42 63% 55%)' }) {
   const isAsleep = behavior === BEHAVIORS.SLEEP;
   const isDrowsy = behavior === BEHAVIORS.DOZE || behavior === BEHAVIORS.YAWN;
   const isHappy = HAPPY_BEHAVIORS.includes(behavior);
@@ -59,6 +71,11 @@ export default function SceneBison({ behavior = BEHAVIORS.IDLE, accent = 'hsl(42
         </motion.div>
       )}
 
+      {/* Micro-behaviour layer — small, continuous, easing in and out */}
+      <motion.div
+        animate={isAsleep ? {} : (MICRO_MOTION[micro] || { rotate: 0, x: 0, y: 0 })}
+        transition={{ duration: 1.1, ease: 'easeInOut' }}
+      >
       {/* Breathing wrapper */}
       <motion.svg
         width="150" height="110" viewBox="0 0 150 110"
@@ -149,6 +166,7 @@ export default function SceneBison({ behavior = BEHAVIORS.IDLE, accent = 'hsl(42
           style={{ transformOrigin: '126px 60px' }}
         />
       </motion.svg>
+      </motion.div>
     </motion.div>
   );
 }
