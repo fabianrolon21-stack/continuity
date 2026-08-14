@@ -10,6 +10,7 @@
 import { base44 } from '@/api/base44Client';
 import { decisionBoard } from './decisionBoard';
 import { loadPolicy } from '@/lib/bison/privacy/firewallPolicy';
+import { recordDecision } from '@/lib/bison/observability/decisionReplay';
 
 export const STAGES = [
   'PACKAGE_44_SOVEREIGNTY',
@@ -139,5 +140,7 @@ async function finish(proposal, board, trace, outcome, reason, observed) {
     rolled_back: outcome === 'REGRESSION_ROLLED_BACK',
   };
   await base44.entities.OptimizationDeployment.create(result).catch(() => {});
+  // Package 51 — make the reasoning replayable after the fact.
+  recordDecision({ proposal, board, trace, outcome });
   return { ...result, trace, board };
 }
