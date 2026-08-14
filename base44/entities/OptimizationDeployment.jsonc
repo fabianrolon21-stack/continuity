@@ -1,0 +1,91 @@
+{
+  "name": "OptimizationDeployment",
+  "type": "object",
+  "properties": {
+    "proposal_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "expected_gain": {
+      "type": "number"
+    },
+    "observed_gain": {
+      "type": "number"
+    },
+    "risk_score": {
+      "type": "number"
+    },
+    "humanity_score": {
+      "type": "number"
+    },
+    "constitution_score": {
+      "type": "number"
+    },
+    "forecast_summary": {
+      "type": "string"
+    },
+    "verification_trace": {
+      "type": "string"
+    },
+    "previous_state": {
+      "type": "string"
+    },
+    "current_state": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "VERIFIED_DEPLOYED",
+        "REJECTED_INVARIANT",
+        "REJECTED_RISK",
+        "REJECTED_HUMANITY",
+        "REGRESSION_ROLLED_BACK",
+        "LEARNING_ONLY"
+      ],
+      "default": "LEARNING_ONLY"
+    },
+    "rejection_reason": {
+      "type": "string"
+    },
+    "root_cause": {
+      "type": "string"
+    },
+    "rolled_back": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "proposal_id",
+    "title",
+    "outcome"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
