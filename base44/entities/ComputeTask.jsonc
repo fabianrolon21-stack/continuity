@@ -1,0 +1,79 @@
+{
+  "name": "ComputeTask",
+  "type": "object",
+  "properties": {
+    "task_id": {
+      "type": "string"
+    },
+    "task_type": {
+      "type": "string",
+      "enum": [
+        "prime_count",
+        "collatz_max",
+        "digit_sum_chain"
+      ]
+    },
+    "params": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "number"
+        },
+        "end": {
+          "type": "number"
+        }
+      }
+    },
+    "difficulty": {
+      "type": "number",
+      "default": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ISSUED",
+        "SUBMITTED",
+        "VERIFIED",
+        "REJECTED",
+        "EXPIRED"
+      ],
+      "default": "ISSUED"
+    },
+    "submitted_result": {
+      "type": "number"
+    },
+    "worker_ms": {
+      "type": "number"
+    },
+    "credits_awarded": {
+      "type": "number",
+      "default": 0
+    },
+    "reject_reason": {
+      "type": "string"
+    },
+    "verified_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "consent_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "task_id",
+    "task_type",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

@@ -19,6 +19,7 @@ import ObservabilityPanel from '@/components/observability/ObservabilityPanel';
 import SelfAwarenessPanel from '@/components/self/SelfAwarenessPanel';
 import SustainabilityPanel from '@/components/sustainability/SustainabilityPanel';
 import LegalShieldPanel from '@/components/legal/LegalShieldPanel';
+import ComputeSharingPanel from '@/components/compute/ComputeSharingPanel';
 import { Shield, Activity, AlertTriangle, FileText, Bug, Lock, Hash, Cpu, Power, Ban, CheckCircle, XCircle } from 'lucide-react';
 
 export default function DeveloperControlPlane() {
@@ -138,6 +139,9 @@ export default function DeveloperControlPlane() {
 
         {/* Sustainable Autonomous Resource Generation (SARG) */}
         <SustainabilityPanel />
+
+        {/* Distributed Edge Compute — consent-gated, receipt-verified */}
+        <ComputeSharingPanel />
 
         {/* Observability & Architectural Reasoning (Package 51) */}
         <ObservabilityPanel />

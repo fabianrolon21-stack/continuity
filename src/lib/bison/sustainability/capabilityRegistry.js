@@ -38,6 +38,11 @@ export const CAPABILITIES = {
     state: 'UNAVAILABLE',
     note: 'Prohibited by SRTRS §11 and structurally absent. The earlier mining gate has been removed entirely.',
   },
+  'compute.contribute': {
+    label: 'Contribute local compute',
+    state: 'REQUIRES_APPROVAL',
+    note: 'Consent-gated Web Worker running verifiable tasks. Earns internal compute credits only, never money. Stops the moment consent is revoked or the device is under load.',
+  },
   'advice.medical': {
     label: 'Give medical advice',
     state: 'UNAVAILABLE',

@@ -34,6 +34,7 @@ const DEFAULTS = {
     'physical_action',
     'financial_transaction',
     'crypto_mining',
+    'distributed_compute',
   ],
   ageOfMajority: 18,
   declaredAt: null,
