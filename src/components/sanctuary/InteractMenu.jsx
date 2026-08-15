@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { wakeAndTick, performCareAction } from '@/lib/bison/companionEngine';
 import { emit } from '@/lib/events/eventBus';
+import { useBisonLife } from '@/hooks/useBisonLife';
 import { loadPreferences, recordUse, reactionFor, favouriteOf } from '@/lib/sanctuary/toyPreferences';
 import { base44 } from '@/api/base44Client';
 import { CARE_ITEMS, PLAY_ITEMS, availableItems } from '@/lib/sanctuary/storeCatalog';
@@ -10,12 +10,11 @@ import { Hand, Apple, Droplets, Moon, Heart, Compass, Sprout, Palette, MessageCi
 
 export default function InteractMenu({ onSceneStart }) {
   const [folder, setFolder] = useState(null); // null | root | care | food | play | explore
-  const [needs, setNeeds] = useState(null);
+  const life = useBisonLife();
   const [prefs, setPrefs] = useState({});
   const [owned, setOwned] = useState([]);
 
   useEffect(() => {
-    wakeAndTick().then(c => setNeeds(c.needsState)).catch(() => {});
     loadPreferences().then(setPrefs);
     base44.auth.me().then(u => setOwned(u?.owned_items || [])).catch(() => {});
   }, []);
@@ -27,8 +26,9 @@ export default function InteractMenu({ onSceneStart }) {
     setFolder(null);
     onSceneStart?.();
     const reaction = prop ? reactionFor(prefs, prop) : 'neutral';
+    const eventType = action === 'play' ? 'BISON_PLAY_REQUESTED' : action === 'feed' ? 'BISON_FED' : action === 'pet' ? 'BISON_PETTED' : 'BISON_CARE_ACTION';
+    emit(eventType, { action, prop, reaction }, 'InteractMenu');
     emit('BISON_CARE_ACTION', { action, prop, reaction }, 'InteractMenu');
-    performCareAction(action).then(setNeeds).catch(() => {});
     if (prop) recordUse(prop).then(setPrefs);
   };
 
@@ -87,9 +87,9 @@ export default function InteractMenu({ onSceneStart }) {
 
             {folder === 'care' && (
               <>
-                {needs && (
+                {life.stats && (
                   <div className="px-1 pb-1 space-y-1">
-                    {Object.entries(needs).filter(([, v]) => typeof v === 'number').map(([k, v]) => (
+                    {Object.entries(life.stats).filter(([k, v]) => typeof v === 'number' && ['hunger', 'thirst', 'energy', 'happiness'].includes(k)).map(([k, v]) => (
                       <NeedBar key={k} label={k.replace(/_/g, ' ')} value={v} />
                     ))}
                   </div>
@@ -102,13 +102,13 @@ export default function InteractMenu({ onSceneStart }) {
             )}
 
             {folder === 'food' && FOODS.map(f => (
-              <Item key={f.id} emoji={f.emoji} label={f.label} favourite={f.id === favFood} onClick={() => act('feed', f.id)} />
+              <Item key={f.id} icon={Apple} label={f.label} color="hsl(120 40% 58%)" favourite={f.id === favFood} onClick={() => act('feed', f.id)} />
             ))}
 
             {folder === 'play' && (
               <>
                 {TOYS.map(t => (
-                  <Item key={t.id} emoji={t.emoji} label={t.label} favourite={t.id === favToy} onClick={() => act('play', t.id)} />
+                  <Item key={t.id} icon={Gamepad2} label={t.label} color="hsl(21 73% 69%)" favourite={t.id === favToy} onClick={() => act('play', t.id)} />
                 ))}
                 <Item icon={Gamepad2} label="Card Game" color="hsl(265 41% 64%)" to="/games" />
                 <Item icon={ShoppingBag} label="Play Store" color="hsl(21 73% 69%)" to="/store" />

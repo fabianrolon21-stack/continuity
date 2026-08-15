@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { processInteraction, RESPONSE_MODES, createMemoryFromMessage } from '@/lib/bison/pipeline';
 import { calculateTrustScore, createTrustEvent, TRUST_EVENTS } from '@/lib/bison/trustScoreCalculator';
 import { awardTokens } from '@/lib/tokens';
+import { emit } from '@/lib/events/eventBus';
 import { PageHeader, EmptyState } from '@/components/MicroAnimations';
 import DendriticScanCard from '@/components/chat/DendriticScanCard';
 import { Send, Brain, Repeat, Bookmark, Sparkles, Loader2, Zap, Droplet, Heart, ShieldAlert, Lightbulb, ExternalLink, PauseCircle } from 'lucide-react';
@@ -54,6 +55,7 @@ export default function BisonChat() {
     if (!text || processing) return;
     setInput('');
     setProcessing(true);
+    emit('BISON_CARE_ACTION', { action: 'talk' }, 'BisonChat');
 
     const recentHistory = messages.slice(-10).map(m => ({ role: m.role, text: m.text, intent: m.intent, domain: m.domain }));
 

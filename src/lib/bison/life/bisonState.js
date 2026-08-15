@@ -27,6 +27,7 @@ export function defaultState() {
     version: STATE_VERSION,
     personality: { ...DEFAULT_PERSONALITY },
     stats: { happiness: 72, energy: 80, hunger: 30, thirst: 28, affection: 60, loneliness: 20 },
+    emotion: 'calm',
     currentEnvironment: 'meadow',
     lastSimulationTimestamp: now,
     interactionMemory: {
@@ -47,6 +48,7 @@ export function loadState() {
       ...base, ...parsed,
       personality: { ...base.personality, ...parsed.personality },
       stats: { ...base.stats, ...parsed.stats },
+      emotion: parsed.emotion || base.emotion,
       interactionMemory: { ...base.interactionMemory, ...parsed.interactionMemory },
     };
   } catch {

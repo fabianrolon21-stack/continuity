@@ -8,8 +8,11 @@ const FORCE = [
   ['IDLE', BEHAVIORS.IDLE],
   ['WALK', BEHAVIORS.WALK],
   ['PLAY', BEHAVIORS.PLAY],
+  ['EAT', BEHAVIORS.EAT],
+  ['DRINK', BEHAVIORS.DRINK],
   ['SLEEP', BEHAVIORS.SLEEP],
   ['HAPPY', BEHAVIORS.DANCE],
+  ['SAD', BEHAVIORS.SIT],
 ];
 
 export default function BisonDebugOverlay({ life }) {
@@ -23,6 +26,7 @@ export default function BisonDebugOverlay({ life }) {
       <Row k="behavior" v={life.behavior} />
       <Row k="micro" v={life.micro || '—'} />
       <Row k="source" v={life.source} />
+      <Row k="emotion" v={life.emotion} />
       <Row k="priority" v={life.priority} />
       <Row k="return" v={life.returnState || '—'} />
       <Row k="next decision" v={`${(life.msUntilDecision / 1000).toFixed(1)}s`} />
@@ -30,6 +34,7 @@ export default function BisonDebugOverlay({ life }) {
       <Row k="queued" v={life.queued} />
       <Row k="decisions" v={life.decisions} />
       <Row k="simulation" v={life.active ? 'ACTIVE' : 'PAUSED'} />
+      <Row k="power mode" v={life.resourceLevel} />
       {Object.entries(life.stats).map(([k, v]) => <Row key={k} k={k} v={Math.round(v)} />)}
       <p className="text-white/30 pt-1 truncate">hist: {life.history.slice(0, 4).join(',')}</p>
 

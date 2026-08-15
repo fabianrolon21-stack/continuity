@@ -10,6 +10,7 @@ import { BEHAVIORS } from '@/lib/sanctuary/bisonBehavior';
 import { getDef, PRIORITY, MICRO_BEHAVIORS, timeOfDay } from './behaviorRegistry';
 import { selectBehavior } from './behaviorSelector';
 import { BehaviorQueue } from './behaviorQueue';
+import { interactionSequence } from './interactionSequences';
 import { loadState, saveState, advanceStats, applyStats, nudgePersonality, rememberActivity, defaultState } from './bisonState';
 import { getPresence, initPresence, shouldGreet, idleForMs } from './playerPresence';
 import { computeWorldState } from '@/lib/world/worldStateEngine';
@@ -22,12 +23,12 @@ const COOLDOWN_AFTER = 1200; // §4 — brief cooldown before deciding again
 
 // §18 — how app events translate into Bison's inner life.
 const CARE_EFFECTS = {
-  feed: { stats: { hunger: -35, happiness: 8, energy: 6 }, behavior: BEHAVIORS.EAT, trait: 'affection', memory: 'lastFedAt' },
-  water: { stats: { thirst: -40, happiness: 5 }, behavior: BEHAVIORS.DRINK, memory: 'lastFedAt' },
-  play: { stats: { happiness: 16, loneliness: -22, energy: -8, affection: 8 }, behavior: BEHAVIORS.PLAY, trait: 'playfulness', memory: 'lastPlayedAt' },
-  pet: { stats: { affection: 14, loneliness: -18, happiness: 10 }, behavior: BEHAVIORS.LOOK_AT_USER, trait: 'affection', memory: 'lastPettedAt' },
-  rest: { stats: { energy: 22, happiness: 4 }, behavior: BEHAVIORS.SLEEP, memory: 'lastPettedAt' },
-  talk: { stats: { loneliness: -14, happiness: 6 }, behavior: BEHAVIORS.LOOK_AT_USER, trait: 'sociability', memory: 'lastSpokenToAt' },
+  feed: { stats: { hunger: -35, happiness: 8, energy: 6 }, behavior: BEHAVIORS.EAT, emotion: 'happy', trait: 'affection', memory: 'lastFedAt' },
+  water: { stats: { thirst: -40, happiness: 5 }, behavior: BEHAVIORS.DRINK, emotion: 'calm', memory: 'lastFedAt' },
+  play: { stats: { happiness: 16, loneliness: -22, energy: -8, affection: 8 }, behavior: BEHAVIORS.PLAY, emotion: 'excited', trait: 'playfulness', memory: 'lastPlayedAt' },
+  pet: { stats: { affection: 14, loneliness: -18, happiness: 10 }, behavior: BEHAVIORS.LOOK_AT_USER, emotion: 'affectionate', trait: 'affection', memory: 'lastPettedAt' },
+  rest: { stats: { energy: 22, happiness: 4 }, behavior: BEHAVIORS.SLEEP, emotion: 'sleepy', memory: 'lastPettedAt' },
+  talk: { stats: { loneliness: -14, happiness: 6 }, behavior: BEHAVIORS.LOOK_AT_USER, emotion: 'curious', trait: 'sociability', memory: 'lastSpokenToAt' },
 };
 
 class BisonSimulation {
@@ -62,13 +63,18 @@ class BisonSimulation {
     this.resume();
 
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') this.resume();
-      else this.pause();
+      if (document.visibilityState === 'visible') {
+          eventBus.publish('BISON_APP_RESUMED', {}, 'BisonSimulation');
+        } else {
+          eventBus.publish('BISON_APP_BACKGROUNDED', {}, 'BisonSimulation');
+        }
     });
 
     eventBus.subscribe('BISON_CARE_ACTION', (e) => {
       this.handleInteraction(e.payload?.action, e.payload?.prop);
     });
+    eventBus.subscribe('BISON_APP_RESUMED', () => this.resume());
+    eventBus.subscribe('BISON_APP_BACKGROUNDED', () => this.pause());
 
     this.runLoop();
   }
@@ -199,6 +205,7 @@ class BisonSimulation {
     if (!effect) return null;
 
     this.state.stats = applyStats(this.state.stats, effect.stats);
+    this.state.emotion = effect.emotion || 'calm';
     if (effect.trait) this.state.personality = nudgePersonality(this.state.personality, effect.trait, 0.008);
     this.state.interactionMemory = rememberActivity(
       { ...this.state.interactionMemory, [effect.memory]: Date.now() },
@@ -206,15 +213,16 @@ class BisonSimulation {
     );
     saveState(this.state);
 
-    // Requested, not forced: it enters the queue at user priority, so it
-    // works while wandering, looking away, sleeping, or mid-idle.
-    this.queue.push({
-      id: effect.behavior,
-      priority: PRIORITY.USER_INTERACTION,
-      source: 'user',
-      durationMs: 6000,
-      expiresAt: Date.now() + 15000,
+    // A user action becomes a sequenced request, never a screen-level animation override.
+    const steps = interactionSequence(action, effect.behavior);
+    const now = Date.now();
+    let startsAt = now;
+    steps.forEach((id, sequence) => {
+      const durationMs = sequence === steps.length - 1 ? 3000 : 1800;
+      this.queue.push({ id, sequence, priority: PRIORITY.USER_INTERACTION, source: 'user', durationMs, notBefore: startsAt, expiresAt: now + 20000 });
+      startsAt += durationMs;
     });
+    this.emit();
     return effect;
   }
 
@@ -244,6 +252,7 @@ class BisonSimulation {
       priority: this.behaviorPriority,
       msUntilDecision: Math.max(0, this.behaviorUntil - Date.now()),
       stats: { ...this.state.stats },
+      emotion: this.state.emotion || 'calm',
       personality: { ...this.state.personality },
       memory: { ...this.state.interactionMemory },
       history: this.history.map(h => h.behaviorId),

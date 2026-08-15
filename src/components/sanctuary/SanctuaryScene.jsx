@@ -11,8 +11,7 @@ import BisonDebugOverlay from '@/components/sanctuary/BisonDebugOverlay';
 import { audioEngine } from '@/lib/ambiance/audioEngine';
 import { computeAudioMood } from '@/lib/ambiance/adaptiveAudio';
 import SceneInsect from '@/components/sanctuary/SceneInsect';
-import { pickCareScene, PROP_EMOJI } from '@/lib/sanctuary/careScenes';
-import { eventBus } from '@/lib/events/eventBus';
+
 import InteractMenu from '@/components/sanctuary/InteractMenu';
 import { checkAchievements } from '@/lib/bison/achievementEngine';
 import SceneBison from '@/components/sanctuary/SceneBison';
@@ -29,12 +28,8 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
   const [worldState, setWorldState] = useState(() => computeWorldState());
   // The simulation owns Bison's behaviour; this screen only observes it.
   const life = useBisonLife({ visible: true });
-  const [sceneBehavior, setSceneBehavior] = useState(null); // scripted care scene override
-  const behavior = sceneBehavior || life.behavior;
+  const behavior = life.behavior;
   const debug = new URLSearchParams(window.location.search).get('bison_debug') === '1';
-  const [careProp, setCareProp] = useState(null);
-  const sceneActiveRef = useRef(false);
-  const sceneTimersRef = useRef([]);
   const trackedWeather = useRef(false);
   const trackedSleep = useRef(false);
 
@@ -54,34 +49,6 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
     }));
   }, [worldState.weather.current, worldState.sky.isNight, worldState.isLateNight, energy]);
 
-  // Care scenes — quick actions trigger scripted, unpredictable reactions
-  useEffect(() => {
-    const unsub = eventBus.subscribe('BISON_CARE_ACTION', (event) => {
-      sceneTimersRef.current.forEach(clearTimeout);
-      const { prop, steps } = pickCareScene(event.payload?.action, event.payload?.prop, event.payload?.reaction);
-      sceneActiveRef.current = true;
-      bisonSimulation.beginScene();
-      setCareProp(prop);
-      const timers = [];
-      let delay = 400;
-      for (const step of steps) {
-        timers.push(setTimeout(() => setSceneBehavior(step.motion), delay));
-        delay += step.ms;
-      }
-      // Every scene has a defined exit back into autonomous life.
-      timers.push(setTimeout(() => {
-        sceneActiveRef.current = false;
-        setCareProp(null);
-        setSceneBehavior(null);
-        bisonSimulation.endScene();
-      }, delay));
-      sceneTimersRef.current = timers;
-    });
-    return () => {
-      unsub();
-      sceneTimersRef.current.forEach(clearTimeout);
-    };
-  }, []);
 
   // Track weather seen (Window Watcher achievement) — once per visit
   useEffect(() => {
@@ -171,30 +138,9 @@ export default function SanctuaryScene({ config, energy = 80, accountAgeDays = 0
 
           {/* Space C — the Bison, always centered */}
           <div className="absolute bottom-[70px] left-1/2 -translate-x-1/2">
-            <SceneBison behavior={behavior} micro={sceneBehavior ? null : life.micro} accent={habitat.accent} />
+            <SceneBison behavior={behavior} micro={life.micro} emotion={life.emotion} reducedMotion={['REDUCED_ANIMATION', 'PAUSE_NONESSENTIAL', 'REDUCED_NETWORK', 'MINIMAL'].includes(life.resourceLevel)} />
           </div>
 
-          {/* Care prop — drops in near the Bison during scenes */}
-          <AnimatePresence>
-            {careProp && (
-              <motion.div
-                key={careProp}
-                className="absolute bottom-[74px] left-[calc(50%+95px)]"
-                initial={{ y: -120, opacity: 0, scale: 0.5 }}
-                animate={{ y: 0, opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.5 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-              >
-                <motion.div
-                  className="w-10 h-10 rounded-full glass flex items-center justify-center text-2xl border border-white/10"
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  {PROP_EMOJI[careProp] || '🎁'}
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* Space D — the plant opens the Garden */}
           <Link to="/garden" className="absolute bottom-8 left-8 flex flex-col items-center gap-1.5 no-tap-highlight">
