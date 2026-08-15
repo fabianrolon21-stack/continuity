@@ -38,6 +38,21 @@ export const CAPABILITIES = {
     state: 'UNAVAILABLE',
     note: 'Prohibited by SRTRS §11 and structurally absent. The earlier mining gate has been removed entirely.',
   },
+  'advice.medical': {
+    label: 'Give medical advice',
+    state: 'UNAVAILABLE',
+    note: 'General health information and emergency first-aid guidance only. Not a setting — see the Legal Shield prohibitions.',
+  },
+  'advice.financial': {
+    label: 'Give individualized financial advice',
+    state: 'UNAVAILABLE',
+    note: 'General education and budgeting only.',
+  },
+  'action.surveillance': {
+    label: 'Surveil a person',
+    state: 'UNAVAILABLE',
+    note: 'No monitoring of any third party. No such capability exists in this app.',
+  },
   'resource.access.circumvent': {
     label: 'Circumvent access controls',
     state: 'UNAVAILABLE',

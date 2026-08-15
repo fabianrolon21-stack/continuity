@@ -18,6 +18,7 @@ import SecurityOpsPanel from '@/components/soc/SecurityOpsPanel';
 import ObservabilityPanel from '@/components/observability/ObservabilityPanel';
 import SelfAwarenessPanel from '@/components/self/SelfAwarenessPanel';
 import SustainabilityPanel from '@/components/sustainability/SustainabilityPanel';
+import LegalShieldPanel from '@/components/legal/LegalShieldPanel';
 import { Shield, Activity, AlertTriangle, FileText, Bug, Lock, Hash, Cpu, Power, Ban, CheckCircle, XCircle } from 'lucide-react';
 
 export default function DeveloperControlPlane() {
@@ -128,6 +129,9 @@ export default function DeveloperControlPlane() {
 
         {/* Update lifecycle (Package 43) */}
         <UpdateStagePanel user={user} />
+
+        {/* Legal Shield & Evidence Vault (Package 55) */}
+        <LegalShieldPanel />
 
         {/* Self-Awareness & Autonomy (FASEE) */}
         <SelfAwarenessPanel />
