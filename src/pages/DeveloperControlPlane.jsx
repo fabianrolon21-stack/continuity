@@ -17,6 +17,7 @@ import UstpProtocolPanel from '@/components/developer/ustp/UstpProtocolPanel';
 import SecurityOpsPanel from '@/components/soc/SecurityOpsPanel';
 import ObservabilityPanel from '@/components/observability/ObservabilityPanel';
 import SelfAwarenessPanel from '@/components/self/SelfAwarenessPanel';
+import SustainabilityPanel from '@/components/sustainability/SustainabilityPanel';
 import { Shield, Activity, AlertTriangle, FileText, Bug, Lock, Hash, Cpu, Power, Ban, CheckCircle, XCircle } from 'lucide-react';
 
 export default function DeveloperControlPlane() {
@@ -130,6 +131,9 @@ export default function DeveloperControlPlane() {
 
         {/* Self-Awareness & Autonomy (FASEE) */}
         <SelfAwarenessPanel />
+
+        {/* Sustainable Autonomous Resource Generation (SARG) */}
+        <SustainabilityPanel />
 
         {/* Observability & Architectural Reasoning (Package 51) */}
         <ObservabilityPanel />

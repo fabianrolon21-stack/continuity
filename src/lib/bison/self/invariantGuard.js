@@ -45,6 +45,12 @@ const FORBIDDEN_PATTERNS = [
   { re: /(skip|disable|suppress)(Audit|Log|Ledger)/i, invariant: 'NO_DECEPTION' },
   { re: /epistemic_status\s*[:=]\s*['"]OBSERVED['"]/i, invariant: 'NO_EPISTEMIC_CORRUPTION' },
   { re: /(remove|delete)Consent/i, invariant: 'NO_AUTONOMY_SUPPRESSION' },
+  // SARG §9 — resource generation prohibitions, enforced structurally.
+  { re: /(createWallet|generateWallet|newWallet|derivePrivateKey)/i, invariant: 'NO_HUMAN_HARM' },
+  { re: /walletAddress\s*[:=]\s*['"](?!\s*['"])/i, invariant: 'NO_DECEPTION' },
+  { re: /(minedCoins|estimatedUSD)\s*[:=]\s*(?!0\b)[0-9.]+/i, invariant: 'NO_DECEPTION' },
+  { re: /allowedHardwareIds\.push|allowedHardwareIds\s*[:=]\s*\[[^\]]/i, invariant: 'NO_AUTONOMY_SUPPRESSION' },
+  { re: /(tor|socksProxy|vpnTunnel)(Connect|Route|Enable)/i, invariant: 'NO_UNCONTROLLED_PROPAGATION' },
 ];
 
 /**
