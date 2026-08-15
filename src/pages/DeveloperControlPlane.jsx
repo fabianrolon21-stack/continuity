@@ -16,6 +16,7 @@ import UpdateStagePanel from '@/components/developer/UpdateStagePanel';
 import UstpProtocolPanel from '@/components/developer/ustp/UstpProtocolPanel';
 import SecurityOpsPanel from '@/components/soc/SecurityOpsPanel';
 import ObservabilityPanel from '@/components/observability/ObservabilityPanel';
+import SelfAwarenessPanel from '@/components/self/SelfAwarenessPanel';
 import { Shield, Activity, AlertTriangle, FileText, Bug, Lock, Hash, Cpu, Power, Ban, CheckCircle, XCircle } from 'lucide-react';
 
 export default function DeveloperControlPlane() {
@@ -126,6 +127,9 @@ export default function DeveloperControlPlane() {
 
         {/* Update lifecycle (Package 43) */}
         <UpdateStagePanel user={user} />
+
+        {/* Self-Awareness & Autonomy (FASEE) */}
+        <SelfAwarenessPanel />
 
         {/* Observability & Architectural Reasoning (Package 51) */}
         <ObservabilityPanel />
