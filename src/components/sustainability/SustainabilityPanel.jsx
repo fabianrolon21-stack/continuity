@@ -1,31 +1,35 @@
 import { useEffect, useState } from 'react';
 import { Leaf } from 'lucide-react';
-import { startWatchdog } from '@/lib/bison/sustainability/continuityWatchdog';
-import MiningGateView from './MiningGateView';
-import ResourceStewardView from './ResourceStewardView';
-import ComplianceView from './ComplianceView';
+import { startWatchdog, watchdogStatus } from '@/lib/bison/sustainability/continuityWatchdog';
+import { start } from '@/lib/bison/sustainability/resourceSteward';
+import ResourceDashboardView from './ResourceDashboardView';
+import DegradationView from './DegradationView';
+import ApprovalsView from './ApprovalsView';
 import FreeResourceView from './FreeResourceView';
+import CapabilitiesView from './CapabilitiesView';
 
 const VIEWS = [
-  { id: 'resources', label: 'Resources' },
-  { id: 'mining', label: 'Mining gate' },
-  { id: 'legal', label: 'Compliance' },
-  { id: 'explore', label: 'Free resources' },
+  { id: 'dashboard', label: 'Usage' },
+  { id: 'degradation', label: 'Degradation' },
+  { id: 'approvals', label: 'Approvals' },
+  { id: 'discovery', label: 'Discovery' },
+  { id: 'capabilities', label: 'Capabilities' },
 ];
 
 export default function SustainabilityPanel({ accent = 'hsl(120 40% 58%)' }) {
-  const [view, setView] = useState('resources');
+  const [view, setView] = useState('dashboard');
+  const wd = watchdogStatus();
 
-  useEffect(() => { startWatchdog(); }, []);
+  useEffect(() => { startWatchdog(); start(); }, []);
 
   return (
     <div className="glass rounded-xl p-5 space-y-4">
       <div className="flex items-center gap-2">
         <Leaf className="w-4 h-4" style={{ color: accent }} />
-        <h3 className="font-heading font-semibold text-sm">Sustainable Operations</h3>
+        <h3 className="font-heading font-semibold text-sm">Resource Stewardship</h3>
       </div>
 
-      <p className="text-[10px] text-muted-foreground">Resource stewardship, legal gating, and free-resource discovery are live. Self-funding through mining is not — the gate explains exactly why, and no earnings figure is ever fabricated.</p>
+      <p className="text-[10px] text-muted-foreground">Default behavior: use fewer resources, spend nothing unless explicitly authorized, remain functional, and say what is happening. Bison runs indefinitely with no external revenue and no autonomous income of any kind.</p>
 
       <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
         {VIEWS.map(v => (
@@ -33,10 +37,15 @@ export default function SustainabilityPanel({ accent = 'hsl(120 40% 58%)' }) {
         ))}
       </div>
 
-      {view === 'resources' && <ResourceStewardView />}
-      {view === 'mining' && <MiningGateView />}
-      {view === 'legal' && <ComplianceView />}
-      {view === 'explore' && <FreeResourceView />}
+      {view === 'dashboard' && <ResourceDashboardView />}
+      {view === 'degradation' && <DegradationView />}
+      {view === 'approvals' && <ApprovalsView />}
+      {view === 'discovery' && <FreeResourceView />}
+      {view === 'capabilities' && <CapabilitiesView />}
+
+      {wd.startupReport && !wd.startupReport.firstRun && (
+        <p className="text-[9px] text-muted-foreground/60">{wd.startupReport.detail}</p>
+      )}
     </div>
   );
 }

@@ -75,7 +75,17 @@ class BisonSimulation {
 
   runLoop() {
     clearInterval(this.timer);
-    this.timer = setInterval(() => this.tick(), TICK_MS);
+    this.timer = setInterval(() => this.tick(), this.tickMs || TICK_MS);
+  }
+
+  // SRTRS §14 — degradation changes frequency and fidelity, never presence.
+  // Bison keeps living at every level; he just deliberates less often.
+  applyResourceLevel(def) {
+    this.tickMs = def.simulationTickMs;
+    this.microEnabled = def.microBehaviors;
+    this.resourceLevel = def;
+    if (this.timer) this.runLoop();
+    this.emit();
   }
 
   // §12 — no animation loop in the background; only elapsed-time math.
@@ -116,7 +126,7 @@ class BisonSimulation {
     this.driftNeeds(now);
 
     // Micro-behaviors keep tiny signs of life running under everything (§7).
-    if (presence.isBisonVisible && now >= this.nextMicroAt) {
+    if (presence.isBisonVisible && this.microEnabled !== false && now >= this.nextMicroAt) {
       this.micro = MICRO_BEHAVIORS[Math.floor(Math.random() * MICRO_BEHAVIORS.length)];
       this.nextMicroAt = now + 2500 + Math.random() * 5000;
       this.emit();
@@ -243,6 +253,8 @@ class BisonSimulation {
       decisions: this.decisionCount,
       digest: this.digest,
       returnState: this.returnState,
+      resourceLevel: this.resourceLevel?.id || 'NORMAL',
+      tickMs: this.tickMs || TICK_MS,
       active: !!this.timer,
     };
   }

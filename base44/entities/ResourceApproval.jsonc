@@ -1,0 +1,86 @@
+{
+  "name": "ResourceApproval",
+  "type": "object",
+  "properties": {
+    "approval_id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "compute",
+        "storage",
+        "network",
+        "api",
+        "data"
+      ]
+    },
+    "service_name": {
+      "type": "string"
+    },
+    "capability": {
+      "type": "string"
+    },
+    "maximum_cost_usd": {
+      "type": "number",
+      "default": 0
+    },
+    "billing_period": {
+      "type": "string",
+      "enum": [
+        "one_time",
+        "monthly"
+      ],
+      "default": "monthly"
+    },
+    "justification": {
+      "type": "string"
+    },
+    "alternative_offered": {
+      "type": "string"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "revoked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "APPROVED",
+        "DECLINED",
+        "EXPIRED",
+        "REVOKED"
+      ],
+      "default": "PENDING"
+    },
+    "observed_cost_usd": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "approval_id",
+    "category",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
