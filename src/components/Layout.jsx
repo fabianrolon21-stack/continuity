@@ -2,7 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield, Eye, Mic, Sprout, Brain, Lock, Network } from 'lucide-react';
+import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield, Eye, Mic, Sprout, Brain, Lock, Network, BriefcaseBusiness } from 'lucide-react';
 import LocalFirstBadge from '@/components/privacy/LocalFirstBadge';
 import BackgroundLayer from '@/components/BackgroundLayer';
 import AudioPlayer from '@/components/AudioPlayer';
@@ -17,6 +17,7 @@ import { useAtmosphericLighting } from '@/lib/ambiance/atmosphericLighting';
 const NAV_ITEMS = [
   { path: '/', label: 'Sanctuary', icon: Home, color: 'hsl(120 40% 58%)' },
   { path: '/bison', label: 'Bison', icon: MessageCircle, color: 'hsl(42 63% 55%)' },
+  { path: '/work', label: 'Bison Work', icon: BriefcaseBusiness, color: 'hsl(199 56% 64%)' },
   { path: '/checkin', label: 'Check-in', icon: ClipboardCheck, color: 'hsl(42 63% 55%)' },
   { path: '/reflect', label: 'Reflect', icon: BookOpen, color: 'hsl(48 67% 74%)' },
   { path: '/archives', label: 'Archives', icon: Archive, color: 'hsl(199 56% 64%)' },

@@ -1,0 +1,2 @@
+export const completedResult = result => ({ status: 'COMPLETED', result, completed_at: new Date().toISOString() });
+export const failedResult = reason => ({ status: 'FAILED', failure_reason: reason, completed_at: new Date().toISOString() });

@@ -1,0 +1,1 @@
+export const financialPermission = () => ({ allowed: false, reason: 'Bison cannot access payment methods, credentials, wallets, or transaction authority.' });

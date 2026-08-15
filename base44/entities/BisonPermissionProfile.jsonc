@@ -1,0 +1,42 @@
+{
+  "name": "BisonPermissionProfile",
+  "type": "object",
+  "properties": {
+    "profile": {
+      "type": "string",
+      "enum": [
+        "RESTRICTED",
+        "STANDARD",
+        "AUTONOMOUS",
+        "CUSTOM"
+      ],
+      "default": "STANDARD"
+    },
+    "approved_capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "custom_permissions": {
+      "type": "object"
+    }
+  },
+  "required": [
+    "profile"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

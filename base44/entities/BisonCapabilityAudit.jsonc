@@ -1,0 +1,45 @@
+{
+  "name": "BisonCapabilityAudit",
+  "type": "object",
+  "properties": {
+    "capability_id": {
+      "type": "string"
+    },
+    "task_id": {
+      "type": "string"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "REQUESTED",
+        "PERMISSION_GRANTED",
+        "PERMISSION_DENIED",
+        "VALIDATED",
+        "EXECUTED",
+        "RESULT_VALIDATED",
+        "BLOCKED"
+      ]
+    },
+    "detail": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "capability_id",
+    "stage"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

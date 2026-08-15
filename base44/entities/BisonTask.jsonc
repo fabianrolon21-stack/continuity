@@ -1,0 +1,93 @@
+{
+  "name": "BisonTask",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "capability_id": {
+      "type": "string"
+    },
+    "goal_id": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "number",
+      "default": 50
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "QUEUED",
+        "PLANNING",
+        "WAITING_FOR_PERMISSION",
+        "RUNNING",
+        "COMPLETED",
+        "FAILED",
+        "CANCELLED"
+      ],
+      "default": "QUEUED"
+    },
+    "requires_user_approval": {
+      "type": "boolean",
+      "default": true
+    },
+    "input": {
+      "type": "string"
+    },
+    "result": {
+      "type": "string"
+    },
+    "failure_reason": {
+      "type": "string"
+    },
+    "attempts": {
+      "type": "number",
+      "default": 0
+    },
+    "max_attempts": {
+      "type": "number",
+      "default": 2
+    },
+    "max_runtime_ms": {
+      "type": "number",
+      "default": 30000
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "title",
+    "capability_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

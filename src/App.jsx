@@ -27,6 +27,8 @@ import Games from '@/pages/Games';
 import Store from '@/pages/Store';
 import Privacy from '@/pages/Privacy';
 import Simulation from '@/pages/Simulation';
+import BisonWork from '@/pages/BisonWork';
+import '@/lib/bison/runtime/autonomousWorker';
 // Add page imports here
 
 const AuthenticatedApp = () => {
@@ -74,6 +76,7 @@ const AuthenticatedApp = () => {
         <Route path="/store" element={<Store />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/simulation" element={<Simulation />} />
+        <Route path="/work" element={<BisonWork />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
