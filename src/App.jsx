@@ -28,6 +28,7 @@ import Store from '@/pages/Store';
 import Privacy from '@/pages/Privacy';
 import Simulation from '@/pages/Simulation';
 import BisonWork from '@/pages/BisonWork';
+import ContinuityEngine from '@/pages/ContinuityEngine';
 import '@/lib/bison/runtime/autonomousWorker';
 // Add page imports here
 
@@ -77,6 +78,7 @@ const AuthenticatedApp = () => {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/simulation" element={<Simulation />} />
         <Route path="/work" element={<BisonWork />} />
+        <Route path="/continuity" element={<ContinuityEngine />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
