@@ -15,7 +15,7 @@ const HAPPY = ['play', 'play_alone', 'wag', 'celebrate', 'dance'];
 
 export default function BisonRenderer({ behavior = 'idle', micro, emotion = 'calm', reducedMotion = false }) {
   const active = resolveBisonAnimation(behavior);
-  const motion = MOTION[active] || MOTION.idle;
+  const animation = MOTION[active] || MOTION.idle;
   const asleep = active === 'sleep';
   const happy = HAPPY.includes(active) || emotion === 'happy' || emotion === 'affectionate';
   const eyes = asleep ? 'M 25 77 Q 29 80 33 77 M 38 77 Q 42 80 46 77' : 'M 28 64 L 28 64 M 41 64 L 41 64';
@@ -23,7 +23,7 @@ export default function BisonRenderer({ behavior = 'idle', micro, emotion = 'cal
 
   return (
     <motion.div aria-label={`Bison is ${active.replace(/_/g, ' ')}`} role="img" className="relative flex items-center justify-center"
-      animate={reducedMotion ? {} : motion} transition={{ duration: active === 'walk' ? 10 : 3.2, repeat: reducedMotion ? 0 : Infinity, ease: 'easeInOut' }}>
+      animate={reducedMotion ? {} : animation} transition={{ duration: active === 'walk' ? 10 : 3.2, repeat: reducedMotion ? 0 : Infinity, ease: 'easeInOut' }}>
       <motion.svg width="168" height="124" viewBox="0 0 150 110" className="drop-shadow-xl"
         animate={reducedMotion ? {} : { scale: asleep ? [1, 1.015, 1] : [1, 1.025, 1] }} transition={{ duration: asleep ? 5 : 3.6, repeat: Infinity, ease: 'easeInOut' }}>
         <title>Animated bison character</title>
