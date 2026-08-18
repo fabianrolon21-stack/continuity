@@ -2,7 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield, Eye, Mic, Sprout, Brain, Lock, Network, BriefcaseBusiness, Map } from 'lucide-react';
+import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield, Eye, Mic, Sprout, Brain, Lock, Network, BriefcaseBusiness, Map, ScanEye } from 'lucide-react';
 import LocalFirstBadge from '@/components/privacy/LocalFirstBadge';
 import BackgroundLayer from '@/components/BackgroundLayer';
 import AudioPlayer from '@/components/AudioPlayer';
@@ -27,6 +27,7 @@ const NAV_ITEMS = [
   { path: '/garden', label: 'Garden', icon: Sprout, color: 'hsl(120 40% 58%)' },
   { path: '/decisions', label: 'Decisions', icon: Brain, color: 'hsl(199 56% 64%)' },
   { path: '/continuity', label: 'Continuity Map', icon: Map, color: 'hsl(199 56% 64%)' },
+  { path: '/mirror', label: 'Mirror', icon: ScanEye, color: 'hsl(21 73% 69%)' },
   { path: '/simulation', label: 'Simulation', icon: Network, color: 'hsl(199 56% 64%)' },
   { path: '/privacy', label: 'Privacy', icon: Lock, color: 'hsl(120 40% 58%)' },
   { path: '/settings', label: 'Settings', icon: Settings, color: 'hsl(268 8% 60%)' },

@@ -29,6 +29,7 @@ import Privacy from '@/pages/Privacy';
 import Simulation from '@/pages/Simulation';
 import BisonWork from '@/pages/BisonWork';
 import ContinuityEngine from '@/pages/ContinuityEngine';
+import Mirror from '@/pages/Mirror';
 import '@/lib/bison/runtime/autonomousWorker';
 // Add page imports here
 
@@ -79,6 +80,7 @@ const AuthenticatedApp = () => {
         <Route path="/simulation" element={<Simulation />} />
         <Route path="/work" element={<BisonWork />} />
         <Route path="/continuity" element={<ContinuityEngine />} />
+        <Route path="/mirror" element={<Mirror />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
