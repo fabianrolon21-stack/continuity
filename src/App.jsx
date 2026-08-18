@@ -31,6 +31,7 @@ import BisonWork from '@/pages/BisonWork';
 import ContinuityEngine from '@/pages/ContinuityEngine';
 import Mirror from '@/pages/Mirror';
 import '@/lib/bison/runtime/autonomousWorker';
+import '@/lib/bison/kernel/boot';
 // Add page imports here
 
 const AuthenticatedApp = () => {

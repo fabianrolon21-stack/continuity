@@ -20,6 +20,7 @@ import SelfAwarenessPanel from '@/components/self/SelfAwarenessPanel';
 import SustainabilityPanel from '@/components/sustainability/SustainabilityPanel';
 import LegalShieldPanel from '@/components/legal/LegalShieldPanel';
 import ComputeSharingPanel from '@/components/compute/ComputeSharingPanel';
+import KernelPanel from '@/components/developer/KernelPanel';
 import { Shield, Activity, AlertTriangle, FileText, Bug, Lock, Hash, Cpu, Power, Ban, CheckCircle, XCircle } from 'lucide-react';
 
 export default function DeveloperControlPlane() {
@@ -127,6 +128,9 @@ export default function DeveloperControlPlane() {
             <div><p className="text-xs text-muted-foreground">Role</p><p className="font-medium capitalize">{user.role}</p></div>
           </div>
         </div>
+
+        {/* Unified Cognitive Runtime & System Kernel */}
+        <KernelPanel accent={accent} />
 
         {/* Update lifecycle (Package 43) */}
         <UpdateStagePanel user={user} />
