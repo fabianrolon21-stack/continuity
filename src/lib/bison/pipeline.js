@@ -269,6 +269,7 @@ When someone worries about surveillance, training, theft, or losing their work: 
   addCtx('adversityFrame', 'HIGH', phaseContext.adversityContext, 'Continuity Translator — adversity transmutation', null);
   addCtx('financialTriage', 'HIGH', phaseContext.financialTriageContext, 'Financial triage — advisory allocation from user-supplied data', null);
   addCtx('behavioralFilter', 'HIGH', phaseContext.behavioralFilterContext, 'Behavioral interception — self-regulation mirror', null);
+  addCtx('epistemicTriangulation', 'HIGH', phaseContext.epistemicTriangulationContext, 'Epistemological triangulation — external narrative structure analysis', null);
 
   if (recurrence.detected) {
     manifest.addSection({ id: 'recurrence', priority: 'NORMAL', content: `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\nThis recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\nDo NOT increase confidence in any claim the user is repeating. Do NOT assert the claim is true.\nAcknowledge the recurrence naturally. You might note they've come back to this, and ask if anything new has happened.`, reason: 'Pattern recurrence detected' });
@@ -829,7 +830,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 5z-ms. Master Systems (Continuity Translator / Financial Triage / Behavioral Filter)
   // Deterministic, local, advisory-only. Self-awareness derived from measured bandwidth.
   let masterSystems = null;
-  if (state.adversityRequested || state.financialTriageRequested || state.behavioralFilterRequested) {
+  if (state.adversityRequested || state.financialTriageRequested || state.behavioralFilterRequested || state.triangulationRequested) {
     try {
       masterSystems = runMasterSystems(userInput, state, { selfAwarenessScore: cognitiveLoad?.currentBandwidth ?? 70 });
     } catch (e) {}
@@ -910,6 +911,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     adversityContext: masterSystems?.contexts.adversity || null,
     financialTriageContext: masterSystems?.contexts.financial || null,
     behavioralFilterContext: masterSystems?.contexts.behavioral || null,
+    epistemicTriangulationContext: masterSystems?.contexts.epistemic || null,
   };
   startTimer('promptAssembly');
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
@@ -1104,7 +1106,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     slangMatch: slangMatch || null,
     openToolResult: openToolResult || null,
     coRegulationData: coRegulationData || null,
-    masterSystems: masterSystems ? { transmutation: masterSystems.transmutation, triage: masterSystems.triage, filterResult: masterSystems.filterResult } : null,
+    masterSystems: masterSystems ? { transmutation: masterSystems.transmutation, triage: masterSystems.triage, filterResult: masterSystems.filterResult, triangulation: masterSystems.triangulation } : null,
     provenanceAudit: provenanceAuditData || null,
     runtimeAuthorityReport: getReport(),
     contextPlan: {
