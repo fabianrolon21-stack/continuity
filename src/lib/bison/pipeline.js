@@ -82,6 +82,7 @@ import { runPostInteraction } from './meta/metaCycle';
 import { detectPackage43Intents, anyIntent, buildPackage43Contexts } from './autonomy/package43Bridge';
 import { buildSovereigntyContextString } from './privacy/generativeResilience';
 import { runMasterSystems, MASTER_SYSTEMS_PROTOCOLS } from './masterSystems';
+import { interact as faceInteract, buildFaceContextString } from './face/faceEngine';
 import { RESPONSE_MODES, MODE_GUIDELINES, interpretState, detectRecurrence, selectStrategy, getFallbackResponse, detectCognitiveDistortions } from './core/stateInterpreter';
 
 // Re-exported for existing consumers.
@@ -270,6 +271,7 @@ When someone worries about surveillance, training, theft, or losing their work: 
   addCtx('financialTriage', 'HIGH', phaseContext.financialTriageContext, 'Financial triage — advisory allocation from user-supplied data', null);
   addCtx('behavioralFilter', 'HIGH', phaseContext.behavioralFilterContext, 'Behavioral interception — self-regulation mirror', null);
   addCtx('epistemicTriangulation', 'HIGH', phaseContext.epistemicTriangulationContext, 'Epistemological triangulation — external narrative structure analysis', null);
+  addCtx('face', 'HIGH', phaseContext.faceContext, 'Bison Face — developmental presentation layer', null);
 
   if (recurrence.detected) {
     manifest.addSection({ id: 'recurrence', priority: 'NORMAL', content: `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\nThis recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\nDo NOT increase confidence in any claim the user is repeating. Do NOT assert the claim is true.\nAcknowledge the recurrence naturally. You might note they've come back to this, and ask if anything new has happened.`, reason: 'Pattern recurrence detected' });
@@ -836,6 +838,14 @@ export async function processInteraction(userInput, recentHistory = [], options 
     } catch (e) {}
   }
 
+  // 5z-face. Bison Face — award talk growth and derive presentation phase.
+  // Degrades silently: if Face is unavailable, Bison behaves exactly as before.
+  let faceContext = null;
+  try {
+    const faceResult = await faceInteract('talk');
+    faceContext = buildFaceContextString(faceResult?.state);
+  } catch (e) {}
+
   // 5z-nat. Humor throttle (Package 44.5)
   let humorContext = null;
   if (shouldAllowHumor()) {
@@ -912,6 +922,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     financialTriageContext: masterSystems?.contexts.financial || null,
     behavioralFilterContext: masterSystems?.contexts.behavioral || null,
     epistemicTriangulationContext: masterSystems?.contexts.epistemic || null,
+    faceContext,
   };
   startTimer('promptAssembly');
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);

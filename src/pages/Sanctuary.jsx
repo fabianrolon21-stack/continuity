@@ -10,6 +10,8 @@ import { getSanctuaryConfig } from '@/lib/sanctuary/habitats';
 import PerformanceModeSelector from '@/components/world/PerformanceModeSelector';
 import { buildCognitiveContext } from '@/lib/bison/cognitiveContext';
 import SessionContinuityBanner from '@/components/SessionContinuityBanner';
+import EggSelection from '@/components/face/EggSelection';
+import FacePanel from '@/components/face/FacePanel';
 import { ClipboardCheck, BookOpen, MessageCircle, Users, ArrowRight } from 'lucide-react';
 
 export default function Sanctuary() {
@@ -20,6 +22,7 @@ export default function Sanctuary() {
   const [cognitiveContext, setCognitiveContext] = useState(null);
   const [sanctuaryConfig, setSanctuaryConfig] = useState(null);
   const [accountAgeDays, setAccountAgeDays] = useState(0);
+  const [faceState, setFaceState] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,6 +37,7 @@ export default function Sanctuary() {
       setTokenBalance(user?.token_balance || 0);
       setCompanionState(user?.companion_state || null);
       setSanctuaryConfig(getSanctuaryConfig(user));
+      setFaceState(user?.bison_face || null);
       if (user?.created_date) {
         setAccountAgeDays(Math.floor((Date.now() - new Date(user.created_date).getTime()) / 86400000));
       }
@@ -71,6 +75,11 @@ export default function Sanctuary() {
       </div>
 
       <div className="px-6 lg:px-10 pb-8 space-y-6">
+        {/* Face — egg selection on first launch, then the progression panel */}
+        {faceState
+          ? <FacePanel state={faceState} onChange={setFaceState} />
+          : <EggSelection onHatched={setFaceState} />}
+
         {/* The Living Sanctuary — Bison at the center of a living world */}
         <SanctuaryScene
           config={sanctuaryConfig}
