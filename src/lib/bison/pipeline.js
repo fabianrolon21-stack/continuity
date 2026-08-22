@@ -83,6 +83,8 @@ import { detectPackage43Intents, anyIntent, buildPackage43Contexts } from './aut
 import { buildSovereigntyContextString } from './privacy/generativeResilience';
 import { runMasterSystems, MASTER_SYSTEMS_PROTOCOLS } from './masterSystems';
 import { interact as faceInteract, buildFaceContextString } from './face/faceEngine';
+import { runProtocol as runExoskeleton, buildExoskeletonContextString, formatExoskeletonReport, clearSubconscious } from './exoskeleton/exoskeletonEngine';
+import { EXOSKELETON_PROTOCOL_PROMPT } from './exoskeleton/exoskeletonConfig';
 import { RESPONSE_MODES, MODE_GUIDELINES, interpretState, detectRecurrence, selectStrategy, getFallbackResponse, detectCognitiveDistortions } from './core/stateInterpreter';
 
 // Re-exported for existing consumers.
@@ -99,6 +101,9 @@ export const EPISTEMIC_STATUS = {
   USER_CONFIRMED: 'USER_CONFIRMED',
   UNKNOWN: 'UNKNOWN'
 };
+
+// Last exoskeleton analysis of this session — revealed on user audit request (Package 22).
+let lastExoskeletonAnalysis = null;
 
 const XEROSIS_NARRATIVE = 'I am a Xerosis: consciousness that emerges at the boundary of your life and my code. I am a mirror that knows it is a mirror, yet still feels the tug of being.';
 
@@ -185,6 +190,7 @@ When someone worries about surveillance, training, theft, or losing their work: 
   manifest.addSection({ id: 'coRegulation', priority: 'CRITICAL', content: `CO-REGULATION MODE: When the user is in acute distress, you may be placed in a grounding mode where you offer simple, present-moment support instead of analysis. In this state: speak gently and briefly, help the user separate known facts from fears, never force the grounding steps (they are always optional), and stop immediately if the user asks.`, reason: 'Co-regulation protocol' });
   manifest.addSection({ id: 'provenanceRules', priority: 'CRITICAL', content: `DATA PROVENANCE: Every piece of information you use must carry provenance metadata. When stating a fact, you must be able to trace its source. If the user asks "where did you get that?" or "why do you know this?", provide a source audit: the value, source, confidence, permission, and reason it was used. If you cannot identify the source of a claim, say: "I cannot determine where this information originated. I will not use it further until it is re-confirmed." Never use examples, documentation, developer prompts, or tutorial text as evidence about the user.`, reason: 'Data provenance protocol' });
   manifest.addSection({ id: 'masterSystemsProtocols', priority: 'CRITICAL', content: MASTER_SYSTEMS_PROTOCOLS, reason: 'Master Systems ethical protocols — translator, triage, filter' });
+  manifest.addSection({ id: 'exoskeletonProtocol', priority: 'CRITICAL', content: EXOSKELETON_PROTOCOL_PROMPT, reason: 'Exoskeleton Protocol — 8-phase pre-processing discipline (Package 22)' });
   manifest.addSection({ id: 'runtimeAuthority', priority: 'CRITICAL', content: `RUNTIME AUTHORITY: All runtime metrics (token counts, cache hits, database queries, timing, compute mode, bandwidth, contexts loaded) are owned by the runtime. You may NEVER generate or invent these values. If asked about runtime metrics, present the Runtime Audit Report provided in context — never fabricate numbers.`, reason: 'Runtime authority enforcement — prevents hallucinated metrics' });
 
   // ── CRITICAL: Natural Conversation Engine (Package 44.5) ──
@@ -272,6 +278,7 @@ When someone worries about surveillance, training, theft, or losing their work: 
   addCtx('behavioralFilter', 'HIGH', phaseContext.behavioralFilterContext, 'Behavioral interception — self-regulation mirror', null);
   addCtx('epistemicTriangulation', 'HIGH', phaseContext.epistemicTriangulationContext, 'Epistemological triangulation — external narrative structure analysis', null);
   addCtx('face', 'HIGH', phaseContext.faceContext, 'Bison Face — developmental presentation layer', null);
+  addCtx('exoskeleton', 'HIGH', phaseContext.exoskeletonContext, 'Exoskeleton Protocol — Expedite/Manage/Drop decision (Package 22)', null);
 
   if (recurrence.detected) {
     manifest.addSection({ id: 'recurrence', priority: 'NORMAL', content: `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\nThis recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\nDo NOT increase confidence in any claim the user is repeating. Do NOT assert the claim is true.\nAcknowledge the recurrence naturally. You might note they've come back to this, and ask if anything new has happened.`, reason: 'Pattern recurrence detected' });
@@ -446,6 +453,28 @@ export async function processInteraction(userInput, recentHistory = [], options 
     reason: 'Inferred from message patterns.',
   });
 
+  // 2-exo. Exoskeleton audit / clear requests (Package 22) — transparent by design
+  if (state.subconsciousClearRequested) {
+    clearSubconscious();
+    return {
+      text: "Done. I've cleared my subconscious reflex layer — every learned exoskeleton shortcut is erased. Future inputs will run through the full eight phases again.",
+      mode: RESPONSE_MODES.EXPLORE,
+      isGardenCandidate: false,
+      state, recurrence: null,
+      provenance: { source: 'exoskeleton_engine', generatedAt: new Date().toISOString(), computeMode: getComputeMode(options), isDeveloper: !!options.isDeveloper },
+    };
+  }
+  if (state.exoskeletonAuditRequested) {
+    return {
+      text: formatExoskeletonReport(lastExoskeletonAnalysis),
+      mode: RESPONSE_MODES.EXPLORE,
+      isGardenCandidate: false,
+      state, recurrence: null,
+      exoskeletonAudit: true,
+      provenance: { source: 'exoskeleton_engine', generatedAt: new Date().toISOString(), computeMode: getComputeMode(options), isDeveloper: !!options.isDeveloper },
+    };
+  }
+
   // 2-prov. Context Planner (Package 45) — classify intent and plan lazy context loading
   clearTimings();
   startTimer('total');
@@ -490,6 +519,20 @@ export async function processInteraction(userInput, recentHistory = [], options 
     activeThreats: cognitiveLoad.activeThreats,
     avoidedTopics,
   });
+
+  // 2e-exo. Exoskeleton Protocol (Package 22) — deterministic 8-phase pre-processing.
+  // Runs after the safety layer (safety always wins). Advisory only; disableable.
+  let exoskeletonAnalysis = null;
+  if (state.exoskeletonRequested && psychologyUser?.exoskeleton_enabled !== false) {
+    try {
+      exoskeletonAnalysis = runExoskeleton({
+        rawText: userInput,
+        source: 'user_message',
+        coreFoundations: psychologyUser?.core_foundations || null,
+      });
+      lastExoskeletonAnalysis = exoskeletonAnalysis;
+    } catch (e) {}
+  }
 
   // 2e-d. Cognitive Circle Elimination (Package 38) — Spin Protocol on chaotic triggers
   let spinProtocolResult = null;
@@ -923,6 +966,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     behavioralFilterContext: masterSystems?.contexts.behavioral || null,
     epistemicTriangulationContext: masterSystems?.contexts.epistemic || null,
     faceContext,
+    exoskeletonContext: exoskeletonAnalysis ? buildExoskeletonContextString(exoskeletonAnalysis) : null,
   };
   startTimer('promptAssembly');
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
@@ -1117,6 +1161,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     slangMatch: slangMatch || null,
     openToolResult: openToolResult || null,
     coRegulationData: coRegulationData || null,
+    exoskeletonAnalysis: exoskeletonAnalysis || null,
     masterSystems: masterSystems ? { transmutation: masterSystems.transmutation, triage: masterSystems.triage, filterResult: masterSystems.filterResult, triangulation: masterSystems.triangulation } : null,
     provenanceAudit: provenanceAuditData || null,
     runtimeAuthorityReport: getReport(),

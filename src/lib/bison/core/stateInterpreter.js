@@ -5,6 +5,7 @@
 // ═══════════════════════════════════════════════
 
 import { detectMasterTriggers } from '../masterSystems';
+import { detectExoskeletonAuditRequest, detectSubconsciousClearRequest } from '../exoskeleton/exoskeletonEngine';
 
 export const RESPONSE_MODES = {
   REFLECT: 'REFLECT',
@@ -97,7 +98,11 @@ export function interpretState(input) {
   const hostilityDetected = HOSTILITY_PATTERNS.some(p => p.test(input));
   // Master Systems triggers — adversity / financial / behavioral (advisory only)
   const masterTriggers = detectMasterTriggers(input);
-  return { intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery, hostilityDetected, ...masterTriggers };
+  // Exoskeleton Protocol (Package 22) — runs on every non-empty input
+  const exoskeletonRequested = input.trim().length > 0;
+  const exoskeletonAuditRequested = detectExoskeletonAuditRequest(input);
+  const subconsciousClearRequested = detectSubconsciousClearRequest(input);
+  return { intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery, hostilityDetected, exoskeletonRequested, exoskeletonAuditRequested, subconsciousClearRequested, ...masterTriggers };
 }
 
 export function detectRecurrence(currentState, recentUserMessages) {
