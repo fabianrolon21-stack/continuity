@@ -131,7 +131,7 @@ function decide(benefit, risk) {
 
 // ── Main protocol ──
 
-export function runProtocol({ rawText, source, coreFoundations }) {
+export function runProtocol({ rawText, source, coreFoundations, resourceCost = null }) {
   const raw = (rawText || '').trim();
   const foundations = coreFoundations?.length ? coreFoundations : DEFAULT_CORE_FOUNDATIONS;
 
@@ -173,12 +173,19 @@ export function runProtocol({ rawText, source, coreFoundations }) {
       subconsciousUpdate: false, viaReflex: false, timestamp: Date.now(),
     };
   }
-  // PHASE 5: BENEFIT
-  const benefitYield = calculateBenefit(interpretedTruth);
-  // PHASE 6: RISK
-  const riskExposure = calculateRisk(interpretedTruth);
-  // PHASE 7: EXPEDITE / MANAGE / DROP
-  const { decision, decisionReason } = decide(benefitYield, riskExposure);
+  // PHASE 5: BENEFIT — critical-resource actions carry a material cost.
+  let benefitYield = calculateBenefit(interpretedTruth);
+  if (resourceCost) benefitYield = Math.max(-100, benefitYield - Math.round(resourceCost.resourceCost * 0.2));
+  // PHASE 6: RISK — scarcity and environmental impact raise exposure.
+  let riskExposure = calculateRisk(interpretedTruth);
+  if (resourceCost) riskExposure = Math.min(100, riskExposure + Math.round(resourceCost.resourceCost * 0.3));
+  // PHASE 7: EXPEDITE / MANAGE / DROP — consuming critical resources with
+  // low reversibility forces MANAGE (Earth Resource Intelligence).
+  let { decision, decisionReason } = decide(benefitYield, riskExposure);
+  if (resourceCost?.forceManage && decision === 'EXPEDITE') {
+    decision = 'MANAGE';
+    decisionReason = `Action touches critical Earth resources (${resourceCost.resources.join(', ')}) with high environmental cost. Managed, not expedited — material reality demands care.`;
+  }
   // PHASE 8: SUBCONSCIOUS
   const subconsciousUpdate = decision !== 'DROP';
   if (subconsciousUpdate) pushToSubconscious(raw, decision);

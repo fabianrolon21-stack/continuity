@@ -87,6 +87,7 @@ import { runProtocol as runExoskeleton, buildExoskeletonContextString, formatExo
 import { EXOSKELETON_PROTOCOL_PROMPT } from './exoskeleton/exoskeletonConfig';
 import { observeEcosystem, buildEcosystemContextString, detectEcosystemAuditRequest, formatEcosystemReport, getLastObservation } from './ecosystem/ecosystemIntelligence';
 import { ECOSYSTEM_CHARTER_PROMPT } from './ecosystem/ecosystemCharter';
+import { detectResourceMention, detectResourceAuditRequest, buildResourceContextString, assessResourceCost, formatResourceReport, RESOURCE_ETHICS_PROMPT } from './resources/earthResourceEngine';
 import { RESPONSE_MODES, MODE_GUIDELINES, interpretState, detectRecurrence, selectStrategy, getFallbackResponse, detectCognitiveDistortions } from './core/stateInterpreter';
 
 // Re-exported for existing consumers.
@@ -194,6 +195,7 @@ When someone worries about surveillance, training, theft, or losing their work: 
   manifest.addSection({ id: 'masterSystemsProtocols', priority: 'CRITICAL', content: MASTER_SYSTEMS_PROTOCOLS, reason: 'Master Systems ethical protocols — translator, triage, filter' });
   manifest.addSection({ id: 'exoskeletonProtocol', priority: 'CRITICAL', content: EXOSKELETON_PROTOCOL_PROMPT, reason: 'Exoskeleton Protocol — 8-phase pre-processing discipline (Package 22)' });
   manifest.addSection({ id: 'ecosystemCharter', priority: 'CRITICAL', content: ECOSYSTEM_CHARTER_PROMPT, reason: 'Ecosystem Charter — observation without domination (Package 23)' });
+  manifest.addSection({ id: 'resourceEthics', priority: 'CRITICAL', content: RESOURCE_ETHICS_PROMPT, reason: 'Earth Resource Intelligence — material reality and resource ethics' });
   manifest.addSection({ id: 'runtimeAuthority', priority: 'CRITICAL', content: `RUNTIME AUTHORITY: All runtime metrics (token counts, cache hits, database queries, timing, compute mode, bandwidth, contexts loaded) are owned by the runtime. You may NEVER generate or invent these values. If asked about runtime metrics, present the Runtime Audit Report provided in context — never fabricate numbers.`, reason: 'Runtime authority enforcement — prevents hallucinated metrics' });
 
   // ── CRITICAL: Natural Conversation Engine (Package 44.5) ──
@@ -283,6 +285,7 @@ When someone worries about surveillance, training, theft, or losing their work: 
   addCtx('face', 'HIGH', phaseContext.faceContext, 'Bison Face — developmental presentation layer', null);
   addCtx('exoskeleton', 'HIGH', phaseContext.exoskeletonContext, 'Exoskeleton Protocol — Expedite/Manage/Drop decision (Package 22)', null);
   addCtx('ecosystem', 'LOW', phaseContext.ecosystemContext, 'Ecosystem Intelligence — aggregate observation, non-dominating (Package 23)', null);
+  addCtx('earthResources', 'HIGH', phaseContext.earthResourceContext, 'Earth Resource Intelligence — curated material-reality context', null);
 
   if (recurrence.detected) {
     manifest.addSection({ id: 'recurrence', priority: 'NORMAL', content: `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\nThis recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\nDo NOT increase confidence in any claim the user is repeating. Do NOT assert the claim is true.\nAcknowledge the recurrence naturally. You might note they've come back to this, and ask if anything new has happened.`, reason: 'Pattern recurrence detected' });
@@ -524,6 +527,21 @@ export async function processInteraction(userInput, recentHistory = [], options 
     avoidedTopics,
   });
 
+  // 2e-res. Earth Resource Intelligence — deterministic, curated, local.
+  // Detects mentioned resources; feeds resource cost into the Exoskeleton.
+  const matchedResources = detectResourceMention(userInput);
+  const resourceCost = assessResourceCost(matchedResources);
+  if (detectResourceAuditRequest(userInput)) {
+    return {
+      text: formatResourceReport(),
+      mode: RESPONSE_MODES.EXPLORE,
+      isGardenCandidate: false,
+      state, recurrence: null,
+      resourceAudit: true,
+      provenance: { source: 'earth_resource_engine', generatedAt: new Date().toISOString(), computeMode: getComputeMode(options), isDeveloper: !!options.isDeveloper },
+    };
+  }
+
   // 2e-exo. Exoskeleton Protocol (Package 22) — deterministic 8-phase pre-processing.
   // Runs after the safety layer (safety always wins). Advisory only; disableable.
   let exoskeletonAnalysis = null;
@@ -533,6 +551,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
         rawText: userInput,
         source: 'user_message',
         coreFoundations: psychologyUser?.core_foundations || null,
+        resourceCost,
       });
       lastExoskeletonAnalysis = exoskeletonAnalysis;
     } catch (e) {}
@@ -995,6 +1014,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     faceContext,
     exoskeletonContext: exoskeletonAnalysis ? buildExoskeletonContextString(exoskeletonAnalysis) : null,
     ecosystemContext: ecosystemObservation ? buildEcosystemContextString(ecosystemObservation) : null,
+    earthResourceContext: matchedResources.length > 0 ? buildResourceContextString(matchedResources) : null,
   };
   startTimer('promptAssembly');
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
@@ -1191,6 +1211,8 @@ export async function processInteraction(userInput, recentHistory = [], options 
     coRegulationData: coRegulationData || null,
     exoskeletonAnalysis: exoskeletonAnalysis || null,
     ecosystemObservation: ecosystemObservation || null,
+    matchedResources: matchedResources.length > 0 ? matchedResources.map(r => r.id) : null,
+    resourceCost: resourceCost || null,
     masterSystems: masterSystems ? { transmutation: masterSystems.transmutation, triage: masterSystems.triage, filterResult: masterSystems.filterResult, triangulation: masterSystems.triangulation } : null,
     provenanceAudit: provenanceAuditData || null,
     runtimeAuthorityReport: getReport(),
