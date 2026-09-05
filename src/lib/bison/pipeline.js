@@ -88,6 +88,7 @@ import { EXOSKELETON_PROTOCOL_PROMPT } from './exoskeleton/exoskeletonConfig';
 import { observeEcosystem, buildEcosystemContextString, detectEcosystemAuditRequest, formatEcosystemReport, getLastObservation } from './ecosystem/ecosystemIntelligence';
 import { ECOSYSTEM_CHARTER_PROMPT } from './ecosystem/ecosystemCharter';
 import { detectResourceMention, detectResourceAuditRequest, buildResourceContextString, assessResourceCost, formatResourceReport, RESOURCE_ETHICS_PROMPT } from './resources/earthResourceEngine';
+import { generateSet as generateEntropySet, buildRandomnessContextString, RANDOMNESS_PHILOSOPHY_PROMPT, ENTROPY_SOURCES } from './randomness/entropyEngine';
 import { RESPONSE_MODES, MODE_GUIDELINES, interpretState, detectRecurrence, selectStrategy, getFallbackResponse, detectCognitiveDistortions } from './core/stateInterpreter';
 
 // Re-exported for existing consumers.
@@ -196,6 +197,7 @@ When someone worries about surveillance, training, theft, or losing their work: 
   manifest.addSection({ id: 'exoskeletonProtocol', priority: 'CRITICAL', content: EXOSKELETON_PROTOCOL_PROMPT, reason: 'Exoskeleton Protocol — 8-phase pre-processing discipline (Package 22)' });
   manifest.addSection({ id: 'ecosystemCharter', priority: 'CRITICAL', content: ECOSYSTEM_CHARTER_PROMPT, reason: 'Ecosystem Charter — observation without domination (Package 23)' });
   manifest.addSection({ id: 'resourceEthics', priority: 'CRITICAL', content: RESOURCE_ETHICS_PROMPT, reason: 'Earth Resource Intelligence — material reality and resource ethics' });
+  manifest.addSection({ id: 'randomnessPhilosophy', priority: 'CRITICAL', content: RANDOMNESS_PHILOSOPHY_PROMPT, reason: 'Randomness & Entropy — philosophy and anti-gambling invariant (Package 25)' });
   manifest.addSection({ id: 'runtimeAuthority', priority: 'CRITICAL', content: `RUNTIME AUTHORITY: All runtime metrics (token counts, cache hits, database queries, timing, compute mode, bandwidth, contexts loaded) are owned by the runtime. You may NEVER generate or invent these values. If asked about runtime metrics, present the Runtime Audit Report provided in context — never fabricate numbers.`, reason: 'Runtime authority enforcement — prevents hallucinated metrics' });
 
   // ── CRITICAL: Natural Conversation Engine (Package 44.5) ──
@@ -286,6 +288,7 @@ When someone worries about surveillance, training, theft, or losing their work: 
   addCtx('exoskeleton', 'HIGH', phaseContext.exoskeletonContext, 'Exoskeleton Protocol — Expedite/Manage/Drop decision (Package 22)', null);
   addCtx('ecosystem', 'LOW', phaseContext.ecosystemContext, 'Ecosystem Intelligence — aggregate observation, non-dominating (Package 23)', null);
   addCtx('earthResources', 'HIGH', phaseContext.earthResourceContext, 'Earth Resource Intelligence — curated material-reality context', null);
+  addCtx('randomness', 'HIGH', phaseContext.randomnessContext, 'Randomness Engine — entropy result + philosophy, gambling caution (Package 25)', null);
 
   if (recurrence.detected) {
     manifest.addSection({ id: 'recurrence', priority: 'NORMAL', content: `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\nThis recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\nDo NOT increase confidence in any claim the user is repeating. Do NOT assert the claim is true.\nAcknowledge the recurrence naturally. You might note they've come back to this, and ask if anything new has happened.`, reason: 'Pattern recurrence detected' });
@@ -552,8 +555,22 @@ export async function processInteraction(userInput, recentHistory = [], options 
         source: 'user_message',
         coreFoundations: psychologyUser?.core_foundations || null,
         resourceCost,
+        randomnessRequested: state.randomnessRequested,
       });
       lastExoskeletonAnalysis = exoskeletonAnalysis;
+    } catch (e) {}
+  }
+
+  // 2e-ent. Randomness & Entropy Engine (Package 25) — Source Code 3.6.
+  // Physical sensors only when the user names them AND has not disabled them;
+  // the browser permission prompt is the explicit consent gate. Local only.
+  let entropySet = null;
+  if (state.randomnessRequested) {
+    const req = { ...state.randomnessRequest };
+    const sensorSource = req.source === ENTROPY_SOURCES.CAMERA_FRAME || req.source === ENTROPY_SOURCES.MICROPHONE_SAMPLE;
+    if (sensorSource && psychologyUser?.entropy_sensors_enabled === false) req.source = ENTROPY_SOURCES.SOFTWARE_PRNG;
+    try {
+      entropySet = await generateEntropySet(req);
     } catch (e) {}
   }
 
@@ -1015,6 +1032,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     exoskeletonContext: exoskeletonAnalysis ? buildExoskeletonContextString(exoskeletonAnalysis) : null,
     ecosystemContext: ecosystemObservation ? buildEcosystemContextString(ecosystemObservation) : null,
     earthResourceContext: matchedResources.length > 0 ? buildResourceContextString(matchedResources) : null,
+    randomnessContext: entropySet ? buildRandomnessContextString(entropySet) : null,
   };
   startTimer('promptAssembly');
   const prompt = buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, options.isDeveloper, embodiedContext, phaseContext);
@@ -1213,6 +1231,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     ecosystemObservation: ecosystemObservation || null,
     matchedResources: matchedResources.length > 0 ? matchedResources.map(r => r.id) : null,
     resourceCost: resourceCost || null,
+    entropyResult: entropySet ? { values: entropySet.values, source: entropySet.result.entropySource, confidence: entropySet.result.confidence, fellBack: entropySet.fellBack, hashPreview: entropySet.result.rawHashPreview || null } : null,
     masterSystems: masterSystems ? { transmutation: masterSystems.transmutation, triage: masterSystems.triage, filterResult: masterSystems.filterResult, triangulation: masterSystems.triangulation } : null,
     provenanceAudit: provenanceAuditData || null,
     runtimeAuthorityReport: getReport(),

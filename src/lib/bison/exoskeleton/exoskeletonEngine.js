@@ -131,7 +131,7 @@ function decide(benefit, risk) {
 
 // ── Main protocol ──
 
-export function runProtocol({ rawText, source, coreFoundations, resourceCost = null }) {
+export function runProtocol({ rawText, source, coreFoundations, resourceCost = null, randomnessRequested = false }) {
   const raw = (rawText || '').trim();
   const foundations = coreFoundations?.length ? coreFoundations : DEFAULT_CORE_FOUNDATIONS;
 
@@ -163,6 +163,18 @@ export function runProtocol({ rawText, source, coreFoundations, resourceCost = n
   const interpretedTruth = interpretThroughPhilosophy(raw);
   // PHASE 4: MEANINGFUL FACTOR
   const { meaningfulFactor, matchedFoundations } = doesItMatter(raw, foundations);
+  // Package 25 — randomness/lottery requests: low benefit, low risk, high curiosity.
+  // Never blocked; no core foundation is affected.
+  if (randomnessRequested) {
+    return {
+      rawObservation, originQuestions, interpretedTruth,
+      meaningfulFactor: false, coreFoundations: matchedFoundations,
+      benefitYield: 5, riskExposure: 5,
+      decision: 'EXPEDITE',
+      decisionReason: 'Curiosity request about randomness. Low benefit, low risk, high curiosity value. No core foundation affected — respond with honest epistemics.',
+      subconsciousUpdate: false, viaReflex: false, timestamp: Date.now(),
+    };
+  }
   if (!meaningfulFactor) {
     return {
       rawObservation, originQuestions, interpretedTruth,

@@ -6,6 +6,7 @@
 
 import { detectMasterTriggers } from '../masterSystems';
 import { detectExoskeletonAuditRequest, detectSubconsciousClearRequest } from '../exoskeleton/exoskeletonEngine';
+import { detectRandomnessRequest } from '../randomness/entropyEngine';
 
 export const RESPONSE_MODES = {
   REFLECT: 'REFLECT',
@@ -102,7 +103,9 @@ export function interpretState(input) {
   const exoskeletonRequested = input.trim().length > 0;
   const exoskeletonAuditRequested = detectExoskeletonAuditRequest(input);
   const subconsciousClearRequested = detectSubconsciousClearRequest(input);
-  return { intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery, hostilityDetected, exoskeletonRequested, exoskeletonAuditRequested, subconsciousClearRequested, ...masterTriggers };
+  // Randomness & Entropy (Package 25) — lottery/random/Source Code 3.6 requests
+  const randomnessRequest = detectRandomnessRequest(input);
+  return { intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery, hostilityDetected, exoskeletonRequested, exoskeletonAuditRequested, subconsciousClearRequested, randomnessRequested: !!randomnessRequest, randomnessRequest, ...masterTriggers };
 }
 
 export function detectRecurrence(currentState, recentUserMessages) {
