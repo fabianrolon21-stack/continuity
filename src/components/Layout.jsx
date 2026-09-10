@@ -2,7 +2,11 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Home, MessageCircle, ClipboardCheck, BookOpen, Archive, Sparkles, Users, Settings, Coins, Shield, Eye, Mic, Sprout, Brain, Lock, Network, BriefcaseBusiness, Map, ScanEye } from 'lucide-react';
+import { Settings, Coins } from 'lucide-react';
+import { findHub, visibleSections } from '@/lib/navigation';
+import SidebarNav from '@/components/nav/SidebarNav';
+import MobileNav from '@/components/nav/MobileNav';
+import SectionNav from '@/components/nav/SectionNav';
 import LocalFirstBadge from '@/components/privacy/LocalFirstBadge';
 import BackgroundLayer from '@/components/BackgroundLayer';
 import AudioPlayer from '@/components/AudioPlayer';
@@ -13,25 +17,6 @@ import { loadUserTheme } from '@/lib/ambiance/themeEngine';
 import { initLanguage } from '@/lib/localization';
 import { startPresenceLoop, recordInteraction, getPresenceState } from '@/lib/bison/presenceManager';
 import { useAtmosphericLighting } from '@/lib/ambiance/atmosphericLighting';
-
-const NAV_ITEMS = [
-  { path: '/', label: 'Sanctuary', icon: Home, color: 'hsl(120 40% 58%)' },
-  { path: '/bison', label: 'Bison', icon: MessageCircle, color: 'hsl(42 63% 55%)' },
-  { path: '/work', label: 'Bison Work', icon: BriefcaseBusiness, color: 'hsl(199 56% 64%)' },
-  { path: '/checkin', label: 'Check-in', icon: ClipboardCheck, color: 'hsl(42 63% 55%)' },
-  { path: '/reflect', label: 'Reflect', icon: BookOpen, color: 'hsl(48 67% 74%)' },
-  { path: '/archives', label: 'Archives', icon: Archive, color: 'hsl(199 56% 64%)' },
-  { path: '/insights', label: 'Insights', icon: Sparkles, color: 'hsl(265 41% 64%)' },
-  { path: '/community', label: 'Community', icon: Users, color: 'hsl(21 73% 69%)' },
-  { path: '/voice', label: 'Voice', icon: Mic, color: 'hsl(265 41% 64%)' },
-  { path: '/garden', label: 'Garden', icon: Sprout, color: 'hsl(120 40% 58%)' },
-  { path: '/decisions', label: 'Decisions', icon: Brain, color: 'hsl(199 56% 64%)' },
-  { path: '/continuity', label: 'Continuity Map', icon: Map, color: 'hsl(199 56% 64%)' },
-  { path: '/mirror', label: 'Mirror', icon: ScanEye, color: 'hsl(21 73% 69%)' },
-  { path: '/simulation', label: 'Simulation', icon: Network, color: 'hsl(199 56% 64%)' },
-  { path: '/privacy', label: 'Privacy', icon: Lock, color: 'hsl(120 40% 58%)' },
-  { path: '/settings', label: 'Settings', icon: Settings, color: 'hsl(268 8% 60%)' },
-];
 
 export default function Layout() {
   useOrchestrator();
@@ -55,6 +40,9 @@ export default function Layout() {
     return () => { stopLoop(); clearInterval(persistInterval); };
   }, [location.pathname]);
 
+  const activeHub = findHub(location.pathname);
+  const sections = visibleSections(activeHub, { isAdmin: userRole === 'admin', dashboardEnabled });
+
   return (
     <div className="min-h-screen bg-background no-tap-highlight">
       <BackgroundLayer />
@@ -66,45 +54,7 @@ export default function Layout() {
           <h1 className="font-heading text-xl font-bold text-gold tracking-tight text-glow-gold animate-glow-pulse">Continuity</h1>
           <p className="text-xs text-muted-foreground mt-0.5">Private Identity Engine</p>
         </div>
-        <nav className="flex-1 px-3 space-y-0.5">
-          {NAV_ITEMS.map(item => {
-            const Icon = item.icon;
-            const active = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-300"
-                style={active ? { backgroundColor: `${item.color}1a`, color: item.color, boxShadow: `0 0 16px ${item.color}25` } : { color: 'hsl(268 8% 60%)' }}
-                onMouseEnter={e => { if (!active) { e.currentTarget.style.color = 'hsl(40 20% 92%)'; e.currentTarget.style.backgroundColor = 'hsl(268 10% 18% / 0.5)'; } }}
-                onMouseLeave={e => { if (!active) { e.currentTarget.style.color = 'hsl(268 8% 60%)'; e.currentTarget.style.backgroundColor = 'transparent'; } }}
-              >
-                <Icon className="w-4 h-4 shrink-0" style={active ? { filter: `drop-shadow(0 0 6px ${item.color})` } : {}} />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-        {dashboardEnabled && (
-          <Link
-            to="/trust"
-            className="mx-3 mb-2 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all"
-            style={location.pathname === '/trust' ? { backgroundColor: 'hsl(199 56% 64% / 0.1)', color: 'hsl(199 56% 64%)' } : { color: 'hsl(268 8% 60%)' }}
-          >
-            <Eye className="w-4 h-4 shrink-0" />
-            Trust
-          </Link>
-        )}
-        {userRole === 'admin' && (
-          <Link
-            to="/developer"
-            className="mx-3 mb-2 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all"
-            style={location.pathname === '/developer' ? { backgroundColor: 'hsl(0 70% 50% / 0.1)', color: 'hsl(0 70% 50%)' } : { color: 'hsl(268 8% 60%)' }}
-          >
-            <Shield className="w-4 h-4 shrink-0" />
-            Developer
-          </Link>
-        )}
+        <SidebarNav activeHub={activeHub} />
         <div className="px-3 mb-2">
           <LocalFirstBadge />
         </div>
@@ -133,34 +83,29 @@ export default function Layout() {
       <main className="lg:ml-64 min-h-screen pb-28 lg:pb-8 pt-safe">
         <AnimatePresence mode="wait">
           <motion.div
+            key={activeHub.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }}
+          >
+            <SectionNav hub={activeHub} sections={sections} />
+          </motion.div>
+        </AnimatePresence>
+        <AnimatePresence mode="wait">
+          <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 12, scale: 0.98, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -12, scale: 1.02, filter: 'blur(4px)' }}
-            transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
           >
             <Outlet />
           </motion.div>
         </AnimatePresence>
       </main>
 
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 flex items-center justify-around border-t border-border bg-card/80 backdrop-blur-xl z-40 px-1 pb-safe">
-        {NAV_ITEMS.slice(0, 5).map(item => {
-          const Icon = item.icon;
-          const active = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className="flex flex-col items-center gap-1 py-2.5 px-1 flex-1 touch-target no-tap-highlight"
-              style={active ? { color: item.color } : { color: 'hsl(268 8% 50%)' }}
-            >
-              <Icon className="w-5 h-5" />
-              <span className="text-[10px] font-medium">{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <MobileNav activeHub={activeHub} />
     </div>
   );
 }

@@ -49,6 +49,12 @@
     background: hsl(var(--background));
     transition: background-color 3s ease-in-out;
   }
+  /* Unified motion language: every surface eases, nothing snaps. */
+  a, button, [role="button"], .glass, .framed {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: 400ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
 @layer utilities {
