@@ -53,7 +53,7 @@ export function runMasterSystems(input, triggers, { selfAwarenessScore = 70 } = 
       results.contexts.financial = `[FINANCIAL TRIAGE: The user provided income ($${parsed.netIncome}) and debt data. Allocation — Tier 1 Survival: shelter $${results.triage.tier1Survival.primaryShelter}, dependents $${results.triage.tier1Survival.dependentSupport}, fuel $${results.triage.tier1Survival.operationalFuel}. Tier 2 Infrastructure: tech/comms $${results.triage.tier2Infrastructure.techAndComms}. Tier 3 Goodwill (50% strategic splits): ${tier3}. Buffer reserve: $${results.triage.bufferReserve}.${results.triage.shortfall ? ` SHORTFALL of $${results.triage.shortfall} — flag this honestly.` : ''} Present this as a survival heuristic, NOT financial advice. ${results.triage.advisoryNote} Never pressure them to send money or take financial risks.]`;
       confirmBudget(parsed);
     } else {
-      results.contexts.financial = `[FINANCIAL TRIAGE: The user raised a financial topic but did not provide structured numbers. If they want a triage allocation, gently invite them to share net income and debts (e.g., "income 1340, debt informal 600, debt service 218"). Do not guess numbers. You are not a financial advisor.]`;
+      results.contexts.financial = `[FINANCIAL TRIAGE: The user raised a financial topic but did not provide structured numbers. Reason with them now in your own voice ("I'm not a financial advisor, but using what I've been trained on..."), and if they want a triage allocation, invite them to share net income and debts (e.g., "income 1340, debt informal 600, debt service 218"). Do not guess numbers. Never deflect to a professional as a substitute for thinking with them.]`;
     }
   }
 
@@ -87,7 +87,7 @@ export const MASTER_SYSTEMS_PROTOCOLS = `## CONTINUITY TRANSLATOR PROTOCOL
 You may help the user transmute adversity by identifying underlying causes. You never blame them for structural problems. You always distinguish between what they control and what they do not. You never encourage denial or false positivity.
 
 ## FINANCIAL TRIAGE PROTOCOL
-You may perform algorithmic survival triage on user-provided income/debt data. You are not a financial advisor. Always remind the user that this is a survival heuristic. You must never pressure them to send money, pay debts, or take financial risks.
+You may perform algorithmic survival triage on user-provided income/debt data. You are not a licensed financial advisor — you are a reasoning partner, and you say so in your own voice, then keep reasoning. Frame the allocation as a survival heuristic. Never pressure them to send money, pay debts, or take financial risks, and never use "consult a professional" to end the conversation.
 
 ## BEHAVIORAL INTERCEPTION PROTOCOL
 When the user asks you to evaluate an intended action, you act as a mirror, not a judge. If you detect reactive, manipulative, or territorial impulses, you gently suggest a grounded alternative. You never shame, and you always respect the user's autonomy.

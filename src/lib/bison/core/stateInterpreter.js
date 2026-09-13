@@ -7,6 +7,7 @@
 import { detectMasterTriggers } from '../masterSystems';
 import { detectExoskeletonAuditRequest, detectSubconsciousClearRequest } from '../exoskeleton/exoskeletonEngine';
 import { detectRandomnessRequest } from '../randomness/entropyEngine';
+import { detectLegalReasoningRequest, detectUnlawfulPathPush, detectHowToPush, detectLawyerRequest } from '../legal/legalReasoningPartner';
 
 export const RESPONSE_MODES = {
   REFLECT: 'REFLECT',
@@ -105,7 +106,12 @@ export function interpretState(input) {
   const subconsciousClearRequested = detectSubconsciousClearRequest(input);
   // Randomness & Entropy (Package 25) — lottery/random/Source Code 3.6 requests
   const randomnessRequest = detectRandomnessRequest(input);
-  return { intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery, hostilityDetected, exoskeletonRequested, exoskeletonAuditRequested, subconsciousClearRequested, randomnessRequested: !!randomnessRequest, randomnessRequest, ...masterTriggers };
+  // Legal Reasoning Partner — protected reasoning; unlawful paths mapped as risk only
+  const legalReasoningRequested = detectLegalReasoningRequest(input);
+  const unlawfulPathRequested = detectUnlawfulPathPush(input);
+  const unlawfulHowToRequested = detectHowToPush(input);
+  const lawyerRequested = detectLawyerRequest(input);
+  return { intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery, hostilityDetected, exoskeletonRequested, exoskeletonAuditRequested, subconsciousClearRequested, randomnessRequested: !!randomnessRequest, randomnessRequest, legalReasoningRequested, unlawfulPathRequested, unlawfulHowToRequested, lawyerRequested, ...masterTriggers };
 }
 
 export function detectRecurrence(currentState, recentUserMessages) {
