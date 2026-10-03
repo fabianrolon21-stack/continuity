@@ -8,6 +8,7 @@ import { detectMasterTriggers } from '../masterSystems';
 import { detectExoskeletonAuditRequest, detectSubconsciousClearRequest } from '../exoskeleton/exoskeletonEngine';
 import { detectRandomnessRequest } from '../randomness/entropyEngine';
 import { detectLegalReasoningRequest, detectUnlawfulPathPush, detectHowToPush, detectLawyerRequest } from '../legal/legalReasoningPartner';
+import { detectLivedSystemIntents } from '../lived/livedSystemBridge';
 
 export const RESPONSE_MODES = {
   REFLECT: 'REFLECT',
@@ -111,7 +112,7 @@ export function interpretState(input) {
   const unlawfulPathRequested = detectUnlawfulPathPush(input);
   const unlawfulHowToRequested = detectHowToPush(input);
   const lawyerRequested = detectLawyerRequest(input);
-  return { intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery, hostilityDetected, exoskeletonRequested, exoskeletonAuditRequested, subconsciousClearRequested, randomnessRequested: !!randomnessRequest, randomnessRequest, legalReasoningRequested, unlawfulPathRequested, unlawfulHowToRequested, lawyerRequested, ...masterTriggers };
+  return { intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery, hostilityDetected, exoskeletonRequested, exoskeletonAuditRequested, subconsciousClearRequested, randomnessRequested: !!randomnessRequest, randomnessRequest, legalReasoningRequested, unlawfulPathRequested, unlawfulHowToRequested, lawyerRequested, ...masterTriggers, ...detectLivedSystemIntents(input) };
 }
 
 export function detectRecurrence(currentState, recentUserMessages) {
