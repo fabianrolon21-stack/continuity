@@ -9,6 +9,13 @@ import { detectExoskeletonAuditRequest, detectSubconsciousClearRequest } from '.
 import { detectRandomnessRequest } from '../randomness/entropyEngine';
 import { detectLegalReasoningRequest, detectUnlawfulPathPush, detectHowToPush, detectLawyerRequest } from '../legal/legalReasoningPartner';
 import { detectLivedSystemIntents } from '../lived/livedSystemBridge';
+import { classifyCapture } from '../reflection/reflectiveDataCapture';
+import { detectSelfConfrontation } from '../reflection/selfConfrontationInterface';
+import { classifyAttention } from '../sensory/sensoryAttenuationModel';
+import { classifyAdoptionStage } from '../adoption/noveltyToNormCurve';
+import { auditBenefitJustification } from '../audit/benefitJustificationAudit';
+import { classifyCaptureForm } from '../perception/imageFirstCapture';
+import { detectSpeculationBoundary } from '../epistemic/speculationBoundary';
 
 export const RESPONSE_MODES = {
   REFLECT: 'REFLECT',
@@ -112,7 +119,15 @@ export function interpretState(input) {
   const unlawfulPathRequested = detectUnlawfulPathPush(input);
   const unlawfulHowToRequested = detectHowToPush(input);
   const lawyerRequested = detectLawyerRequest(input);
-  return { intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery, hostilityDetected, exoskeletonRequested, exoskeletonAuditRequested, subconsciousClearRequested, randomnessRequested: !!randomnessRequest, randomnessRequest, legalReasoningRequested, unlawfulPathRequested, unlawfulHowToRequested, lawyerRequested, ...masterTriggers, ...detectLivedSystemIntents(input) };
+  // Package 30 — Reflection, adoption & perception systems (deterministic, local).
+  const captureSource = classifyCapture(input);
+  const selfConfrontation = detectSelfConfrontation(input);
+  const attention = classifyAttention(input);
+  const adoptionStage = classifyAdoptionStage(input);
+  const benefitAudit = auditBenefitJustification(input);
+  const captureForm = classifyCaptureForm(input);
+  const speculationBoundary = detectSpeculationBoundary(input);
+  return { intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery, hostilityDetected, exoskeletonRequested, exoskeletonAuditRequested, subconsciousClearRequested, randomnessRequested: !!randomnessRequest, randomnessRequest, legalReasoningRequested, unlawfulPathRequested, unlawfulHowToRequested, lawyerRequested, captureSource, selfConfrontation, attention, adoptionStage, benefitAudit, captureForm, speculationBoundary, ...masterTriggers, ...detectLivedSystemIntents(input) };
 }
 
 export function detectRecurrence(currentState, recentUserMessages) {

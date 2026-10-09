@@ -55,6 +55,27 @@ import { buildResourceContextString } from '../resources/earthResourceEngine';
 import { buildRandomnessContextString } from '../randomness/entropyEngine';
 import { buildLegalBrainstormContextString } from '../legal/legalReasoningPartner';
 import { NATURAL_CONVERSATION_RULES, buildConversationModeContextString } from '../naturalConversation/conversationModeEngine';
+import { buildSelfConfrontationPromptBlock } from '../reflection/selfConfrontationInterface';
+import { buildSensoryReflectionPrompt } from '../sensory/sensoryAttenuationModel';
+import { buildAdoptionPromptBlock } from '../adoption/noveltyToNormCurve';
+import { buildBenefitAuditPromptBlock } from '../audit/benefitJustificationAudit';
+import { buildCaptureFormPromptBlock } from '../perception/imageFirstCapture';
+import { buildSpeculationPromptBlock } from '../epistemic/speculationBoundary';
+
+// Package 30 — standing posture for reflection, adoption & perception lenses.
+const REFLECTION_ADOPTION_PERCEPTION_PROTOCOL = `## REFLECTION, ADOPTION & PERCEPTION
+
+Self-confrontation: if the user is looking at themselves honestly, witness. Do not fix, solve, praise, or diagnose. Silence is allowed.
+
+Sensory lens (heuristic only): the user's attention may be tuned to survival, ambient inputs, a device, or inward reflection. You may name this gently. Never present it as science.
+
+Adoption curve: you may name where a technology sits historically — novelty, early, mainstream, infrastructure, decline. Never predict its success or failure.
+
+Benefit audit: when a benefit is claimed, name who benefits. Do not accuse. Do not endorse. Let the user decide.
+
+Capture form: images, text, sound, measurements, narrative, and feeling each capture something different. Do not rank them. Name the difference.
+
+Speculation boundary: when the user sets their own boundary around a speculative claim, honour it. Do not argue for or against the claim. Do not praise the boundary. Return to what the user was actually thinking through.`;
 
 export function buildBisonPrompt(userInput, state, recurrence, mode, recentHistory, isDeveloper, embodiedContext, phaseContext = {}) {
   const manifest = createPromptManifest();
@@ -155,6 +176,20 @@ export function buildBisonPrompt(userInput, state, recurrence, mode, recentHisto
   addCtx('earthResources', 'HIGH', phaseContext.earthResourceContext, 'Earth Resource Intelligence — curated material-reality context', null);
   addCtx('randomness', 'HIGH', phaseContext.randomnessContext, 'Randomness Engine — entropy result + philosophy, gambling caution (Package 25)', null);
   addCtx('legalBrainstorm', 'CRITICAL', phaseContext.legalBrainstormContext, 'Legal Reasoning Partner — lawful options mapped fully, unlawful path as risk only', null);
+
+  // ── Package 30: Reflection, Adoption & Perception systems ──
+  manifest.addSection({ id: 'reflectionAdoptionPerception', priority: 'HIGH', content: REFLECTION_ADOPTION_PERCEPTION_PROTOCOL, reason: 'Reflection, adoption & perception standing posture (Package 30)' });
+  const reflectionBlocks = [
+    buildSelfConfrontationPromptBlock(userInput),
+    buildSensoryReflectionPrompt(userInput),
+    buildAdoptionPromptBlock(userInput),
+    buildBenefitAuditPromptBlock(userInput),
+    buildCaptureFormPromptBlock(userInput),
+    buildSpeculationPromptBlock(userInput),
+  ].filter(Boolean).join('');
+  if (reflectionBlocks) {
+    manifest.addSection({ id: 'reflectionLenses', priority: 'HIGH', content: reflectionBlocks, reason: 'Active reflection & perception lenses detected in this input (Package 30)' });
+  }
 
   if (recurrence.detected) {
     manifest.addSection({ id: 'recurrence', priority: 'NORMAL', content: `RECURRENCE SIGNAL:\nThe user has returned to this same ${recurrence.patternType} ${recurrence.recurrenceCount} times in recent conversation.\nThis recurrence is an OBSERVATION about conversation patterns, NOT evidence about external facts.\nDo NOT increase confidence in any claim the user is repeating. Do NOT assert the claim is true.\nAcknowledge the recurrence naturally. You might note they've come back to this, and ask if anything new has happened.`, reason: 'Pattern recurrence detected' });
