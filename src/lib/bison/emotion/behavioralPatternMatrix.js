@@ -17,7 +17,7 @@ const PATTERNS = [
 
 /** INTENT → PATTERN MATCHING → REFLECTION. Returns matched patterns with the honest, non-labeling reflection. */
 export function evaluateBehavioralPatterns(rawText) {
-  const text = rawText.toLowerCase();
+  const text = typeof rawText === 'string' ? rawText.toLowerCase() : '';
   return PATTERNS
     .map(pattern => ({ pattern, hit: pattern.indicators.find(indicator => text.includes(indicator)) }))
     .filter(({ hit }) => hit)

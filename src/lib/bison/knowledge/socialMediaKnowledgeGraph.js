@@ -19,7 +19,7 @@ const MECHANIC_PATTERNS = [
 export function detectSocialMediaQuery(input) {
   if (typeof input !== 'string') return null;
   const platforms = graph.platforms.filter(p =>
-    p.keywords.some(k => input.toLowerCase().includes(k.trim()))
+    p.keywords.some(k => (typeof input === 'string' ? input.toLowerCase() : '').includes(k.trim()))
   );
   const asksMechanics = MECHANIC_PATTERNS.some(p => p.test(input));
   if (platforms.length === 0) return null;

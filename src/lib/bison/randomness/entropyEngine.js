@@ -33,7 +33,7 @@ const RANDOMNESS_PATTERNS = [
 
 export function detectRandomnessRequest(input) {
   if (!RANDOMNESS_PATTERNS.some(p => p.test(input))) return null;
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
   const rangeMatch = lower.match(/(?:1\s*(?:to|-|through)\s*|up to |max(?:imum)? |out of )(\d{1,4})/);
   let maxNumber = rangeMatch ? parseInt(rangeMatch[1], 10) : (/rolling cash/.test(lower) ? 39 : 39);
   if (!maxNumber || maxNumber < 2) maxNumber = 39;

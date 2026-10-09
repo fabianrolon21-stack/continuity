@@ -193,7 +193,7 @@ const MAX_FACTS = 2;
 
 export function retrieveNeuroscienceKnowledge(input) {
   if (!input) return [];
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
   const matched = [];
   for (const fact of NEUROSCIENCE_FACTS) {
     if (matched.length >= MAX_FACTS) break;

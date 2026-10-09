@@ -37,9 +37,9 @@ export function determineMask({ environmentStress = 0, activeThreats = 0, avoide
 // Check if user input touches an avoided topic
 export function checkAvoidedTopics(input, avoidedTopics = []) {
   if (!input || !avoidedTopics || avoidedTopics.length === 0) return null;
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
   for (const topic of avoidedTopics) {
-    if (lower.includes(topic.toLowerCase())) return topic;
+    if (topic && lower.includes(topic.toLowerCase())) return topic;
   }
   return null;
 }

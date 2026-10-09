@@ -49,7 +49,7 @@ export function detectPII(text) {
     }
   }
 
-  const lowerText = text.toLowerCase();
+  const lowerText = typeof text === 'string' ? text.toLowerCase() : '';
   if (SENSITIVE_KEYWORDS.some(kw => lowerText.includes(kw))) {
     classifications.add('sensitive');
   }

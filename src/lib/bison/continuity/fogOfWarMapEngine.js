@@ -11,7 +11,7 @@ const seeded = seed => {
 };
 
 function classify(sentence) {
-  const text = sentence.toLowerCase();
+  const text = typeof sentence === 'string' ? sentence.toLowerCase() : '';
   if (sentence.includes('?')) return { category: 'unknown', confidence: 0 };
   if (/(maybe|might|could|perhaps|possibly|what if)/.test(text)) return { category: 'speculative', confidence: 0.34 };
   if (/(think|probably|seems|feel like|guess|likely)/.test(text)) return { category: 'inferred', confidence: 0.6 };

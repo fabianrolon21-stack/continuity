@@ -11,7 +11,7 @@ export const EPISTEMIC_TIER = {
 
 export function classifyEpistemic(statement) {
   if (!statement || typeof statement !== 'string') return EPISTEMIC_TIER.UNKNOWN;
-  const lower = statement.toLowerCase();
+  const lower = typeof statement === 'string' ? statement.toLowerCase() : '';
   if (/i (saw|noticed|observed|heard|felt|measured|recorded)|data shows|according to|reported|documented|stated|told me/i.test(lower))
     return EPISTEMIC_TIER.OBSERVED;
   if (/will|going to|expect|predict|forecast|project|eventually|tomorrow|next week|future/i.test(lower))

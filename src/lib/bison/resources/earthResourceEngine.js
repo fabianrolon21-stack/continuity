@@ -75,7 +75,7 @@ export function rankResourcesByPower(year = new Date().getFullYear()) {
 
 // ── Detection: which resources does the user's message touch? ──
 export function detectResourceMention(input) {
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
   return EARTH_RESOURCES.filter(r => r.keywords.some(k => lower.includes(k)));
 }
 

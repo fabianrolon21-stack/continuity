@@ -28,8 +28,8 @@ function contentOverlap(wordsA, wordsB) {
 }
 
 function findAntonymClash(textA, textB) {
-  const a = textA.toLowerCase();
-  const b = textB.toLowerCase();
+  const a = typeof textA === 'string' ? textA.toLowerCase() : '';
+  const b = typeof textB === 'string' ? textB.toLowerCase() : '';
   for (const [w1, w2] of ANTONYM_PAIRS) {
     if ((a.includes(w1) && b.includes(w2)) || (a.includes(w2) && b.includes(w1))) {
       return `"${w1}" vs "${w2}"`;

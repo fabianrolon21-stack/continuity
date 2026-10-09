@@ -15,7 +15,7 @@ const IMPULSE_INDICATORS = {
 };
 
 export function detectEgoThreat(rawText) {
-  const text = rawText.toLowerCase();
+  const text = typeof rawText === 'string' ? rawText.toLowerCase() : '';
   for (const [impulse, indicators] of Object.entries(IMPULSE_INDICATORS)) {
     const hit = indicators.find(indicator => text.includes(indicator));
     if (hit) {

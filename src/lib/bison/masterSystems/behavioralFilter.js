@@ -7,7 +7,7 @@
 const TOXIC_PATTERNS = ['punish', 'manipulate', 'territorial', 'guilt', 'force', 'worry'];
 
 export function evaluateAction(intendedAction, selfAwarenessScore) {
-  const lower = intendedAction.toLowerCase();
+  const lower = typeof intendedAction === 'string' ? intendedAction.toLowerCase() : '';
   const toxicPatternDetected = TOXIC_PATTERNS.some(pattern => lower.includes(pattern));
 
   const result = { action: intendedAction, toxicPatternDetected, selfAwarenessScore, outcome: 'ACTION_APPROVED' };

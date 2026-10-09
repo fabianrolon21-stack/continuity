@@ -146,7 +146,7 @@ function detectTemporalStatus(input) {
 }
 
 function detectActivity(input) {
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
   for (const action of PHYSICAL_ACTIONS) {
     if (action.keywords.some(kw => lower.includes(kw))) return action;
   }
@@ -154,12 +154,12 @@ function detectActivity(input) {
 }
 
 function detectTools(input) {
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
   return PHYSICAL_TOOLS.filter(tool => lower.includes(tool));
 }
 
 function detectEnvironment(input) {
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
   for (const [env, keywords] of Object.entries(ENVIRONMENT_KEYWORDS)) {
     if (keywords.some(kw => lower.includes(kw))) return env;
   }
@@ -169,7 +169,7 @@ function detectEnvironment(input) {
 const WORD_TO_NUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12 };
 
 function detectDuration(input) {
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
   const hourMatch = lower.match(/(\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s*(?:hours|hrs)/);
   if (hourMatch) return { value: hourMatch[1], unit: 'hours', raw: hourMatch[0] };
   const minMatch = lower.match(/(\d+|ten|fifteen|twenty|thirty|forty|forty-five|sixty)\s*(?:minutes|min)/);
@@ -180,7 +180,7 @@ function detectDuration(input) {
 }
 
 function detectLoad(input) {
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
   for (const [load, keywords] of Object.entries(LOAD_KEYWORDS)) {
     if (keywords.some(kw => lower.includes(kw))) return load;
   }
@@ -188,7 +188,7 @@ function detectLoad(input) {
 }
 
 function detectOutcome(input) {
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
   for (const [outcome, keywords] of Object.entries(OUTCOME_PATTERNS)) {
     if (keywords.some(kw => lower.includes(kw))) return outcome;
   }

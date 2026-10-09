@@ -33,7 +33,7 @@ function intensityOf(text, keyword) {
 
 /** Returns EmotionalObservation[] — stated vs inferred kept distinct. */
 export function extractEmotionalSignals(rawText) {
-  const text = rawText.toLowerCase();
+  const text = typeof rawText === 'string' ? rawText.toLowerCase() : '';
   const observations = [];
   for (const [signal, keywords] of Object.entries(LEXICON)) {
     const hit = keywords.find(keyword => text.includes(keyword));

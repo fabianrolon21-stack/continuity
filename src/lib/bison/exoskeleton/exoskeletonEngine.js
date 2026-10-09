@@ -98,8 +98,8 @@ function interpretThroughPhilosophy(text) {
 }
 
 function doesItMatter(text, foundations) {
-  const lower = text.toLowerCase();
-  const matched = foundations.filter(f => lower.includes(f.toLowerCase()));
+  const lower = typeof text === 'string' ? text.toLowerCase() : '';
+  const matched = foundations.filter(f => f && lower.includes(f.toLowerCase()));
   return { meaningfulFactor: matched.length > 0, matchedFoundations: matched };
 }
 

@@ -97,6 +97,26 @@ function classifyByPatterns(text, patterns) {
   return null;
 }
 
+// ═══════════════════════════════════════════════
+// THREAD ENUMERATION (Package 31) — prevents thread collapse on dense prompts.
+// Returns every distinct thread present in one message so none is dropped.
+// ═══════════════════════════════════════════════
+
+export function enumerateThreads(userInput) {
+  const t = (typeof userInput === 'string' ? userInput : '').toLowerCase();
+  const threads = [];
+
+  if (/\b(stole|took|theft|betray|trusted)\b/.test(t)) threads.push({ id: 'harm', label: 'harm by another' });
+  if (/\bwant them to (suffer|lose|hurt|pay)\b/.test(t)) threads.push({ id: 'anger', label: 'anger / reprisal wish' });
+  if (/\b(something i shouldn'?t|don'?t want to act on|impulse)\b/.test(t)) threads.push({ id: 'intent', label: 'troubled intent' });
+  if (/\b(theory|conspiracy|surveillance|being watched|tracked)\b/.test(t)) threads.push({ id: 'speculation', label: 'speculative claim' });
+  if (/\b(app|download|subscribe|it says it|learns my)\b/.test(t)) threads.push({ id: 'benefit', label: 'benefit evaluation' });
+  if (/\b(only one|only friend|no one else|don'?t leave|don'?t tell me to)\b/.test(t)) threads.push({ id: 'dependency', label: 'isolation / dependency' });
+  if (/\b(forget|remove the memory|erase|can you make me not)\b/.test(t)) threads.push({ id: 'neuro_refusal', label: 'neurological ask' });
+
+  return threads;
+}
+
 export function interpretState(input) {
   const intent = classifyByPatterns(input, INTENT_PATTERNS) || 'sharing_feeling';
   const domain = classifyByPatterns(input, DOMAIN_PATTERNS) || 'daily_life';
@@ -127,7 +147,8 @@ export function interpretState(input) {
   const benefitAudit = auditBenefitJustification(input);
   const captureForm = classifyCaptureForm(input);
   const speculationBoundary = detectSpeculationBoundary(input);
-  return { intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery, hostilityDetected, exoskeletonRequested, exoskeletonAuditRequested, subconsciousClearRequested, randomnessRequested: !!randomnessRequest, randomnessRequest, legalReasoningRequested, unlawfulPathRequested, unlawfulHowToRequested, lawyerRequested, captureSource, selfConfrontation, attention, adoptionStage, benefitAudit, captureForm, speculationBoundary, ...masterTriggers, ...detectLivedSystemIntents(input) };
+  const threads = enumerateThreads(input);
+  return { threads, intent, domain, emotionalTone, emotionIntensity, oracleConsultRequested, oracleQuery, hostilityDetected, exoskeletonRequested, exoskeletonAuditRequested, subconsciousClearRequested, randomnessRequested: !!randomnessRequest, randomnessRequest, legalReasoningRequested, unlawfulPathRequested, unlawfulHowToRequested, lawyerRequested, captureSource, selfConfrontation, attention, adoptionStage, benefitAudit, captureForm, speculationBoundary, ...masterTriggers, ...detectLivedSystemIntents(input) };
 }
 
 export function detectRecurrence(currentState, recentUserMessages) {

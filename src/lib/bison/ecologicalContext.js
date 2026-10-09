@@ -49,7 +49,7 @@ const MAX_ECO_FACTS = 2;
 
 export function retrieveEcologicalKnowledge(input) {
   if (!input) return [];
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
   const matched = [];
 
   for (const fact of ECOLOGICAL_KNOWLEDGE) {
@@ -125,7 +125,7 @@ const ANIMAL_SIGNAL_PATTERNS = [
 
 export function interpretAnimalSignals(input) {
   if (!input) return null;
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
 
   for (const speciesEntry of ANIMAL_SIGNAL_PATTERNS) {
     if (!speciesEntry.triggers.some(t => lower.includes(t))) continue;
@@ -178,10 +178,10 @@ export function detectStagnation(input, recentHistory) {
 
   // Check for conversational repetition (NOT boredom inference)
   let recurrenceCount = 0;
-  const inputWords = new Set(input.toLowerCase().split(/\s+/).filter(w => w.length > 4));
+  const inputWords = new Set((typeof input === 'string' ? input.toLowerCase() : '').split(/\s+/).filter(w => w.length > 4));
   for (const msg of (recentHistory || []).slice(-6)) {
     if (msg.role === 'user' && msg.text) {
-      const msgWords = new Set(msg.text.toLowerCase().split(/\s+/).filter(w => w.length > 4));
+      const msgWords = new Set((msg?.text || '').toLowerCase().split(/\s+/).filter(w => w.length > 4));
       const overlap = [...msgWords].filter(w => inputWords.has(w)).length;
       if (overlap > 3) recurrenceCount++;
     }

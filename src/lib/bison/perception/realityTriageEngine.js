@@ -26,7 +26,7 @@ const KEYWORD_MAP = {
 };
 
 function getInitialStatus(statement, verified, urgency) {
-  const lower = statement.toLowerCase();
+  const lower = typeof statement === 'string' ? statement.toLowerCase() : '';
   if (lower.includes('rent') && verified.rentPaid) return 'SECURED';
   if (lower.includes('insurance') && verified.insurancePaid) return 'SECURED';
   if (urgency === 'Immediate') return 'ACTIVE';

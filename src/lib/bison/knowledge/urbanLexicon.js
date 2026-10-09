@@ -35,7 +35,7 @@ export function lookupTerm(term) {
 export function detectSlang(input, maxOffensiveness = 'mild') {
   if (typeof input !== 'string' || !input.trim()) return null;
   const ceiling = levelRank(maxOffensiveness);
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
 
   const asked = [];
   for (const pattern of DEFINITION_REQUEST_PATTERNS) {

@@ -112,7 +112,7 @@ const MAX_FACTS = 2;
 
 export function retrieveKnowledge(input) {
   if (!input) return [];
-  const lower = input.toLowerCase();
+  const lower = typeof input === 'string' ? input.toLowerCase() : '';
   const matched = [];
 
   for (const fact of CURATED_KNOWLEDGE) {

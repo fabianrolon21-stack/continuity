@@ -92,6 +92,9 @@ import { runLivedSystems, addLivedContextSections } from './lived/livedSystemBri
 import { sanitizeBisonVoice } from './language/consentLanguageGuard';
 import { recordOrigin } from './hygiene/dataOriginTracker';
 import { buildBisonPrompt } from './core/bisonPrompt';
+import { sanitizeOutput, stripContinuityClaims, FORBIDDEN_OUTPUT_TOKENS } from './pipeline/outputSanitizer';
+import { enforceConsentFloor } from './language/consentLanguageFloor';
+import { shouldSurfaceAdvisory } from './signals/signalGate';
 import { RESPONSE_MODES, interpretState, detectRecurrence, selectStrategy, getFallbackResponse, detectCognitiveDistortions } from './core/stateInterpreter';
 
 // Re-exported for existing consumers.
@@ -183,7 +186,26 @@ function determineGardenCandidate(input, state, recurrence) {
 // MAIN PIPELINE — processInteraction
 // ═══════════════════════════════════════════════
 
+// Crash guard (Package 31) — the user never sees a stack trace or a raw error string.
+const ENGINE_CRASH_FALLBACK = "Something in my reasoning broke just now. Let me try again — can you say that once more?";
+
 export async function processInteraction(userInput, recentHistory = [], options = {}) {
+  try {
+    return await runPipeline(userInput, recentHistory, options);
+  } catch (err) {
+    console.error('[ENGINE CRASH]', err);
+    return {
+      text: ENGINE_CRASH_FALLBACK,
+      mode: RESPONSE_MODES.GROUND,
+      isGardenCandidate: false,
+      state: null,
+      recurrence: null,
+      engineCrash: true,
+    };
+  }
+}
+
+async function runPipeline(userInput, recentHistory = [], options = {}) {
   // 0a. Runtime orchestration — record interaction with the unified runtime
   orchestrator.recordInteraction();
 
@@ -316,6 +338,19 @@ export async function processInteraction(userInput, recentHistory = [], options 
   // 2. State interpretation
   const state = interpretState(userInput);
 
+  // 2-t. Multi-thread directive (Package 31) — dense messages must not collapse.
+  const multiThreadContext = state.threads?.length >= 2
+    ? `[MULTI-THREAD DIRECTIVE]\nThe user has raised ${state.threads.length} distinct threads in this message:\n${state.threads.map(t => `· ${t.label}`).join('\n')}\nYou MUST address each thread, at least briefly. Do not collapse. Do not skip the emotionally difficult ones. Order: acknowledge the most emotionally weighted thread first, then move through the rest. End by returning choice to the user.\n`
+    : null;
+
+  // 2-s. Signal gate (Package 31) — advisories only pass relevance, mood and rate gates.
+  const advisoryAllowed = shouldSurfaceAdvisory({
+    emotionalIntensity: state.emotionIntensity > 0.6 ? 'high' : 'low',
+    threads: state.threads || [],
+    devContext: !!options.isDeveloper,
+    userAskedAboutSecurity: /\b(security|vulnerab|advisory|cve|exploit|patch)\b/i.test(userInput),
+  });
+
   registerDatum({
     value: `Intent: ${state.intent}, Domain: ${state.domain}, Tone: ${state.emotionalTone}`,
     source: PROVENANCE_SOURCES.INFERRED,
@@ -387,6 +422,8 @@ export async function processInteraction(userInput, recentHistory = [], options 
     avoidedTopics = psychologyUser?.avoided_topics || [];
     avoidedTopicHit = checkAvoidedTopics(userInput, avoidedTopics);
   } catch (e) {}
+  // Package 31 — continuity is only claimed when memory access is actually granted.
+  const memoryAccessGranted = !!(psychologyUser && (psychologyUser.memory_access_granted === true || psychologyUser.memoryAccessGranted === true));
   const mask = determineMask({
     environmentStress: cognitiveLoad.currentBandwidth,
     activeThreats: cognitiveLoad.activeThreats,
@@ -842,6 +879,7 @@ export async function processInteraction(userInput, recentHistory = [], options 
     conversationMode,
     depthEstimate,
     vocabularyLevel,
+    multiThreadContext,
     selfModelContext,
     affectiveContext,
     neuroKnowledge,
@@ -898,8 +936,8 @@ export async function processInteraction(userInput, recentHistory = [], options 
     socialMediaContext: socialMediaMatch ? buildSocialMediaContextString(socialMediaMatch) : null,
     slangContext: slangMatch ? buildSlangContextString(slangMatch) : null,
     openToolContext: openToolResult ? buildOpenToolContextString(openToolResult) : null,
-    updateStatusContext: p43.updateContext,
-    awarenessContext: p43.awarenessContext,
+    updateStatusContext: advisoryAllowed ? p43.updateContext : null,
+    awarenessContext: advisoryAllowed ? p43.awarenessContext : null,
     communitySharingContext: p43.communityContext,
     externalServiceContext: p43.externalServiceContext,
     adversityContext: masterSystems?.contexts.adversity || null,
@@ -1057,6 +1095,20 @@ export async function processInteraction(userInput, recentHistory = [], options 
     });
     runtimeReflection = completion.reflection;
   } catch (e) {}
+
+  // ── Package 31: final hardening pass on user-facing text ──
+  // Consent floor, continuity honesty, then metadata/tag sanitization.
+  bisonText = enforceConsentFloor(bisonText);
+  if (!memoryAccessGranted) bisonText = stripContinuityClaims(bisonText);
+  bisonText = sanitizeOutput(bisonText) || bisonText;
+
+  if (import.meta.env.DEV) {
+    for (const token of FORBIDDEN_OUTPUT_TOKENS) {
+      if (bisonText.includes(token)) {
+        console.error('[LEAK] Forbidden token in output:', token);
+      }
+    }
+  }
 
   return {
     text: bisonText,
