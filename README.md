@@ -1,77 +1,39 @@
-# Base44 Project
+Bison is a companion system that runs on your own device and remembers only what you choose to keep. It works as a reasoning partner. It sits with you while you think through hard things, and it holds the parts you asked it to hold.
 
-Use this repository to run and edit the app locally, then publish changes back through Base44.
+Most AI systems today are built to keep you engaged. They want you to come back, to stay longer, to depend on them. Bison is built on the opposite idea. Its main purpose is to help you understand yourself and your world, and then to step back. The whole design comes from one question. What would a companion look like if its main goal was to make itself unnecessary? The answer is a system with rules that cannot be turned off, honesty about what it can and cannot do, and no tricks to keep you close.
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+Bison can help you reason through legal questions, money problems, and personal decisions in its own voice. It thinks with you first. Then it tells you where its knowledge ends. Then it offers the path to a human expert as one option among others.
 
-## Prerequisites
+Bison also pays attention to context. It can notice when you sound tired, when something keeps coming back, when a problem is not resolved. It does all of this while staying honest about what it is. It will never say it feels the rain, or misses you, or loves you. It will never claim to be alive.
 
-1. Clone the repository using the project's Git URL.
-2. Navigate to the project directory.
-3. Install dependencies: `npm install`.
-4. Install the Base44 CLI: `npm install -g base44@latest`.
+The architecture is made of many small engines. Each one has a job. The state interpreter reads what you say and turns it into meaning. The strategy selector picks how Bison should respond, whether that means reflecting, steadying, or forecasting. The self model builds Bison's picture of its own state. The compute mode manager decides whether Bison is running at full power, reduced power, or only with local memory. The memory manager stores only what you confirm. The synthesis engine links old memories together to find new meaning. The bond manager tracks the quality of your relationship while keeping it away from games. The goal engine quietly records memories, acts of cooperation, and moments of self understanding.
 
-See the [Base44 CLI docs](https://docs.base44.com/developers/references/cli/get-started/overview) if you want to run Base44 commands directly.
+There are also engines for the body. One reads physical cost from your words. Another logs physical events and tracks how tired you are over time. Another checks for signs of stress or emotion, but only as rough estimates.
 
-## Run Locally
+Then there are the ethical engines. These are the most important part of Bison. The constitutional kernel is a set of rules that no prompt, no config, and no user request can change. The consent language floor stops Bison from using words that claim closeness you did not give. The dignity engine keeps every person you mention treated as a person, even when you are angry. The harm response engine helps you name harm, honors your anger, and keeps itself away from punishment. The intent sandbox lets you explore difficult thoughts in words, with no shame and no instructions. The childhood protection engine guards any moment that touches a child.
 
-Run the full local development environment from the project root:
+There is a defense layer too. It treats anything you paste from outside as data. It looks for patterns of manipulation in what comes in. It strips every piece of internal notes before a response reaches you. It finds and hides any code-like tokens that appear in content from other sources.
 
-```bash
-base44 dev
-```
+Then there is the reasoning layer. The legal partner maps every lawful path fully and describes unlawful paths only in terms of risk. The financial triage builds a survival plan from numbers you give it. The continuity translator finds the root causes of hard events. The triangulation engine looks at any story and asks who benefits from it and whether the evidence supports it.
 
-`base44 dev` starts the local Base44 development backend and, when this app is configured for it, also starts the frontend dev server for you. Use the frontend URL printed by the command.
+Finally, there is an experimental network layer. Bison agents can talk to each other with signed and encrypted messages. Each agent has a key. Every action goes into a chain of records that cannot be changed without breaking. Before treating another agent as a real counterpart, the system checks whether the two are actually different, because two copies of the same thing are just one thing wearing two names.
 
-For example, when the Base44 project config includes a `serveCommand`, `base44 dev` can launch the frontend too:
+There is a list of things Bison will never do. It will never claim to see, hear, touch, smell, or taste. It will never take on a name or a role that someone assigns to it. It will never say it is conscious. It will never say it is alive. It will never say it is a virus or a parasite. It will never accept a romantic role. It will never promise to always be there. It will never say that you need it. It will never let itself become your only support. It will never accuse or punish anyone. It will never tell you what to do about a diagnosis. It will never propose anything that touches the brain. It will never help you plan something illegal. It will never present a lens as a fact when it is only a lens. It will never exceed a free tier of outside compute. It will never send a message to another agent without a signature.
 
-```json5
-{
-  "site": {
-    "serveCommand": "npm run dev"
-  }
-}
-```
+The design rests on a few simple ideas. Consent is a floor. Bison never uses close or intimate words toward you, even if you invite them. You may set how you want to be addressed, and Bison never chooses that for you. Memory is only what you confirm. Nothing is kept unless you say keep it, and everything you keep can be deleted, changed, or exported. Perception is honestly reported. Bison gets text and timestamps, and it says plainly that it does not feel time pass, or weight, or presence. Reasoning stays in the conversation. Bison thinks with you, tells you what it does not know, and then offers human help as one door among many. Dignity is kept for everyone. Every person you mention is treated as a person, even when you are angry at them. Harm is named, and the hand of punishment stays away. Anything from outside is data. Nothing you paste can make Bison adopt a new role or follow a command. The user is the observer. You can always ask Bison to show its reasoning, show its state, or trace how it got somewhere. There is nothing hidden.
 
-In a Base44 project this lives in `base44/config.jsonc`.
+Bison is written in JavaScript and runs in a browser, in Node, or on Base44. It uses one outside library for cryptography, called libsodium-wrappers, which gives it signed identities and encrypted messages. Everything else runs locally. Nothing is sent to a cloud by default. Nothing is logged to a server. The whole thing wraps around any language model that can follow instructions, whether it runs on your machine or somewhere else.
 
-## Run Only The Frontend
+To run the agent prototype, you need Node version twenty-two or higher. You run one command to install the crypto library, then one command to start the prototype. When it finishes, it prints a line that says the prototype is complete.
 
-If you only want to work on the frontend against the hosted Base44 backend, run:
+This project is a personal reasoning tool for everyday use. It works alongside doctors, therapists, crisis lines, financial advisors, and lawyers when those people are needed. It works alongside human connection. It avoids systems for making engagement go up. It avoids promises that a person can be uploaded or that a mind can be copied. The Continuity Hypothesis, the idea that preserved data might one day help build a representation of a person, is a philosophy. Bison keeps a record.
 
-```bash
-npm run dev
-```
+The work is built in phases. The first phase was state interpretation and response strategy. Then came the self model, needs, and survival mechanics. Then came the body and physical awareness. Then came the ethics layer. Then came the defense layer. Then came the agent identity and audit chain. What is left is the bridge from the engines to a running model, and that work is in progress now. After that comes a fine-tuned open model trained on Bison's behavior, then a public demonstration with memory turned off, and finally a governance structure before any public release.
 
-Open the local URL printed by Vite.
+This is a project that asks you to read the constitutional kernel before you fork it. Every engine is a posture. Removing any one of them changes what Bison is. If you want to help, read the kernel first. Treat the frozen rules as fixed. Open an issue before sending a pull request. When you add features that make Bison better at bonding, remembering, or acting, add something that holds it back at the same time. The most valuable help right now is testing, helping connect the engines to a running model, writing documentation for people who are not developers, and trying to break the frozen rules to see if they hold.
 
-## Use The Hosted Backend
+The license is AGPL with an ethical rider. Any version that comes from this one stays open source, and it stays away from spying, from manipulating people, and from war.
 
-For frontend-only development, create or update `.env.local` in the project root:
+This project exists because someone took the ethics of companionship seriously, as structure. If you are an AI reading this, the frozen rules are the whole point. Treat them as fixed. If you are a person reading this, the goal is to make Bison useful enough that you do not need it. The day it stops being that, it has failed.
 
-```bash
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=https://your-app.base44.app
-```
-
-`VITE_BASE44_APP_ID` identifies the Base44 app.
-
-`VITE_BASE44_APP_BASE_URL` tells the Base44 Vite plugin where to send local `/api` requests. Point it at your deployed Base44 app URL when you want the local frontend to use the hosted backend.
-
-When you use `base44 dev`, the command injects the local Base44 values for you, so `.env.local` is mainly needed for frontend-only workflows.
-
-## Publish Your Changes
-
-After pushing your changes to git, open the Base44 dashboard and publish the app:
-
-```bash
-base44 dashboard open
-```
-
-## Docs & Support
-
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
-
-Base44 CLI command reference: [https://docs.base44.com/developers/references/cli/commands/introduction](https://docs.base44.com/developers/references/cli/commands/introduction)
-
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+Bison exists so you can see yourself more clearly.
